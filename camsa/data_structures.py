@@ -127,17 +127,17 @@ class AssemblyGraph(object):
         max_matching = networkx.max_weight_matching(G=self.graph)
         seen = set()
         edges = []
-        sum = 0
+        # sum = 0
         for key, value in max_matching.items():
             if key not in seen and value not in seen:
                 edges.append((key, value))
-                sum += self.graph[key][value]["weight"]
-                if 0.57 < self.graph[key][value]["weight"] < 0.59:
-                    print(key, value, self.graph[key][value]["weight"])
+                # sum += self.graph[key][value]["weight"]
+                # if 0.57 < self.graph[key][value]["weight"] < 0.59:
+                #     print(key, value, self.graph[key][value]["weight"])
                 seen.add(key)
                 seen.add(value)
         result = networkx.Graph()
-        print(sum)
+        # print(sum)
         result.add_edges_from(edges)
         return result
 

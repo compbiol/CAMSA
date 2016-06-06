@@ -293,7 +293,7 @@
                             <th>osc</th>
                             <th>oc</th>
                             <th>un</th>
-                            <th>sap</th>
+                            <th>map</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -352,7 +352,7 @@
                             {#                                        outer-confclited#}
                             <th>un</th>
                             {#                                        unique to this assembly#}
-                            <th>sap</th>
+                            <th>map</th>
                             {#                                        super assembly participation#}
                         </tr>
                         </tfoot>
@@ -368,7 +368,7 @@
                                     this.api().columns().every(function () {
                                         var column = this;
                                         text = this.header().innerText;
-                                        if (["or1", "or2", "ssc", "sc", "osc", "oc", "un", "um", "sap"].indexOf(text) < 0) {
+                                        if (["or1", "or2", "ssc", "sc", "osc", "oc", "un", "or", "map"].indexOf(text) < 0) {
                                             var select = $('<input type="text" placeholder="Search" />')
                                                     .appendTo($(column.footer()).empty())
                                                     .on('keyup change', function () {
@@ -471,7 +471,7 @@
                         <input type="text" class="col-lg-8" id="oc_query">
                     </div>
                     <div class="row search_query_div">
-                        <label class="text-right col-lg-2" for="sap_query">sap:</label>
+                        <label class="text-right col-lg-2" for="sap_query">map:</label>
                         <input type="text" class="col-lg-8" id="sap_query">
                     </div>
                     <div class="row search_query_div">
@@ -517,7 +517,7 @@
                 <th>sc</th>
                 <th>osc</th>
                 <th>oc</th>
-                <th>sap</th>
+                <th>map</th>
                 <th>self_id</th>
             </tr>
             </thead>
@@ -562,12 +562,12 @@
                 <th>or1</th>
                 <th>or2</th>
                 <th>cw</th>
-                <th>am</th>
+                <th>or</th>
                 <th>ssc</th>
                 <th>sc</th>
                 <th>osc</th>
                 <th>oc</th>
-                <th>sap</th>
+                <th>map</th>
                 <th>self_id</th>
             </tr>
             </tfoot>
@@ -586,7 +586,7 @@
 {#                                    }#}
                                     if (
                                             {#                                            true#}
-                                    ["or1", "or2", "ssc", "sc", "osc", "oc", "am", "sap", "cw"].indexOf(text) < 0
+                                    ["or1", "or2", "ssc", "sc", "osc", "oc", "or", "map", "cw"].indexOf(text) < 0
                                     ) {
                                         var select = $('<input type="text" placeholder="Search" />')
                                                 .appendTo($(column.footer()).empty())
