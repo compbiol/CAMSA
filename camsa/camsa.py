@@ -1,23 +1,19 @@
 # -*- coding: utf-8 -*-
-import os
-from argparse import ArgumentParser
-
 import datetime
+import os
+import shutil
+from argparse import ArgumentParser
 from collections import defaultdict
 
 import itertools
 
-import networkx
 from bg.breakpoint_graph import BreakpointGraph
 from bg.edge import BGEdge
-from bg.genome import BGGenome
-from bg.graphviz import ColorSource, Colors, BGVertexProcessor, BGEdgeProcessor, BreakpointGraphProcessor, \
-    BGEdgeTextProcessor, LabelFormat, BGEdgeShapeProcessor, BGVertexShapeProcessor
+from bg.graphviz import Colors, BGEdgeTextProcessor, LabelFormat, BGEdgeShapeProcessor, BGVertexShapeProcessor
 from bg.grimm import GRIMMReader
-from bg.multicolor import Multicolor
-from bg.vertices import TaggedBlockVertex
+from data_structures import AssemblyPoint, AssemblyGraph, Assembly
 from jinja2 import Template
-import shutil
+import camsa_io
 
 
 class GeneralizedEdgeTextProcessor(BGEdgeTextProcessor):
@@ -79,132 +75,6 @@ def delete_irregular_vertices(breakpoint_graph: BreakpointGraph):
     irregular_vertices = [vertex for vertex in breakpoint_graph.nodes() if vertex.is_irregular_vertex]
     for vertex in irregular_vertices:
         breakpoint_graph.bg.remove_node(vertex)
-
-
-class AssemblyPoint(object):
-    def __init__(self, ctg1, ctg2, ctg1_or, ctg2_or, sources):
-        self.contig_1 = ctg1
-        self.contig_2 = ctg2
-        self.contig_1_orientation = ctg1_or
-        self.contig_2_orientation = ctg2_or
-        self.sources = sorted(sources)
-        self.participates_in_max_non_conflicting_assembly = False
-        self.in_conflicted = []
-        self.in_semi_conflicted = []
-        self.out_conflicted = []
-        self.out_semi_conflicted = []
-        self.participation_ctg1_or = None
-        self.participation_ctg2_or = None
-
-    def get_bg_edges(self):
-        result = []
-        for ap in self.get_all_all_possible_representations():
-            head = ap.contig_1 + ("h" if ap.contig_1_orientation == "+" else "t")
-            tail = ap.contig_2 + ("t" if ap.contig_2_orientation == "+" else "h")
-            hv = TaggedBlockVertex(name=head)
-            tv = TaggedBlockVertex(name=tail)
-            result.append(
-                BGEdge(vertex1=hv, vertex2=tv, multicolor=Multicolor(*[BGGenome(name) for name in self.sources])))
-        return result
-
-    def is_in_semi_conflicted_for(self, source_name):
-        return source_name in self.in_semi_conflicted
-
-    def is_in_conflicted_for(self, source_name):
-        return source_name in self.in_conflicted
-
-    def is_out_semi_conflicted_for(self, source_name):
-        return len(self.out_semi_conflicted) > 0
-
-    def is_out_conflicted_for(self, source_name):
-        return len(self.out_conflicted) > 0
-
-    @property
-    def is_out_conflicted(self):
-        return len(self.out_conflicted) > 0
-
-    @property
-    def is_out_semi_conflicted(self):
-        return len(self.out_semi_conflicted) > 0
-
-    @property
-    def is_non_conflicted(self):
-        return len(self.in_conflicted) == 0 and len(self.out_conflicted) == 0 and len(self.in_semi_conflicted) == 0 and len(
-            self.out_semi_conflicted) == 0
-
-    def get_edges(self):
-        result = []
-        for ap in self.get_all_all_possible_representations():
-            head = ap.contig_1 + ("h" if ap.contig_1_orientation == "+" else "t")
-            tail = ap.contig_2 + ("t" if ap.contig_2_orientation == "+" else "h")
-            hv = TaggedBlockVertex(name=head)
-            tv = TaggedBlockVertex(name=tail)
-            # hv = head
-            # tv = tail
-            result.append((hv, tv))
-        return result
-
-    def get_all_all_possible_representations(self):
-        result = []
-        if self.contig_1_orientation == "?":
-            ctg_1_choices = ["+", "-"]
-        else:
-            ctg_1_choices = [self.contig_1_orientation]
-        if self.contig_2_orientation == "?":
-            ctg_2_choices = ["+", "-"]
-        else:
-            ctg_2_choices = [self.contig_2_orientation]
-        for ctg1_or, ctg2_or in itertools.product(ctg_1_choices, ctg_2_choices):
-            result.append(AssemblyPoint(ctg1=self.contig_1, ctg2=self.contig_2, ctg1_or=ctg1_or, ctg2_or=ctg2_or,
-                                        sources=self.sources))
-        return result
-
-    @property
-    def is_ambiguous(self):
-        return self.contig_1_orientation == "?" or self.contig_2_orientation == "?"
-
-
-class AssemblyGraph(object):
-    def __init__(self):
-        self.graph = networkx.Graph()
-
-    def add_edge(self, u, v, weight=1):
-        if self.graph.has_edge(u=u, v=v):
-            self.graph[u][v]['weight'] += weight
-        else:
-            self.graph.add_edge(u=u, v=v, weight=weight)
-
-    def get_maximal_non_conflicting_assembly_graph(self):
-        max_matching = networkx.max_weight_matching(G=self.graph)
-        seen = set()
-        edges = []
-        for key, value in max_matching.items():
-            if key not in seen and value not in seen:
-                edges.append((key, value))
-                seen.add(key)
-                seen.add(value)
-        result = networkx.Graph()
-        result.add_edges_from(edges)
-        return result
-
-
-class Assembly(object):
-    def __init__(self, name, aps):
-        self.name = name
-        self.aps = aps
-        self.total_cnt = 0
-        self.max_non_conflicting_aps = []
-
-    @property
-    def entries_names(self):
-        return self.get_all_entries_names()
-
-    def get_all_entries_names(self):
-        return sorted(set(name for ap in self.aps for name in ap.sources))
-
-    def sort_aps(self):
-        self.aps = sorted(self.aps,
-                          key=lambda ap: (ap.contig_1, ap.contig_1_orientation, ap.contig_2, ap.contig_2_orientation))
 
 
 def get_non_conflicting_vertices(breakpoint_graph, vertices):
@@ -296,20 +166,33 @@ def get_assembly_points(breakpoint_graph):
     return result
 
 
-def merge_aps(aps):
-    tmp_result = defaultdict(list)
+def merge_aps(aps, or_ap_by_id=None, m_ap_by_id=None):
+    sources = defaultdict(list)
+    cw = defaultdict(int)
+    children = defaultdict(list)
+    or_ap_by_id = or_ap_by_id if or_ap_by_id is not None else {}
+    m_ap_by_id = m_ap_by_id if m_ap_by_id is not None else {}
     for organism, o_aps in aps.items():
-        for ap in o_aps:
+        for cnt, ap in enumerate(o_aps):
+            ap.self_id = "or_{id}".format(id=cnt)
+            or_ap_by_id[ap.self_id] = ap
             ctg1, ctg2 = ap.contig_1, ap.contig_2
             ctg1_or, ctg2_or = ap.contig_1_orientation, ap.contig_2_orientation
             ctg1_or, ctg2_or = (ctg1_or, ctg2_or) if ctg1 < ctg2 else (
                 inverse_orientation(ctg2_or), inverse_orientation(ctg1_or))
             ctg1, ctg2 = (ctg1, ctg2) if ctg1 < ctg2 else (ctg2, ctg1)
             entry = (ctg1, ctg2, ctg1_or, ctg2_or)
-            tmp_result[entry].extend(ap.sources)
+            cw[entry] += ap.cw
+            sources[entry].extend(ap.sources)
+            children[entry].append(ap.self_id)
     result = []
-    for entry, sources in tmp_result.items():
-        ap = AssemblyPoint(ctg1=entry[0], ctg2=entry[1], ctg1_or=entry[2], ctg2_or=entry[3], sources=sources)
+    for cnt, (entry, sources) in enumerate(sources.items()):
+        children_ids = children[entry]
+        ap = AssemblyPoint(ctg1=entry[0], ctg2=entry[1], ctg1_or=entry[2], ctg2_or=entry[3], sources=sources, cw=cw[entry],
+                           children_id=children_ids, self_id="m_{id}".format(id=cnt))
+        m_ap_by_id[ap.self_id] = ap
+        for ap_id in ap.children_id:
+            or_ap_by_id[ap_id].parent_id = ap.self_id
         result.append(ap)
     return result
 
@@ -329,6 +212,9 @@ if __name__ == "__main__":
     parser.add_argument("input", nargs="+")
     parser.add_argument("--input-format", dest="input_format", choices=["grimm", "pairs"], default="grimm")
     parser.add_argument("--output-html-report-file", dest="output_report_file", default="report.html")
+    parser.add_argument("--default-exact-cw", dest="cw_exact", type=float, default=1.0)
+    parser.add_argument("--default-prob-cw", dest="cw_prob", type=float, default=0.9)
+    parser.add_argument("--minimum-cw-threshold", dest="min_cw", type=float, default=0.0)
     # parser.add_argument("--compile-graph", dest="compile_graph", action='store_true', default=False)
     # parser.add_argument("--compile-graph-command", dest="compilation_command",
     #                     default=os.path.join("/usr", "local", "bin", "neato"))
@@ -355,16 +241,24 @@ if __name__ == "__main__":
         delete_irregular_vertices(breakpoint_graph=bg)
         aps = get_assembly_points(breakpoint_graph=bg)
 
-    else:
+    elif args.input_format == "pairs":
         for file_name in args.input:
             with open(file_name, "rt") as source:
-                next(source)
-                aps = read_aps_as_pairs(stream=source, destination=aps)
+                camsa_io.read_pairs(source=source, delimiter="\t", destination=aps,
+                                    default_cw_eae=args.cw_exact, default_cw_pae=args.cw_prob)
+                # for file_name in args.input:
+                #     with open(file_name, "rt") as source:
+                #         next(source)
+                #         aps = read_aps_as_pairs(stream=source, destination=aps,)
 
-    merged_aps = merge_aps(aps=aps)
+    or_ap_by_id = {}
+    merged_ap_by_id = {}
+    merged_aps = merge_aps(aps=aps, or_ap_by_id=or_ap_by_id, m_ap_by_id=merged_ap_by_id)
 
     aps_source = defaultdict(list)
     for ap in merged_aps:
+        if ap.cw < args.min_cw:
+            continue
         for u, v in ap.get_edges():
             aps_source[u].append(ap)
             aps_source[v].append(ap)
@@ -373,12 +267,22 @@ if __name__ == "__main__":
     for ap in merged_aps:
         for source_name in ap.sources:
             tmp_individual_assemblies[source_name].append(ap)
+
     individual_assemblies = [Assembly(name=name, aps=aps) for name, aps in tmp_individual_assemblies.items()]
+    grouped_assemblies = []
+    for i in range(1, len(individual_assemblies) + 1):
+        for assembly_combination in itertools.combinations(sorted([a.name for a in individual_assemblies]), i):
+            assembly = Assembly(name=assembly_combination, aps=[])
+            for ap in merged_aps:
+                if len(ap.sources) == len(assembly_combination) and all(map(lambda entry: entry in ap.sources, assembly_combination)):
+                    assembly.aps.append(ap)
+            grouped_assemblies.append(assembly)
+    grouped_assemblies = list(filter(lambda a: len(a.aps) > 0, sorted(grouped_assemblies, key=lambda entry: len(entry.aps), reverse=True)))
 
     ag = AssemblyGraph()
     for ap in merged_aps:
         for (u, v) in ap.get_edges():
-            ag.add_edge(u=u, v=v, weight=len(ap.sources))
+            ag.add_edge(u=u, v=v, weight=ap.cw)
     max_non_conflicting_assembly_graph = ag.get_maximal_non_conflicting_assembly_graph()
 
     for ap in merged_aps:
@@ -451,6 +355,7 @@ if __name__ == "__main__":
                 "graph_compiled": False,
                 "aps": merged_aps,
                 "names_to_id": source_names_to_ids,
-                "source_colors": source_colors
+                "source_colors": source_colors,
+                "grouped_assemblies": grouped_assemblies
             }),
             file=dest)
