@@ -754,10 +754,10 @@
                         which in turn can be found in <a href="#per_assembly_overview_section">Assemblies summary</a> table, as well as next
                         to each assembly in the <a href="#individual_assemblies_section">Individual assemblies</a> section
                     </li>
-                    <li><strong>ctg1:</strong> column corresponds to first, out of two contigs, that participate in the reported assembly
+                    <li><strong>ctg1:</strong> column corresponds to first, out of two fragments, that participate in the reported assembly
                         point.
                     </li>
-                    <li><strong>ctg2:</strong> column corresponds to second, out of two contigs, that participate in the reported assembly
+                    <li><strong>ctg2:</strong> column corresponds to second, out of two fragments, that participate in the reported assembly
                         point
                     </li>
                     <li><strong>or1:</strong> column corresponds to relative orientation of <strong>ctg1</strong> wrt <strong>ctg2</strong>
@@ -782,11 +782,14 @@
                             </li>
                         </ol>
                     </li>
-                    <li><strong>am:</strong> is a boolean flag (i.e. either <strong>0</strong> or <strong>1</strong>) standing for <i>ambiguous</i>
-                        assembly point (i.e. at least a single ctg orientaiton was initially reported as <strong>?</strong>.
-                        Note, that columns <strong>or1</strong> and <strong>or2</strong> represent the orientation of the contigs with
-                        respect to produced super assembly. If at least one version of the ambigous assembly point was chosen
-                        to be part of the super assembly, the corresponding configs orientation will be shown.
+                    <li><strong>cw:</strong> confidence weight (score) for the reported assmebly point. Equals to the sum of individual assembly points,
+                        reported by each assembly</li>
+                    <li><strong>or:</strong> a flag determining the type os assembly point:
+                        <ol>
+                            <li><strong>O</strong>: oriented assembly point, that is for both fragments their extremities are specified</li>
+                            <li><strong>SO</strong>: partially oriented assembly point, that is only for one out of two fragments an assembly extremity is specified</li>
+                            <li><strong>U</strong>: unoriented assembly point, that is for both fragments their extremities used for assembly are not specified</li>
+                        </ol>
                     </li>
                     <li><strong>ssc:</strong> corresponds to the list of sources, with which this assembly point is
                         <strong>S</strong>elf-<strong>S</strong>emi-<strong>C</strong>onflicted. This happens, if this assembly point (at
@@ -822,8 +825,8 @@
                         <string>0</string>
                         stands for non <strong>O</strong>ut-<strong>C</strong>onflicted.
                     </li>
-                    <li><strong>sap:</strong> is a boolean flag (i.e. aither <strong>0</strong> or <strong>1</strong>) corresponding whether
-                        this assmbely point participates in the reported <strong>S</strong>uper-<strong>A</strong>ssembly
+                    <li><strong>map:</strong> is a boolean flag (i.e. aither <strong>0</strong> or <strong>1</strong>) corresponding whether
+                        this assmbely point participates in the reported <strong>M</strong>erged-<strong>A</strong>ssembly
                     </li>
                 </ul>
             </div>
@@ -832,15 +835,12 @@
                 <ul>
                     <li><strong>Built-in filters:</strong> every column has a filter in the table heading.
                         <ol>
-                            <li>If the filter is represented an <i>input</i> field, the value has to be a valid <strong>regular
-                                expression</strong>. Values matching <strong>entirely</strong> will be kept.
-                                For more information on how to construct regular expressions please refer to <a
-                                        href="https://en.wikipedia.org/wiki/Regular_expression">Wikipedia</a></li>
+                            <li>If the filter is represented an <i>input</i> field, the value a substring of a column / row entry. Smart Datatables search is used.
                             <li>If the input is represented with a <i>dropdown</i>, then all values matching the chose value will be kept.
                             </li>
-                            <li>There is a <i>whole table filter</i> on the top right of the table. It also accepts a valid regular
+                            <li>There is a <i>whole table filter</i> on the top right of the table. It also accepts a string
                                 expression, but for this filter at least one value in at least one column has to at least to contain the
-                                specified regex (in coparison to mandatory full match in per column buit-in filters).
+                                specified string.
                             </li>
                         </ol>
                     </li>
@@ -860,6 +860,7 @@
         <button id="draw_graph" type="button" class="btn btn-info">Draw assembly graph with table data</button>
         <button id="fit_graph" type="button" class="btn btn-warning">Fit</button>
         <button id="save_graph" type="button" class="btn btn-success">Save image</button>
+        <button id="export_aps" type="button" class="btn btn-info">Export assembly points</button>
     </div>
     <div class="row">
         <div id="graph" style="margin: 1em;">
@@ -889,6 +890,18 @@
                 var ctg1_suffix = or1 == "+" ? "h" : "t";
                 var ctg2_suffix = or2 == "-" ? "h" : "t";
                 return [ctg1 + ctg1_suffix, ctg2 + ctg2_suffix]
+            }
+
+            function download_aps_as_text(text) {
+                var element = document.createElement('a');
+                element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+                element.setAttribute('download', 'data.txt');
+
+                element.style.display = 'none';
+                document.body.appendChild(element);
+
+                element.click();
+                document.body.removeChild(element);
             }
 
             function AssemblyPoint(ctg1, ctg2, oor1, oor2, por1, por2, cw, self_id, source, sap) {
@@ -969,7 +982,7 @@
                     var oor2 = data[4].trim();
                     var por1 = data[5].trim();
                     var por2 = data[6].trim();
-                    var cw = parseFloat(data[7].trim());
+                    var cw = parseFloat(data[9].trim());
 
                     var sap = data[data.length - 2].trim() == "1";
                     var self_id = data[data.length - 1].trim();
@@ -977,6 +990,18 @@
                     sources.forEach(function (element) {
                         aps.push(new AssemblyPoint(ctg1, ctg2, oor1, oor2, por1, por2, cw, self_id, element, sap))
                     });
+                });
+                return aps;
+            }
+
+            function get_aps_by_ids(){
+                var aps = [];
+                var table = $('#overall_aps_table').DataTable();
+                table.rows({'filter': 'applied'}).every(function () {
+                    var data = this.data();
+                    var self_id = data[data.length - 1].trim();
+                    var ap = window.merged_aps_by_id[self_id];
+                    aps.push(ap);
                 });
                 return aps;
             }
@@ -1113,6 +1138,18 @@
                 return node_ids.concat(edge_ids);
             }
 
+            function ap_as_string(ap) {
+                var result = "";
+                result += ap.source + "\t";
+                result += ap.ctg1 + "\t";
+                result += ap.ctg2 + "\t";
+                result += ap.por1 + "\t";
+                result += ap.por2 + "\t";
+                result += "?" + "\t";
+                result += ap.cw;
+                return result;
+            }
+
             $(document).ready(function () {
                 window.merged_aps_by_id = {
                 {% for ap in data.aps %}
@@ -1122,6 +1159,14 @@
                         {{ ap.cw }}, '{{ ap.self_id }}', {{ ap.sources }}, {% if ap.participates_in_max_non_conflicting_assembly %}1{% else %}0{% endif %}),
                 {% endfor %}
                 };
+                $("#export_aps").on('click', function (){
+                    var aps = get_aps_by_ids();
+                    var result = "species\tctg1\tctg2\torientation_ctg1\torientation_ctg2\tdistance\tscore\n";
+                    aps.forEach(function(entry){
+                        result += ap_as_string(entry) + "\n";
+                    });
+                    download_aps_as_text(result);
+                });
                 $("#draw_graph").on('click', function () {
                     $("#graph").empty();
                     $("#graph").css('background', 'url(./libs/images/giphy.gif) no-repeat center center');
