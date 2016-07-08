@@ -2,6 +2,7 @@ CAMSA
 ==
 
 ``CAMSA``  - is a tool for **C**omparative **A**nalysis and **M**erging of **S**caffold **A**ssemblies.
+``CAMSA`` is distributed under the MIT license. Refer to LICENSE.txt file for more details.
 
 ``CAMSA`` is developed using Python 3.5+ programming language and requires Python 3.5+ interpreter to work properly.
 
