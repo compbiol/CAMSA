@@ -208,13 +208,21 @@ def get_all_conflicted_aps(ap, all_aps):
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser()
+    full_description = """
+        Sergey Aganezov & Max A. Alekseyev (c)
+        Computational Biology Institute, The George Washington University.
+
+        CAMSA is a tool for Comparative Analysis and Merging of Scaffold Assemblies.
+        For more information relate to description.txt file in the root of CAMSA distribution.
+        """
+    parser = ArgumentParser(description=full_description)
     parser.add_argument("input", nargs="+")
-    parser.add_argument("--input-format", dest="input_format", choices=["grimm", "pairs"], default="grimm")
+    parser.add_argument("--input-format", dest="input_format", choices=["grimm", "pairs"], default="pairs")
     parser.add_argument("--output-html-report-file", dest="output_report_file", default="report.html")
     parser.add_argument("--default-exact-cw", dest="cw_exact", type=float, default=1.0)
     parser.add_argument("--default-prob-cw", dest="cw_prob", type=float, default=0.9)
     parser.add_argument("--minimum-cw-threshold", dest="min_cw", type=float, default=0.0)
+    parser.add_argument("--version", action="version", version="1.0b")
     # parser.add_argument("--compile-graph", dest="compile_graph", action='store_true', default=False)
     # parser.add_argument("--compile-graph-command", dest="compilation_command",
     #                     default=os.path.join("/usr", "local", "bin", "neato"))
