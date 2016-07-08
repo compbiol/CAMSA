@@ -213,7 +213,9 @@ if __name__ == "__main__":
         Computational Biology Institute, The George Washington University.
 
         CAMSA is a tool for Comparative Analysis and Merging of Scaffold Assemblies.
-        For more information relate to description.txt file in the root of CAMSA distribution.
+        For more information relate to README.md file in the root of CAMSA distribution.
+
+        With any questions, please, contact Sergey Aganezov [aganezov(at)gwu.edu].
         """
     parser = ArgumentParser(description=full_description)
     parser.add_argument("input", nargs="+")
