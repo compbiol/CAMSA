@@ -1,0 +1,4 @@
+species	ctg1	ctg2	orientation_ctg1	orientation_ctg2	distance	score	conflict_ctg1:conflict_ctg2	besst_vscore:besst_dscore:nb_reads:orientation1:orientation2
+A_1 s_1 s_2 +   ?   ?   ?
+A_1 s_2 s_3 +   +   ?   ?
+A_1 s_3 s_5 +   +   ?   ?
