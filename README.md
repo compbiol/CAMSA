@@ -5,7 +5,7 @@ CAMSA
 
 ``CAMSA`` is developed using Python 3.5+ programming language and requires Python 3.5+ interpreter to work properly.
 
-To install ``CAMSA``: download the repository snapshot from the master branch, install all the python packages required for CAMSA work (listed in requirements.txt).
+To install ``CAMSA``: download the repository snapshot from the master branch, install all the python packages required for ``CAMSA`` work (listed in requirements.txt).
 We suggest using a ``virtual environment`` of python, to isolate the installation.
 
     python3.5 -m venv camsa_env
@@ -19,7 +19,7 @@ We suggest using a ``virtual environment`` of python, to isolate the installatio
 Input
 --
 
-CAMSA expect as an input a set of different assemblies on the same set of scaffolds.
+``CAMSA`` expect as an input a set of different assemblies on the same set of scaffolds.
 Assemblies are ought to be provided in CSV files, with the following format:
 
     origin, ctg1,   ctg1_or,  ctg2,    ctg2_or, gap_size,   cw
