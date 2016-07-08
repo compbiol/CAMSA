@@ -123,6 +123,7 @@ ENV/
 
 # mpeltonen/sbt-idea plugin
 .idea_modules/
+.idea/
 
 # JIRA plugin
 atlassian-ide-plugin.xml
@@ -135,3 +136,4 @@ fabric.properties
 
 # Created by .ignore support plugin (hsz.mobi)
 /camsa/dev/
+/camsa/output/
