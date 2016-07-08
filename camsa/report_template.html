@@ -96,8 +96,7 @@
                     <td>{{ assembly.non_conflicted_cnt }}</td>
                     <td>{{ assembly.out_conflicted_cnt }} / {{ assembly.out_semi_conflicted_cnt }}</td>
                     <td>{{ assembly.in_conflicted_cnt }} / {{ assembly.in_semi_conflicted_cnt }}</td>
-                    <td>{{ assembly.aps|selectattr("participates_in_max_non_conflicting_assembly")|list|length }} (
-                        {{ "%0.2f" | format((assembly.aps|selectattr("participates_in_max_non_conflicting_assembly")|list|length *  100 / assembly.aps|length) | float) }})
+                    <td>{{ assembly.aps|selectattr("participates_in_max_non_conflicting_assembly")|list|length }} ({{ "%0.2f" | format((assembly.aps|selectattr("participates_in_max_non_conflicting_assembly")|list|length *  100 / assembly.aps|length) | float) }} %)
                     </td>
                 </tr>
             {% endfor %}
