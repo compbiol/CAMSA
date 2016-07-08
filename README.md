@@ -18,7 +18,7 @@ We suggest using a ``virtual environment`` of python, to isolate the installatio
 
     python3.5 camsa.py --help
 
-With any questions about installation or usage, please, contact **Sergey Aganezov** ***[aganezov(at)gwu.edu]***
+With any questions about installation or usage, please, contact **Sergey Aganezov** *[aganezov(at)gwu.edu]*
 
 Input
 --
