@@ -300,8 +300,8 @@ if __name__ == "__main__":
         for u, v in ap.get_edges():
             if max_non_conflicting_assembly_graph.has_edge(u=u, v=v):
                 participates = True
-                ap.participation_ctg1_or = "+" if u.is_head_vertex else "-"
-                ap.participation_ctg2_or = "+" if v.is_tail_vertex else "-"
+                ap.participation_ctg1_or = "+" if u.endswith("h") else "-"
+                ap.participation_ctg2_or = "+" if v.endswith("t") else "-"
                 break
         ap.participates_in_max_non_conflicting_assembly = participates
         if not participates:

@@ -86,10 +86,8 @@ class AssemblyPoint(object):
         for ap in self.get_all_all_possible_representations():
             head = ap.contig_1 + ("h" if ap.contig_1_orientation == "+" else "t")
             tail = ap.contig_2 + ("t" if ap.contig_2_orientation == "+" else "h")
-            hv = TaggedBlockVertex(name=head)
-            tv = TaggedBlockVertex(name=tail)
-            # hv = head
-            # tv = tail
+            hv = head
+            tv = tail
             result.append((hv, tv))
         return result
 
@@ -127,13 +125,9 @@ class AssemblyGraph(object):
         max_matching = networkx.max_weight_matching(G=self.graph)
         seen = set()
         edges = []
-        # sum = 0
         for key, value in max_matching.items():
             if key not in seen and value not in seen:
                 edges.append((key, value))
-                # sum += self.graph[key][value]["weight"]
-                # if 0.57 < self.graph[key][value]["weight"] < 0.59:
-                #     print(key, value, self.graph[key][value]["weight"])
                 seen.add(key)
                 seen.add(value)
         result = networkx.Graph()
