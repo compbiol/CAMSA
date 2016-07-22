@@ -6,9 +6,9 @@ if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
     brew install pyenv
     case "$PYTHON" in
      "3.4")
-     pyenv install 3.4 ;;
+     pyenv install 3.4.2 ;;
      "3.5")
-     pyenv install 3.5 ;;
+     pyenv install 3.5.2 ;;
     esac
 fi
 
