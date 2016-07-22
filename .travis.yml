@@ -20,7 +20,9 @@ matrix:
         - OS=osx
         - PYVER=3.5
 
-before_install: sudo chmod +x .travis/install.sh && sudo /usr/bin/bash .travis/install.sh
+before_install:
+  - which bash
+  - sudo chmod +x .travis/install.sh && sudo .travis/install.sh
 
 install:
   - python3 -m venv camsa-env
