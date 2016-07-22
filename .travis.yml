@@ -5,10 +5,10 @@ matrix:
 #    - os: linux
 #      sudo: required
 #      python: 3.4
-    - os: linux
-      sudo: required
-      python: 3.5
-      env: OS=linux
+#    - os: linux
+#      sudo: required
+#      python: 3.5
+#      env: OS=linux
 #    - os: osx
 #      sudo: required
 #      language: generic

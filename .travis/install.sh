@@ -2,6 +2,7 @@
 
 echo "$TRAVIS_OS_NAME"
 echo "$PATH"
+echo "$OS"
 
 if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
   brew update
