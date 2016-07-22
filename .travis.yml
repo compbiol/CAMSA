@@ -2,22 +2,22 @@ language: python
 
 matrix:
   include:
-    - os: linux
-      sudo: required
-      python: 3.4
+#    - os: linux
+#      sudo: required
+#      python: 3.4
     - os: linux
       sudo: required
       python: 3.5
-    - os: osx
-      sudo: required
-      language: generic
-      env: PYVER=3.4
+#    - os: osx
+#      sudo: required
+#      language: generic
+#      env: PYVER=3.4
     - os: osx
       sudo: required
       language: generic
       env: PYVER=3.5
 
-before_install: sudo ./.travis/install.sh
+before_install: chmod +x .travis/install.sh && ./.travis/install.sh
 
 install:
   - source camsa-env/bin/activate
