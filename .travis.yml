@@ -1,0 +1,23 @@
+language: python
+python:
+  - "3.3"
+  - "3.4"
+  - "3.5"
+
+os:
+  - linux
+  - osx
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install mummer  ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install mummer  ; fi
+
+install:
+  - python -m venv camsa-env
+  - source camsa-env/bin/activate
+  - pip install -r requirements.txt
+  - chmod +x camsa/utils/mummer/nucmer-to-camsa.py
+
+script: camsa/utils/mummer/nucmer-to-camsa.py --help
