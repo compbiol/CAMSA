@@ -18,11 +18,9 @@ matrix:
       sudo: required
       language: generic
       env:
-        - OS=osx
-        - PYVER=3.5
+        - PYTHON=3.5
 
 before_install:
-  - which bash
   - sudo chmod +x .travis/install.sh && sudo chown $USER .travis/install.sh && /bin/bash .travis/install.sh
 
 install:

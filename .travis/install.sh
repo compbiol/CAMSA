@@ -1,19 +1,13 @@
 #!/usr/bin/env bash
 
-echo "$TRAVIS_OS_NAME"
-echo "$PATH"
-echo "$OS"
-
 if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
-  brew update
+    brew update
     brew install mummer
-    case "${PYVER}" in
-        py34)
-            brew install python3.4
-        ;;
-        py35)
-            brew install python3.5
-        ;;
+    case "$PYTHON" in
+     "3.4")
+     brew install python3.4 ;;
+     "3.5")
+     brew install python3.5 ;;
     esac
 fi
 
