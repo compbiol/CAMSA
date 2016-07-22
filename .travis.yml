@@ -14,6 +14,7 @@ matrix:
 #      language: generic
 #      env: PYVER=3.4
     - os: osx
+      osx_image: xcode7.3
       sudo: required
       language: generic
       env:
@@ -22,7 +23,7 @@ matrix:
 
 before_install:
   - which bash
-  - sudo chmod +x .travis/install.sh && sudo .travis/install.sh
+  - sudo chmod +x .travis/install.sh && sudo chown $USER .travis/install.sh && /bin/bash .travis/install.sh
 
 install:
   - python3 -m venv camsa-env
