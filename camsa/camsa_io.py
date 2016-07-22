@@ -2,7 +2,7 @@
 import csv
 from collections import defaultdict
 
-from data_structures import AssemblyPoint
+from camsa.data_structures import AssemblyPoint
 
 aliases = {
     ########################
@@ -51,7 +51,3 @@ def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, defau
                                                  sources=[row[fn_relations["origin"]]],
                                                  cw=cw))
     return destination
-
-
-def read_grimm(source, default_cw_eae=1, default_cw_pae=0.9):
-    pass

@@ -7,56 +7,9 @@ from collections import defaultdict
 
 import itertools
 
-from bg.breakpoint_graph import BreakpointGraph
-from bg.edge import BGEdge
-from bg.graphviz import Colors, BGEdgeTextProcessor, LabelFormat, BGEdgeShapeProcessor, BGVertexShapeProcessor
-from bg.grimm import GRIMMReader
-from data_structures import AssemblyPoint, AssemblyGraph, Assembly
+from camsa.data_structures import AssemblyPoint, AssemblyGraph, Assembly
 from jinja2 import Template
-import camsa_io
-
-
-class GeneralizedEdgeTextProcessor(BGEdgeTextProcessor):
-    def get_text(self, entry=None, label_format=LabelFormat.plain, edge_attributes_to_be_displayed=None,
-                 tag_key_processor=None,
-                 tag_value_processor=None, edge_key_value_separator=":", entries_separator="\n"):
-        text = super().get_text(entry, label_format, edge_attributes_to_be_displayed, tag_key_processor,
-                                tag_value_processor,
-                                edge_key_value_separator, entries_separator)
-        text_value = text[1:-1]
-        wrapper_l, wrapper_r = text[0], text[-1]
-        if isinstance(entry, BGEdge) and not entry.is_irregular_edge and entry.vertex1.mate_vertex == entry.vertex2:
-            block_name = entry.vertex1.block_name
-            text_value = block_name + entries_separator + text_value
-        return wrapper_l + text_value + wrapper_r
-
-
-class GeneralizedEdgeShapeProcessor(BGEdgeShapeProcessor):
-    def __init__(self, pen_width=1, style="solid", color=Colors.black, color_source=None):
-        super().__init__(pen_width, style, color, color_source)
-        self.direction_template = "dir=\"{direction}\""
-
-    def get_direction(self, entry):
-        if not isinstance(entry, BGEdge):
-            return "None"
-        if not entry.vertex1.is_block_vertex or not entry.vertex2.is_block_vertex:
-            return "None"
-        if entry.vertex1.mate_vertex == entry.vertex2:
-            if entry.vertex1.is_tail_vertex:
-                return "forward"
-            else:
-                return "back"
-        return "None"
-
-    def get_attributes_string_list(self, entry):
-        result = super().get_attributes_string_list(entry)
-        result.append(self.direction_template.format(direction=self.get_direction(entry=entry)))
-        return result
-
-
-class AssemblyVertexShapeProcessor(BGVertexShapeProcessor):
-    def get_shape(self, entry=None):
-        return "point"
+import camsa.camsa_io as camsa_io
 
 
 def inverse_orientation(orientation):
@@ -65,13 +18,13 @@ def inverse_orientation(orientation):
     return orientation
 
 
-def delete_irregular_edges(breakpoint_graph: BreakpointGraph):
+def delete_irregular_edges(breakpoint_graph):
     irregular_edges = [edge for edge in breakpoint_graph.edges() if edge.is_irregular_edge]
     for edge in irregular_edges:
         breakpoint_graph.delete_bgedge(bgedge=edge)
 
 
-def delete_irregular_vertices(breakpoint_graph: BreakpointGraph):
+def delete_irregular_vertices(breakpoint_graph):
     irregular_vertices = [vertex for vertex in breakpoint_graph.nodes() if vertex.is_irregular_vertex]
     for vertex in irregular_vertices:
         breakpoint_graph.bg.remove_node(vertex)
@@ -219,17 +172,11 @@ if __name__ == "__main__":
         """
     parser = ArgumentParser(description=full_description)
     parser.add_argument("input", nargs="+")
-    parser.add_argument("--input-format", dest="input_format", choices=["grimm", "pairs"], default="pairs")
     parser.add_argument("--output-html-report-file", dest="output_report_file", default="report.html")
     parser.add_argument("--default-exact-cw", dest="cw_exact", type=float, default=1.0)
     parser.add_argument("--default-prob-cw", dest="cw_prob", type=float, default=0.9)
     parser.add_argument("--minimum-cw-threshold", dest="min_cw", type=float, default=0.0)
     parser.add_argument("--version", action="version", version="1.0b")
-    # parser.add_argument("--compile-graph", dest="compile_graph", action='store_true', default=False)
-    # parser.add_argument("--compile-graph-command", dest="compilation_command",
-    #                     default=os.path.join("/usr", "local", "bin", "neato"))
-    # parser.add_argument("--compile-graph-command-arguments", dest="compilation_command_arguments", default=None)
-    # parser.add_argument("--output-graph-dot-file", dest="output_dot_file", default="graph.dot")
     parser.add_argument("--output-report-dir", dest="output_report_dir",
                         default=None)
     args = parser.parse_args()
@@ -237,29 +184,11 @@ if __name__ == "__main__":
         args.output_report_dir = os.path.join(os.getcwd(), "camsa_report_{date}".format(
             date=datetime.datetime.now().strftime("%b_%d_%Y__%H_%M")))
 
-    # if args.compilation_command_arguments is None:
-    #     args.compilation_command_arguments = ["-Tpdf", "graph.dot", "-o", "graph.pdf"]
-
     aps = defaultdict(list)
-    if args.input_format == "grimm":
-        bg = BreakpointGraph()
-        for file_name in args.input:
-            with open(file_name, "rt") as source:
-                bg.update(breakpoint_graph=GRIMMReader.get_breakpoint_graph(stream=source, merge_edges=False),
-                          merge_edges=False)
-        delete_irregular_edges(breakpoint_graph=bg)
-        delete_irregular_vertices(breakpoint_graph=bg)
-        aps = get_assembly_points(breakpoint_graph=bg)
-
-    elif args.input_format == "pairs":
-        for file_name in args.input:
-            with open(file_name, "rt") as source:
-                camsa_io.read_pairs(source=source, delimiter="\t", destination=aps,
-                                    default_cw_eae=args.cw_exact, default_cw_pae=args.cw_prob)
-                # for file_name in args.input:
-                #     with open(file_name, "rt") as source:
-                #         next(source)
-                #         aps = read_aps_as_pairs(stream=source, destination=aps,)
+    for file_name in args.input:
+        with open(file_name, "rt") as source:
+            camsa_io.read_pairs(source=source, delimiter="\t", destination=aps,
+                                default_cw_eae=args.cw_exact, default_cw_pae=args.cw_prob)
 
     or_ap_by_id = {}
     merged_ap_by_id = {}
