@@ -18,14 +18,15 @@ matrix:
       language: generic
       env:
         - OS=osx
-        - OS=PYVER=3.5
+        - PYVER=3.5
 
-before_install: sudo chmod +x .travis/install.sh && sudo ./.travis/install.sh
+before_install: sudo chmod +x .travis/install.sh && sudo /usr/bin/bash .travis/install.sh
 
 install:
   - python3 -m venv camsa-env
   - source camsa-env/bin/activate
-  - sudo camsa-env/bin/pip3 install -r requirements.txt
+  - which pip
+  - pip install -r requirements.txt
   - chmod +x camsa/utils/mummer/nucmer-to-camsa.py
 
 script: camsa/utils/mummer/nucmer-to-camsa.py --help
