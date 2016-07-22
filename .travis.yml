@@ -8,6 +8,7 @@ matrix:
     - os: linux
       sudo: required
       python: 3.5
+      env: OS=linux
 #    - os: osx
 #      sudo: required
 #      language: generic
@@ -15,7 +16,9 @@ matrix:
     - os: osx
       sudo: required
       language: generic
-      env: PYVER=3.5
+      env:
+        - OS=osx
+        - OS=PYVER=3.5
 
 before_install: sudo chmod +x .travis/install.sh && sudo ./.travis/install.sh
 
