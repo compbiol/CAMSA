@@ -2,8 +2,8 @@
 
 echo "$TRAVIS_OS_NAME"
 
-if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-    brew update
+if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
+  brew update
     brew install mummer
     case "${PYVER}" in
         py34)
@@ -13,7 +13,9 @@ if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
             brew install python3.5
         ;;
     esac
-else
+fi
+
+if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
     apt-get update
     apt-get install mummer
 fi
