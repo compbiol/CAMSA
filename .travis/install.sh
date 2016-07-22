@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-echo "$TRAVIS_OS_NAME"
+echo $TRAVIS_OS_NAME
 
 
-if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
+if [ $TRAVIS_OS_NAME == 'osx' ]; then
     brew update
     brew install mummer
     case "${PYVER}" in
