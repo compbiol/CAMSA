@@ -2,12 +2,13 @@
 
 if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
     brew update
+    brew tap homebrew/science
     brew install mummer
     case "$PYTHON" in
      "3.4")
-     brew install python3.4 ;;
+     brew install python34 ;;
      "3.5")
-     brew install python3.5 ;;
+     brew install python35 ;;
     esac
 fi
 
