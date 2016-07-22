@@ -20,7 +20,7 @@ matrix:
 before_install: sudo chmod +x .travis/install.sh && sudo ./.travis/install.sh
 
 install:
-  - python3 -m venv camsa-env/bin/activate
+  - python3 -m venv camsa-env
   - source camsa-env/bin/activate
   - pip install -r requirements.txt
   - chmod +x camsa/utils/mummer/nucmer-to-camsa.py
