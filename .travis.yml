@@ -30,4 +30,4 @@ install:
   - pip install -r requirements.txt
   - chmod +x camsa/util/mummer/nucmer-to-camsa.py
 
-script: camsa/utils/mummer/nucmer-to-camsa.py --help
+script: camsa/util/mummer/nucmer-to-camsa.py --help
