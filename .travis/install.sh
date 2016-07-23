@@ -11,7 +11,7 @@ if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
      pyenv global 2.7.11
      ;;
      "3.3")
-     pyenv install 3.3.5
+     pyenv install 3.3.6
      pyenv global 3.3.6
      ;;
      "3.4")
