@@ -23,8 +23,8 @@ if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
      pyenv global 3.5.1
      ;;
      "pypy.2")
-     pyenv install pypy-5.3.1
-     pyenv global pypy-5.3.1
+     pyenv install pypy-5.3
+     pyenv global pypy-5.3
      ;;
      "pypy.3")
      pyenv install pypy3.3-5.2-alpha1
