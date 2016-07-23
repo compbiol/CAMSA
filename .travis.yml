@@ -14,12 +14,12 @@ matrix:
 #      language: generic
 #      env:
 #        - PYTHON=3.4
-    - os: osx
-      osx_image: xcode7.3
-      sudo: required
-      language: generic
-      env:
-        - PYTHON=3.5
+#    - os: osx
+#      osx_image: xcode7.3
+#      sudo: required
+#      language: generic
+#      env:
+#        - PYTHON=3.5
 
 before_install:
   - sudo chmod +x .travis/install.sh && sudo chown $USER .travis/install.sh && /bin/bash .travis/install.sh

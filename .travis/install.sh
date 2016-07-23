@@ -19,8 +19,8 @@ if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
 fi
 
 if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
-    apt-get update
-    apt-get install mummer
+    sudo apt-get update
+    sudo apt-get install mummer
     pip install virtualenv
     virtualenv camsa-env
 fi
