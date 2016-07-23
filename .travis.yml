@@ -24,9 +24,9 @@ before_install:
   - sudo chmod +x .travis/install.sh && sudo chown $USER .travis/install.sh && /bin/bash .travis/install.sh
 
 install:
-  - python3 -m venv camsa-env
+  - if [ "$TRAVIS_OS_NAME" = 'osx' ]; then `pyenv which python` -m venv camsa-env ; fi
+  - if [ "$TRAVIS_OS_NAME" = 'linux' ]; then python3 -m venv camsa-env            ; fi
   - source camsa-env/bin/activate
-  - which pip
   - pip install -r requirements.txt
   - chmod +x camsa/utils/mummer/nucmer-to-camsa.py
 
