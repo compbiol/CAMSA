@@ -14,9 +14,13 @@ if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
      pyenv global 3.5.1
      ;;
     esac
+    `pyenv which pip` install virtualenv
+    `pyenv which virtualenv` camsa-env
 fi
 
 if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
     apt-get update
     apt-get install mummer
+    pip install virtualenv
+    virtualenv camsa-env
 fi

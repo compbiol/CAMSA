@@ -5,14 +5,15 @@ matrix:
 #    - os: linux
 #      sudo: required
 #      python: 3.4
-#    - os: linux
-#      sudo: required
-#      python: 3.5
-#      env: OS=linux
+    - os: linux
+      sudo: required
+      python: 3.5
 #    - os: osx
+#      osx_image: xcode7.3
 #      sudo: required
 #      language: generic
-#      env: PYVER=3.4
+#      env:
+#        - PYTHON=3.4
     - os: osx
       osx_image: xcode7.3
       sudo: required
@@ -24,10 +25,8 @@ before_install:
   - sudo chmod +x .travis/install.sh && sudo chown $USER .travis/install.sh && /bin/bash .travis/install.sh
 
 install:
-  - if [ "$TRAVIS_OS_NAME" = 'osx' ]; then `pyenv which python` -m venv camsa-env ; fi
-  - if [ "$TRAVIS_OS_NAME" = 'linux' ]; then python3 -m venv camsa-env            ; fi
   - source camsa-env/bin/activate
   - pip install -r requirements.txt
-  - chmod +x camsa/util/mummer/nucmer-to-camsa.py
+  - chmod +x camsa/utils/mummer/nucmer-to-camsa.py
 
-script: camsa/util/mummer/nucmer-to-camsa.py --help
+script: camsa/utils/mummer/nucmer-to-camsa.py --help
