@@ -2,7 +2,7 @@ CAMSA
 ==
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/hyperium/hyper/master/LICENSE)
 
-[![Build Status](https://travis-ci.org/aganezov/CAMSA.svg?branch=master)](https://travis-ci.org/aganezov/CAMSA)
+[![Build Status](https://travis-ci.org/aganezov/CAMSA.svg?branch=dev)](https://travis-ci.org/aganezov/CAMSA)
 
 
 ``CAMSA``  - is a tool for **C**omparative **A**nalysis and **M**erging of **S**caffold **A**ssemblies.
