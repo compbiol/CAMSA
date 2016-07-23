@@ -4,7 +4,16 @@ if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
     brew update
     brew tap homebrew/science
     brew install pyenv
+    brew install mercurial
     case "$PYTHON" in
+    "2.7")
+     pyenv install 2.7.11
+     pyenv global 2.7.11
+     ;;
+     "3.3")
+     pyenv install 3.3.5
+     pyenv global 3.3.6
+     ;;
      "3.4")
      pyenv install 3.4.3
      pyenv global 3.4.3
@@ -12,6 +21,14 @@ if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
      "3.5")
      pyenv install 3.5.1
      pyenv global 3.5.1
+     ;;
+     "pypy.2")
+     pyenv install pypy-5.3.1
+     pyenv global pypy-5.3.1
+     ;;
+     "pypy.3")
+     pyenv install pypy3.3-5.2-alpha1
+     pyenv global pypy3.3-5.2-alpha1
      ;;
     esac
     `pyenv which pip` install virtualenv
