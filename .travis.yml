@@ -52,7 +52,6 @@ install:
   - chmod +x camsa/utils/mummer/nucmer-to-camsa.py
   - chmod +x camsa/camsa.py
 
-
 script:
   - camsa/utils/mummer/nucmer-to-camsa.py --help
   - camsa/camsa.py --help
