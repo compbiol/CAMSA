@@ -8,9 +8,12 @@ from collections import defaultdict
 
 import itertools
 
-from camsa.data_structures import AssemblyPoint, AssemblyGraph, Assembly
+from data_structures import AssemblyPoint, AssemblyGraph, Assembly
 from jinja2 import Template
-import camsa.camsa_io as camsa_io
+import camsa_io as camsa_io
+
+
+VERSION = "1.0.0"
 
 
 def inverse_orientation(orientation):
@@ -173,12 +176,12 @@ if __name__ == "__main__":
         """
     parser = ArgumentParser(description=full_description)
     parser.add_argument("input", nargs="+")
-    parser.add_argument("--output-html-report-file", dest="output_report_file", default="report.html")
+    parser.add_argument("-f", "--output-file", dest="output_report_file", default="report.html")
     parser.add_argument("--default-exact-cw", dest="cw_exact", type=float, default=1.0)
     parser.add_argument("--default-prob-cw", dest="cw_prob", type=float, default=0.9)
     parser.add_argument("--minimum-cw-threshold", dest="min_cw", type=float, default=0.0)
-    parser.add_argument("--version", action="version", version="1.0b")
-    parser.add_argument("--output-report-dir", dest="output_report_dir",
+    parser.add_argument("--version", action="version", version=VERSION)
+    parser.add_argument("-o", "--output-dir", dest="output_report_dir",
                         default=None)
     args = parser.parse_args()
     if args.output_report_dir is None:
@@ -187,6 +190,7 @@ if __name__ == "__main__":
 
     aps = defaultdict(list)
     for file_name in args.input:
+        file_name = os.path.abspath(os.path.expanduser(file_name))
         with open(file_name, "rt") as source:
             camsa_io.read_pairs(source=source, delimiter="\t", destination=aps,
                                 default_cw_eae=args.cw_exact, default_cw_pae=args.cw_prob)
@@ -267,6 +271,7 @@ if __name__ == "__main__":
                     if source not in ap.out_semi_conflicted:
                         ap.out_semi_conflicted.append(source)
 
+    args.output_report_dir = os.path.abspath(os.path.expanduser(args.output_report_dir))
     if not os.path.exists(args.output_report_dir):
         os.makedirs(args.output_report_dir)
 
@@ -297,5 +302,10 @@ if __name__ == "__main__":
                 "names_to_id": source_names_to_ids,
                 "source_colors": source_colors,
                 "grouped_assemblies": grouped_assemblies
+            },
+            meta={
+                "camsa": {
+                    "version": VERSION
+                }
             }),
             file=dest)

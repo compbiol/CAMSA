@@ -277,7 +277,7 @@ if __name__ == "__main__":
             chains = parser.parse_data()
 
             result_file = os.path.join(args.output_dir, prefix + ".camsa.pairs")
-            with open(result_file, "wt", newline='') as destination:
+            with open(result_file, "wt") as destination:
                 logger.info("Writing coords data in terms of CAMSA assembly points in \"{camsa_input_file}\"".format(camsa_input_file=result_file))
                 writer = csv.writer(destination, delimiter="\t")
                 writer.writerow(['origin', 'ctg1', 'ctg1_or', 'ctg2', 'ctg2_or', 'gap_size', 'cw'])

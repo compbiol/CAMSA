@@ -2,7 +2,7 @@
 import csv
 from collections import defaultdict
 
-from camsa.data_structures import AssemblyPoint
+from data_structures import AssemblyPoint
 
 aliases = {
     ########################

@@ -20,9 +20,6 @@
     <script type="text/javascript" src="./libs/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="./libs/js/datatables.min.js"></script>
     <script type="text/javascript" src="./libs/js/cytoscape.min.js"></script>
-
-    {#    <script type="text/javascript" src="https://cdn.rawgit.com/cpettitt/dagre/v0.7.4/dist/dagre.min.js"></script>#}
-    {#    <script type="text/javascript" src="https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.1.2/cytoscape-dagre.js"></script>#}
     <script type="text/javascript" src="./libs/js/cytoscape-cose-bilkent.js"></script>
     <script type="text/javascript" src="./libs/js/cytoscape-cxtmenu.js"></script>
     <script type="text/javascript" src="./libs/js/highcharts.min.js"></script>
@@ -60,7 +57,11 @@
             padding-left: 15px;
         }
     </style>
-
+    <script>
+        function escape(value) {
+            return value.replace(/(:|\.|\[|\]|,)/g, "\\$1");
+        }
+    </script>
 </head>
 <body>
 
@@ -70,6 +71,11 @@
             BIOLOGY LABORATORY</h1></a>
         <img src="./libs/images/gwu_header_logo.png" style="width: 40%; padding-bottom: 15px; padding-top: 15px;">
     </div>
+    <div class="alert alert-warning alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <p class="text-center"><strong>Report is generated with CAMSA v.{{ meta.camsa.version }}</strong></p>
+    </div>
+
     <div class="row" id="per_assembly_overview">
         <h3 class="text-center" id="per_assembly_overview_section">Per assembly overview</h3>
         <table class="table table-bordered table-condensed" id="overall_assemblies_comparison_table"
@@ -116,15 +122,6 @@
         </table>
         <script>
             $(document).ready(function () {
-                {#                $('#overall_assemblies_comparison_table tfoot th').each(function () {#}
-                {#                    var title = $(this).text();#}
-                {#                    if (title == "Name") {#}
-                {#                        $(this).html('<input type="text" placeholder="Search" />');#}
-                {#                    }#}
-                {#                    else {#}
-                {#                        $(this).html("");#}
-                {#                    }#}
-                {#                });#}
                 var table = $('#overall_assemblies_comparison_table').DataTable({
                     "initComplete": function () {
                         this.api().columns().every(function () {
@@ -165,7 +162,6 @@
         </style>
     </div>
     <div class="row" id="subclass_assemblies_overview_comparison">
-        {#        <h3 class="text-center" id="per_assembly_overview_section">Grouped assemblies comparison</h3>#}
         <div id="grouped_assembly_comparison_chart" style="min-width: 100%; max-width: 100%; height: 600px; margin: 0 auto"></div>
         <script>
             $(function () {
@@ -179,7 +175,7 @@
                     xAxis: {
                         categories: [
                             {% for assembly in data.grouped_assemblies %}
-                                '{{ assembly.name|join(",") }}'
+                                '{% for name in assembly.name %}{{ data.names_to_id[name] }}{% if not loop.last %},{% endif %}{% endfor %}'
                                 {% if not loop.last %}, {% endif %}
                             {% endfor %}
                         ],
@@ -333,26 +329,16 @@
                         <tfoot>
                         <tr>
                             <th>ctg1</th>
-                            {#                                        contig1#}
                             <th>ctg2</th>
-                            {#                                        contig2#}
                             <th>or1</th>
-                            {#                                        contig1 orientation#}
                             <th>or2</th>
                             <th>or</th>
-                            {#                                        contig2 orientation#}
                             <th>ssc</th>
-                            {#                                        semi-self-confclited#}
                             <th>sc</th>
-                            {#                                        self-conflicted#}
                             <th>osc</th>
-                            {#                                        outer-semi-confclited#}
                             <th>oc</th>
-                            {#                                        outer-confclited#}
                             <th>un</th>
-                            {#                                        unique to this assembly#}
                             <th>map</th>
-                            {#                                        super assembly participation#}
                         </tr>
                         </tfoot>
                     </table>
@@ -580,9 +566,6 @@
                                 this.api().columns().every(function () {
                                     var column = this;
                                     text = this.header().innerText;
-{#                                    if (text == "cw") {#}
-{#                                        return;#}
-{#                                    }#}
                                     if (
                                             {#                                            true#}
                                     ["or1", "or2", "ssc", "sc", "osc", "oc", "or", "map", "cw"].indexOf(text) < 0
@@ -630,7 +613,6 @@
                 );
                 window.initial_aps_data_array = dataTable.rows().data().toArray();
 
-{#                window.or_ap_bys_id = ;#}
                 $("#revert_aps_table_button").on('click', function () {
                     dataTable.clear();
                     dataTable.rows.add(window.initial_aps_data_array).draw();
@@ -645,15 +627,10 @@
                         var result = [];
                         var sources_regex = $("#sources_query").val();
                         if (sources_regex != '') {
-                            {#                            console.log(sources_regex);#}
-                            {#                            console.log(data[0].trim());#}
-                            {#                            console.log(data[0].trim());#}
                             var items = new RegExp(sources_regex).test(data[0].trim().replace("\n", ""));
-                            {#                            console.log(items);#}
                             result.push(items);
                         }
                         var ctg1_regex = $("#ctg1_query").val();
-                        {#                        console.log(ctg1_regex);#}
                         if (ctg1_regex != '') {
                             var regex = new RegExp(ctg1_regex);
                             var row_entry = data[1].trim().replace("\n", "");
@@ -782,7 +759,8 @@
                         </ol>
                     </li>
                     <li><strong>cw:</strong> confidence weight (score) for the reported assmebly point. Equals to the sum of individual assembly points,
-                        reported by each assembly</li>
+                        reported by each assembly
+                    </li>
                     <li><strong>or:</strong> a flag determining the type os assembly point:
                         <ol>
                             <li><strong>O</strong>: oriented assembly point, that is for both fragments their extremities are specified</li>
@@ -856,10 +834,10 @@
     </div>
     <hr>
     <div class="row text-center" style="padding-bottom: 10px">
-        <button id="draw_graph" type="button" class="btn btn-info">Draw assembly graph with table data</button>
+        <button id="draw_graph" type="button" class="btn btn-info">Draw SAG with table data</button>
         <button id="fit_graph" type="button" class="btn btn-warning">Fit</button>
         <button id="save_graph" type="button" class="btn btn-success">Save image</button>
-        <button id="export_aps" type="button" class="btn btn-info">Export assembly points</button>
+        <button id="export_aps" type="button" class="btn btn-info">Export table assembly points</button>
     </div>
     <div class="row">
         <div id="graph" style="margin: 1em;">
@@ -939,15 +917,14 @@
                     }
                     var ap = this;
                     or1_variants.forEach(function (or1_v) {
-                        {#                        console.log(ap.source, ap.ctg1, ap.ctg2, ap.oor1, ap.oor2);#}
                         or2_variants.forEach(function (or2_v) {
                             var vertices = get_vertices(ap.ctg1, ap.ctg2, or1_v, or2_v);
                             var v1 = vertices[0];
                             var v2 = vertices[1];
                             var data = {
-                                id: [v1, v2, ap.source].join("__"),
-                                source: v1,
-                                target: v2,
+                                id: [escape(v1), escape(v2), escape(ap.source)].join("__"),
+                                source: escape(v1),
+                                target: escape(v2),
                                 line_color: colors[ap.source]
                             };
 
@@ -957,7 +934,6 @@
                             if (ap.oor1 == "?" || ap.oor2 == "?") {
                                 data["ambiguous"] = true
                             }
-                            {#                            console.log(data);#}
                             result.push({data: data});
                         });
                     });
@@ -971,7 +947,6 @@
                 var table = $('#overall_aps_table').DataTable();
                 table.rows({'filter': 'applied'}).every(function () {
                     var data = this.data();
-                    {#                    console.log(data);#}
                     var sources = data[0].slice(1, -1).split(',').map(function (str) {
                         return str.trim();
                     });
@@ -985,7 +960,6 @@
 
                     var sap = data[data.length - 2].trim() == "1";
                     var self_id = data[data.length - 1].trim();
-                    {#                    console.log(sources, ctg1, ctg2, oor1, oor2, por1, por2, sap);#}
                     sources.forEach(function (element) {
                         aps.push(new AssemblyPoint(ctg1, ctg2, oor1, oor2, por1, por2, cw, self_id, element, sap))
                     });
@@ -993,7 +967,7 @@
                 return aps;
             }
 
-            function get_aps_by_ids(){
+            function get_aps_by_ids() {
                 var aps = [];
                 var table = $('#overall_aps_table').DataTable();
                 table.rows({'filter': 'applied'}).every(function () {
@@ -1018,7 +992,7 @@
                 });
 
                 return Object.keys(result).map(function (node_id) {
-                    return {data: {id: node_id}, selectable: true};
+                    return {data: {id: escape(node_id)}, selectable: true};
                 });
             }
 
@@ -1042,9 +1016,10 @@
                                 data: {
                                     arrow_head: "triangle",
                                     label: v1.slice(0, v1.length - 1),
-                                    source: v1,
-                                    target: v2,
-                                    id: v1 + "__" + v2 + "__obverse"
+                                    id_label: escape(v1.slice(0, v1.length - 1)),
+                                    source: escape(v1),
+                                    target: escape(v2),
+                                    id: escape(v1) + "__" + escape(v2) + "__obverse"
                                 }
                             };
                             result.push(edge);
@@ -1090,6 +1065,7 @@
             }
 
             function get_cc_element_ids(cy, ele) {
+                {#                console.log("entered");#}
                 var tmp_result = cy.elements().dijkstra(ele);
                 var cc_nodes = [];
                 cc_nodes.push(ele.id());
@@ -1099,8 +1075,10 @@
                         cc_nodes.push(node.id())
                     }
                 });
+                {#                console.log(cc_nodes);#}
                 var result = {};
                 cc_nodes.forEach(function (node_id) {
+                    console.log(node_id);
                     tmp_result.pathTo(cy.$("#" + node_id)).forEach(function (entry) {
                         result[entry.id()] = true;
                     });
@@ -1109,32 +1087,46 @@
 
             }
 
-            function get_cc_nodes_ids(cy, ele) {
-                var cc_node_ids = {};
+            function get_cc_nodes(cy, ele) {
+                var cc_node_ids = new Array();
+
+                {#                console.log(ele.id());#}
+                {#                console.log("#" + ele.id());#}
+                {#                console.log("neighbourhood", cy.$('#' + ele.id()).neighborhood().length);#}
+                {#                var elements_ids = new Array();#}
+                {#                cy.elements().forEach(function (elem) {#}
+                {#                    elements_ids.push(elem.id());#}
+                {#                });#}
+                {#                console.log("total ids", elements_ids);#}
                 cy.elements().bfs({
-                    roots: "#" + ele.id(),
-                    visit: function (i, depth) {
-                        cc_node_ids[this.id()] = true;
+                    roots: ele,
+                    visit: function (i, depth, v, e, u) {
+                        console.log("visited ", v.id());
+                        cc_node_ids.push(v);
                     },
                     directed: false
                 });
-                return Object.keys(cc_node_ids);
+                {#                console.log(dfs.path);#}
+                {#                console.log(dfs.node);#}
+                return cc_node_ids;
             }
 
-            function get_edges(cy, node_ids) {
-                var result = {};
-                node_ids.forEach(function (node_id) {
-                    cy.$("#" + node_id).connectedEdges().forEach(function (edge) {
-                        result[edge.id()] = true
+            function get_edges(cy, nodes) {
+                var result = new Array();
+                nodes.forEach(function (node) {
+                    node.connectedEdges().forEach(function (edge) {
+                        result.push(edge);
                     });
                 });
-                return Object.keys(result);
+                return result;
             }
 
-            function get_cc_ids_by_cc_element(cy, cc_entry) {
-                var node_ids = get_cc_nodes_ids(cy, cc_entry);
-                var edge_ids = get_edges(cy, node_ids);
-                return node_ids.concat(edge_ids);
+            function get_cc_element(cy, cc_entry) {
+                {#                console.log("entered");#}
+                {#                console.log(cc_entry.id());#}
+                var nodes = get_cc_nodes(cy, cc_entry);
+                var edges = get_edges(cy, nodes);
+                return nodes.concat(edges);
             }
 
             function ap_as_string(ap) {
@@ -1157,11 +1149,13 @@
                         '{{ ap.participation_ctg1_or }}', '{{ ap.participation_ctg2_or }}',
                         {{ ap.cw }}, '{{ ap.self_id }}', {{ ap.sources }}, {% if ap.participates_in_max_non_conflicting_assembly %}1{% else %}0{% endif %}),
                 {% endfor %}
-                };
-                $("#export_aps").on('click', function (){
+            }
+                ;
+
+                $("#export_aps").on('click', function () {
                     var aps = get_aps_by_ids();
-                    var result = "species\tctg1\tctg2\torientation_ctg1\torientation_ctg2\tdistance\tscore\n";
-                    aps.forEach(function(entry){
+                    var result = "origin\tctg1\tctg2\tctg1_or\tctg2_or\tgap_size\tcw\n";
+                    aps.forEach(function (entry) {
                         result += ap_as_string(entry) + "\n";
                     });
                     download_aps_as_text(result);
@@ -1185,10 +1179,9 @@
                         idealEdgeLength: 100,
                         edgeElasticity: .45,
                         nestingFactor: .1,
-                        gravity: 0,
-                        numIter: 2500,
-                        tile: true,
-                        animate: true
+                        gravity: -1,
+                        numIter: 300,
+                        tile: true
 
                     };
                     var cy = cytoscape({
@@ -1219,11 +1212,11 @@
                                 .css({
                                     'line-color': 'data(line_color)'
                                 })
-                                .selector('edge[label]')
+                                .selector('edge[id_label]')
                                 .css({
                                     'label': 'data(label)\n',
                                     'edge-text-rotation': 'autorotate',
-                                    'font-size': 7,
+                                    'font-size': 5,
                                     'text-outline-color': "#ddd",
                                     'text-outline-width': 1.5
 
@@ -1261,29 +1254,30 @@
 
                         layout: assembly_layout
                     });
-                    {#                    cy.on('tap', 'node', function(e){#}
-                    {#                        var node = e.cyTarget;#}
-                    {#                        console.log(node.id());#}
-                    {#                    });#}
                     cy.cxtmenu({
                         menuRadius: 100,
                         selector: 'node',
                         commands: [{
                             content: 'mn',
                             select: function (ele) {
-                                cy.$("#" + ele.id()).addClass('marked');
+                                ele.addClass('marked');
                             }
                         }, {
                             content: 'mnd',
                             select: function (ele) {
+                                console.log("element id:", ele.id());
+                                console.log("escaped element id", escape(ele.id()));
+                                console.log(cy.$("#" + ele.id()));
                                 ele.neighborhood().add(ele).addClass('marked');
 
                             }
                         }, {
                             content: 'mcc',
                             select: function (ele) {
-                                get_cc_ids_by_cc_element(cy, ele).forEach(function (entry) {
-                                    cy.$("#" + entry).addClass('marked');
+                                console.log(ele.id());
+                                {#                                get_cc_element_ids(cy, ele);#}
+                                get_cc_element(cy, ele).forEach(function (entry) {
+                                    entry.addClass('marked');
                                 });
 
                             }
@@ -1300,8 +1294,8 @@
                         }, {
                             content: 'ucc',
                             select: function (ele) {
-                                get_cc_ids_by_cc_element(cy, ele).forEach(function (entry, index, array) {
-                                    cy.$("#" + entry).removeClass('marked');
+                                get_cc_element(cy, ele).forEach(function (entry, index, array) {
+                                    entry.removeClass('marked');
                                 });
                             }
                         }
@@ -1421,7 +1415,7 @@
                         });
                         var link = document.createElement('a');
                         link.href = image;
-                        link.target = "_blank"
+                        link.target = "_blank";
                         link.download = 'graph.png';
                         link.style = 'display: none';
                         document.body.appendChild(link);
