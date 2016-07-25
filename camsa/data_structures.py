@@ -2,10 +2,6 @@
 import itertools
 
 import networkx
-from bg.edge import BGEdge
-from bg.genome import BGGenome
-from bg.multicolor import Multicolor
-from bg.vertices import TaggedBlockVertex
 
 
 class AssemblyPoint(object):
