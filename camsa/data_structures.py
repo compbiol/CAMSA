@@ -25,20 +25,11 @@ class AssemblyPoint(object):
 
     @property
     def orientation_as_word(self):
-        if self.is_unoriented: return "U"
-        if self.is_semi_oriented: return "SO"
+        if self.is_unoriented:
+            return "U"
+        if self.is_semi_oriented:
+            return "SO"
         return "O"
-
-    def get_bg_edges(self):
-        result = []
-        for ap in self.get_all_all_possible_representations():
-            head = ap.contig_1 + ("h" if ap.contig_1_orientation == "+" else "t")
-            tail = ap.contig_2 + ("t" if ap.contig_2_orientation == "+" else "h")
-            hv = TaggedBlockVertex(name=head)
-            tv = TaggedBlockVertex(name=tail)
-            result.append(
-                BGEdge(vertex1=hv, vertex2=tv, multicolor=Multicolor(*[BGGenome(name) for name in self.sources])))
-        return result
 
     @property
     def is_unoriented(self):
