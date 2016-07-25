@@ -6,13 +6,13 @@ import os
 import shutil
 from argparse import ArgumentParser
 from collections import defaultdict
+import six
 
 import itertools
 
 from data_structures import AssemblyPoint, AssemblyGraph, Assembly
 from jinja2 import Template
 import camsa_io as camsa_io
-
 
 VERSION = "1.0.0"
 
@@ -293,7 +293,7 @@ if __name__ == "__main__":
                                                                                            'orange', 'pink', 'brown', 'navy', 'steelblue'])}
 
     with open(output_html_report_file_name, "wt") as dest:
-        print(template.render(
+        six.print_(template.render(
             data={
                 "assemblies": individual_assemblies,
                 "assemblies_intersections": [],
@@ -308,5 +308,4 @@ if __name__ == "__main__":
                 "camsa": {
                     "version": VERSION
                 }
-            }),
-            file=dest)
+            }), file=dest)
