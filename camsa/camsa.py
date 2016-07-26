@@ -258,7 +258,7 @@ if __name__ == "__main__":
 
     ag = AssemblyGraph()
     for ap in merged_aps:
-        for (u, v) in ap.get_edges():                   # in case of semi/un-oriented assembly points they might have more than a single edges representing them
+        for (u, v) in ap.get_edges():  # in case of semi/un-oriented assembly points they might have more than a single edges representing them
             ag.add_edge(u=u, v=v, weight=ap.cw)
     ch.terminator = ""
     logger.info("Obtaining a merged assembly...")
