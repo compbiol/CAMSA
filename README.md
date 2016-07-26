@@ -29,9 +29,9 @@ Input
 ``CAMSA`` expect as an input a set of different assemblies on the same set of scaffolds.
 Assemblies are ought to be provided in CSV files, with the following format:
 
-    origin, ctg1,   ctg1_or,  ctg2,    ctg2_or, gap_size,   cw
-    A1,     s1,     +,        s2,       -,      ?,          ?
-    A1,     s2,     -,        s3,       +,      ?,          ?
+    origin    ctg1    ctg1_or    ctg2    ctg2_or    gap_size    cw
+    A1        s1      +          s2      -          ?           ?
+    A1        s2      -          s3      +          ?           ?
     ...
 
 

@@ -44,7 +44,7 @@ if __name__ == "__main__":
         logger.info("Processed {cnt} fasta records".format(cnt=cnt))
     writer = csv.writer(args.output)
     logger.info("Writing the CAMSA lengths output")
-    writer.writerow(["ctg_id", "ctg_length"])
+    writer.writerow(["seq_id", "seq_length"])
     for key in sorted(entries.keys()):
         writer.writerow([key, entries[key]])
     logger.info("All done!")

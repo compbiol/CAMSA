@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 import datetime
+import logging
+
 import os
 import shutil
-from argparse import ArgumentParser
+import argparse
 from collections import defaultdict
 import six
 
@@ -124,19 +126,20 @@ def get_assembly_points(breakpoint_graph):
     return result
 
 
-def merge_aps(aps, or_ap_by_id=None, m_ap_by_id=None):
+def merge_aps(assembly_points, logger, or_assembly_points_by_id=None, m_assembly_points_by_id=None):
     sources = defaultdict(list)
     cw = defaultdict(int)
     children = defaultdict(list)
-    or_ap_by_id = or_ap_by_id if or_ap_by_id is not None else {}
-    m_ap_by_id = m_ap_by_id if m_ap_by_id is not None else {}
-    for organism, o_aps in aps.items():
+    or_assembly_points_by_id = or_assembly_points_by_id if or_assembly_points_by_id is not None else {}
+    m_assembly_points_by_id = m_assembly_points_by_id if m_assembly_points_by_id is not None else {}
+    for origin, o_aps in assembly_points.items():
+        logger.debug("Origin \"{origin}\" contained {cnt} assembly points".format(origin=origin, cnt=len(o_aps)))
         for cnt, ap in enumerate(o_aps):
-            ap.self_id = "or_{id}".format(id=cnt)
-            or_ap_by_id[ap.self_id] = ap
+            ap.self_id = "or_{id}".format(id=cnt)  # each input assembly point is aught to have a unique id
+            or_assembly_points_by_id[ap.self_id] = ap
             ctg1, ctg2 = ap.contig_1, ap.contig_2
             ctg1_or, ctg2_or = ap.contig_1_orientation, ap.contig_2_orientation
-            ctg1_or, ctg2_or = (ctg1_or, ctg2_or) if ctg1 < ctg2 else (
+            ctg1_or, ctg2_or = (ctg1_or, ctg2_or) if ctg1 < ctg2 else (  # assembly points are internally sorted with respect to participating contig names
                 inverse_orientation(ctg2_or), inverse_orientation(ctg1_or))
             ctg1, ctg2 = (ctg1, ctg2) if ctg1 < ctg2 else (ctg2, ctg1)
             entry = (ctg1, ctg2, ctg1_or, ctg2_or)
@@ -148,9 +151,9 @@ def merge_aps(aps, or_ap_by_id=None, m_ap_by_id=None):
         children_ids = children[entry]
         ap = AssemblyPoint(ctg1=entry[0], ctg2=entry[1], ctg1_or=entry[2], ctg2_or=entry[3], sources=sources, cw=cw[entry],
                            children_id=children_ids, self_id="m_{id}".format(id=cnt))
-        m_ap_by_id[ap.self_id] = ap
+        m_assembly_points_by_id[ap.self_id] = ap
         for ap_id in ap.children_id:
-            or_ap_by_id[ap_id].parent_id = ap.self_id
+            or_assembly_points_by_id[ap_id].parent_id = ap.self_id
         result.append(ap)
     return result
 
@@ -166,54 +169,83 @@ def get_all_conflicted_aps(ap, all_aps):
 
 
 if __name__ == "__main__":
-    full_description = """
-        Sergey Aganezov & Max A. Alekseyev (c)
-        Computational Biology Institute, The George Washington University.
-
-        CAMSA is a tool for Comparative Analysis and Merging of Scaffold Assemblies.
-        For more information relate to README.md file in the root of CAMSA distribution.
-
-        With any questions, please, contact Sergey Aganezov [aganezov(at)gwu.edu].
-        """
-    parser = ArgumentParser(description=full_description)
+    full_description = "=" * 80 + \
+                       "\nSergey Aganezov & Max A. Alekseyev (c)\n" + \
+                       "Computational Biology Institute, The George Washington University.\n\n" + \
+                       "CAMSA is a tool for Comparative Analysis and Merging of Scaffold Assemblies." + \
+                       "For more information relate to README.md file in the root of CAMSA distribution.\n\n" + \
+                       "With any questions, please, contact Sergey Aganezov [aganezov(at)gwu.edu].\n" + \
+                       "=" * 80 + "\n"
+    parser = argparse.ArgumentParser(description=full_description, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("input", nargs="+")
     parser.add_argument("-f", "--output-file", dest="output_report_file", default="report.html")
-    parser.add_argument("--default-exact-cw", dest="cw_exact", type=float, default=1.0)
-    parser.add_argument("--default-prob-cw", dest="cw_prob", type=float, default=0.9)
-    parser.add_argument("--minimum-cw-threshold", dest="min_cw", type=float, default=0.0)
+    parser.add_argument("--camsa-default-exact-cw", dest="cw_exact", type=float, default=1.0)
+    parser.add_argument("--camsa-default-prob-cw", dest="cw_prob", type=float, default=0.9)
+    parser.add_argument("--cams-min-cw-threshold", dest="min_cw", type=float, default=0.0)
     parser.add_argument("--version", action="version", version=VERSION)
-    parser.add_argument("-o", "--output-dir", dest="output_report_dir",
-                        default=None)
+    parser.add_argument("-o", "--output-dir", dest="output_report_dir", default=None)
+    parser.add_argument("--logging-level", dest="logging_level", default=logging.INFO, type=int,
+                        choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
+                        help="Logging level for the converter.\nDEFAULT: {info}".format(info=logging.INFO))
     args = parser.parse_args()
+
+    start_time = datetime.datetime.now()
+
+    #############
+    # logging setup
+    #############
+    logger = logging.getLogger("CAMSA")
+    ch = logging.StreamHandler()
+    ch.setLevel(args.logging_level)
+    logger.setLevel(args.logging_level)
+    logger.addHandler(ch)
+    logger.info(full_description)
+    logger.info("Starting the analysis")
+    #############
+
     if args.output_report_dir is None:
-        args.output_report_dir = os.path.join(os.getcwd(), "camsa_report_{date}".format(
+        logger.debug("Output directory did not exist. Creating one.")
+        args.output_report_dir = os.path.join(os.getcwd(), "camsa_{date}".format(
             date=datetime.datetime.now().strftime("%b_%d_%Y__%H_%M")))
 
     aps = defaultdict(list)
+    ch.terminator = ""
     for file_name in args.input:
+        logger.info("Processing PAIRS data from \"{file_name}\"...".format(file_name=file_name))
         file_name = os.path.abspath(os.path.expanduser(file_name))
         with open(file_name, "rt") as source:
             camsa_io.read_pairs(source=source, delimiter="\t", destination=aps,
                                 default_cw_eae=args.cw_exact, default_cw_pae=args.cw_prob)
+        logger.info("done!")
 
     or_ap_by_id = {}
     merged_ap_by_id = {}
-    merged_aps = merge_aps(aps=aps, or_ap_by_id=or_ap_by_id, m_ap_by_id=merged_ap_by_id)
+    logger.info("Merging assembly points...")
+    merged_aps = merge_aps(assembly_points=aps, or_assembly_points_by_id=or_ap_by_id, m_assembly_points_by_id=merged_ap_by_id, logger=logger)
+    ch.terminator = "\n"
+    logger.info("done!")
+    logger.info("All input assembly points were merged into {cnt} unique ones".format(cnt=len(merged_aps)))
 
+    logger.info("Filtering merged assembly points with cumulative confidence weight less than {cw_thresh}".format(cw_thresh=args.min_cw))
+    filtered = 0
     aps_source = defaultdict(list)
     for ap in merged_aps:
         if ap.cw < args.min_cw:
+            filtered += 1
             continue
         for u, v in ap.get_edges():
             aps_source[u].append(ap)
             aps_source[v].append(ap)
+    logger.info("\t{filtered} were filtered out, keeping {left} left.".format(filtered=filtered, left=len(merged_aps) - filtered))
 
+    # references to merged assembly points, ut grouped by their source
     tmp_individual_assemblies = defaultdict(list)
     for ap in merged_aps:
         for source_name in ap.sources:
             tmp_individual_assemblies[source_name].append(ap)
-
     individual_assemblies = [Assembly(name=name, aps=aps) for name, aps in tmp_individual_assemblies.items()]
+
+    # looking at input assemblies subgroups
     grouped_assemblies = []
     for i in range(1, len(individual_assemblies) + 1):
         for assembly_combination in itertools.combinations(sorted([a.name for a in individual_assemblies]), i):
@@ -226,9 +258,13 @@ if __name__ == "__main__":
 
     ag = AssemblyGraph()
     for ap in merged_aps:
-        for (u, v) in ap.get_edges():
+        for (u, v) in ap.get_edges():                   # in case of semi/un-oriented assembly points they might have more than a single edges representing them
             ag.add_edge(u=u, v=v, weight=ap.cw)
+    ch.terminator = ""
+    logger.info("Obtaining a merged assembly...")
     max_non_conflicting_assembly_graph = ag.get_maximal_non_conflicting_assembly_graph()
+    logger.info("done!")
+    ch.terminator = "\n"
 
     for ap in merged_aps:
         participates = False
@@ -307,5 +343,8 @@ if __name__ == "__main__":
             meta={
                 "camsa": {
                     "version": VERSION
+                },
+                "fragments": {
+
                 }
             }), file=dest)

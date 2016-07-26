@@ -696,9 +696,6 @@
                         if (sap_regex != '') {
                             result.push(new RegExp(sap_regex).test(data[15].trim().replace("\n", "")));
                         }
-                        {% if meta.fragments.lengths | length > 0 %}
-
-                        {% else %}
                         var logical_or = $("#logical_or_search").is(":checked");
                         var keep = !logical_or;
                         result.forEach(function (element) {

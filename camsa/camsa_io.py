@@ -4,7 +4,15 @@ from collections import defaultdict
 
 from data_structures import AssemblyPoint
 
-aliases = {
+
+def get_fn_relations_for_column_names(fieldnames, aliases):
+    canonical_field_names = [aliases.get(name.lower(), name) for name in fieldnames]
+    fn_relations = {value: key for key, value in aliases.items()}
+    fn_relations.update({canonical: name for name, canonical in zip(fieldnames, canonical_field_names)})
+    return fn_relations
+
+
+PAIRS_COLUMN_ALIASES = {
     ########################
     "species": "origin",
     "organisms": "origin",
@@ -23,7 +31,6 @@ aliases = {
     "ctg1-ctg2_gap": "gap_size",
     ########################
     "score": "cw",
-
 }
 
 
@@ -32,9 +39,7 @@ def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, defau
         destination = defaultdict(list)
     reader = csv.DictReader(source, delimiter=delimiter)
     fieldnames = reader.fieldnames
-    canonical_field_names = [aliases.get(name.lower(), name) for name in fieldnames]
-    fn_relations = {value: key for key, value in aliases.items()}
-    fn_relations.update({canonical: name for name, canonical in zip(fieldnames, canonical_field_names)})
+    fn_relations = get_fn_relations_for_column_names(fieldnames=fieldnames, aliases=PAIRS_COLUMN_ALIASES)
     for row in filter(lambda entry: not entry[fieldnames[0]].startswith("#"), reader):
         origin = row[fn_relations["origin"]]
         cw = row.get(fn_relations["cw"], "?")
@@ -50,4 +55,25 @@ def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, defau
                                                  ctg2_or=row[fn_relations["ctg2_or"]],
                                                  sources=[row[fn_relations["origin"]]],
                                                  cw=cw))
+    return destination
+
+
+LENGTHS_COLUMN_ALIASES = {
+    ########################
+    "ctg_id": "seq_id",
+    ########################
+    "ctg_length": "seq_length"
+}
+
+
+def read_lengths(source, delimiter="\t", destination=None):
+    if destination is None:
+        destination = {}
+    reader = csv.DictReader(source, delimiter=delimiter)
+    fieldnames = reader.fieldnames
+    fn_relations = get_fn_relations_for_column_names(fieldnames=fieldnames, aliases=PAIRS_COLUMN_ALIASES)
+    for row in filter(lambda entry: not entry[fieldnames[0]].startswith("#"), reader):
+        seq_id = row(fn_relations["seq_id"])
+        seq_length = row(fn_relations["seq_length"])
+        destination[seq_id] = seq_length
     return destination
