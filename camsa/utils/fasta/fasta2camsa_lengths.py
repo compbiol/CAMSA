@@ -16,9 +16,9 @@ if __name__ == "__main__":
                        "With any questions, please, contact Sergey Aganezov [aganezov(at)gwu.edu].\n" + \
                        "=" * 80 + "\n"
     parser = argparse.ArgumentParser(description=full_description, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("-o", "--output-file", meta="OUTPUT", dest="output", type=argparse.FileType("wt"), default=sys.stdout,
+    parser.add_argument("-o", "--output-file", metavar="OUTPUT", dest="output", type=argparse.FileType("wt"), default=sys.stdout,
                         help="A file to which the CAMSA readable fragments lengths would be written. Standard extension is \".camsa.lengths\".\nDEFAULT: stdout")
-    parser.add_argument("contigs", nargs="+", meta="CONTIGS", dest="contig_files", type=argparse.FileType("rt"), default=sys.stdin,
+    parser.add_argument("contigs", nargs="+", metavar="CONTIGS", dest="contig_files", type=argparse.FileType("rt"), default=sys.stdin,
                         help="A list of input *.fasta files with contigs.\nDEFAULT: stdin")
     parser.add_argument("--logging-level", dest="logging_level", default=logging.INFO, type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
