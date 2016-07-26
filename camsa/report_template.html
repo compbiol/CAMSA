@@ -10,6 +10,8 @@
 
     <link rel="stylesheet" href="./libs/css/dataTables.bootstrap.min.css" media="screen">
     <link rel="stylesheet" href="./libs/css/bootstrap.min.css" media="screen">
+    <link rel="stylesheet" href="./libs/css/ion.Slider.css" media="screen">
+    <link rel="stylesheet" href="./libs/css/ion.rangeSlider.skinModern.css" media="screen">
 
 
     <script type="text/javascript" src="./libs/js/jquery-2.2.3.min.js"></script>
@@ -24,6 +26,7 @@
     <script type="text/javascript" src="./libs/js/cytoscape-cxtmenu.js"></script>
     <script type="text/javascript" src="./libs/js/highcharts.min.js"></script>
     <script type="text/javascript" src="./libs/js/highcharts-export.js"></script>
+    <script type="text/javascript" src="./libs/js/ion.rangeSlider.min.js"></script>
     <style>
         html {
             min-height: 100%;
@@ -403,9 +406,9 @@
         {% endfor %}]
     </div>
     <div class="row" style="padding-bottom: 10px">
-        <div id="advanced_filtering_column" class="col-lg-4 col-lg-offset-4 text-center"><a data-toggle="collapse"
-                                                                                            href="#advanced_filter_container">Advanced
-            filter options</a></div>
+        <div id="advanced_filtering_column" class="col-lg-6 col-lg-offset-3 text-center">
+            <a data-toggle="collapse" href="#advanced_filter_container">Advancedfilter options</a>
+        </div>
     </div>
     <style>
         .search_query_div {
@@ -459,6 +462,27 @@
                         <label class="text-right col-lg-2" for="sap_query">map:</label>
                         <input type="text" class="col-lg-8" id="sap_query">
                     </div>
+                    {% if meta.fragments.lengths | length > 0 %}
+                        <div class="range-slider">
+                            <input type="text" id="fragments_lengths_query" value=""/>
+                        </div>
+                        <script>
+                            $("#fragments_lengths_query").ionRangeSlider({
+                                type: "double",
+                                min: 0,
+                                max: {{ meta.fragments.max_length }},
+                                from: 0,
+                                to: {{ meta.fragments.max_length }},
+                                grid: true
+                            });
+                        </script>
+                    {% else %}
+                        <div class="row">
+                            <hr>
+                            <p>Fragment length filtration is not available, as no data regarding fragments length was provided</p>
+                            <hr>
+                        </div>
+                    {% endif %}
                     <div class="row search_query_div">
                         <div class="col-lg-offset-2 col-lg-8">
                             <label><input id="logical_or_search" type="checkbox"> Logical <strong>`OR`</strong> per column filters</label>
@@ -672,6 +696,9 @@
                         if (sap_regex != '') {
                             result.push(new RegExp(sap_regex).test(data[15].trim().replace("\n", "")));
                         }
+                        {% if meta.fragments.lengths | length > 0 %}
+
+                        {% else %}
                         var logical_or = $("#logical_or_search").is(":checked");
                         var keep = !logical_or;
                         result.forEach(function (element) {

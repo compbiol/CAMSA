@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 import argparse
 import csv
+import datetime
 import logging
-import subprocess
 import os
-from os.path import isfile
+import subprocess
 from collections import defaultdict, deque
+from os.path import isfile
 
 
 class CoordsEntry(object):
@@ -144,6 +145,7 @@ def get_assembly_points_from_aligned_contigs(coords_entries, strategy):
             processing.add(current)
         return pairs
 
+
 if __name__ == "__main__":
     full_description = "=" * 80 + \
                        "\nSergey Aganezov & Max A. Alekseyev (c)\n" + \
@@ -186,8 +188,9 @@ if __name__ == "__main__":
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
                         help="Logging level for the converter.\nDEFAULT: {info}".format(info=logging.INFO))
     args = parser.parse_args()
+    start_time = datetime.datetime.now()
 
-    logger = logging.getLogger("NUCmer-to-CAMSA")
+    logger = logging.getLogger("fasta2camsa_pairs")
     ch = logging.StreamHandler()
     ch.setLevel(args.logging_level)
     logger.setLevel(args.logging_level)
@@ -291,3 +294,5 @@ if __name__ == "__main__":
                                          min(right.scaffold_start, right.scaffold_end) - max(left.scaffold_end, left.scaffold_start),
                                          "?"])
             logger.info("Finished converting data for \"{prefix}\"\n---".format(prefix=prefix))
+    end_time = datetime.datetime.now()
+    logger.info("Elapsed time: {el_time}".format(el_time=str(end_time - start_time)))
