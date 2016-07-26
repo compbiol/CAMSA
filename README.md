@@ -8,18 +8,18 @@ CAMSA
 
 ``CAMSA`` is distributed under the ***MIT license***. Refer to [LICENSE.txt](https://github.com/aganezov/CAMSA/blob/master/LICENSE.txt) file for more details.
 
-``CAMSA`` is developed using Python 3.5+ programming language and requires Python 3.5+ interpreter to work properly.
+``CAMSA`` is developed using Python programming language and is compatible with both python2 and python3 interpreter to work properly.
 
-To install ``CAMSA``: download the repository snapshot from the master branch, install all the python packages required for ``CAMSA`` work (listed in requirements.txt).
-We suggest using a ``virtual environment`` of python, to isolate the installation.
+To install ``CAMSA`` download the repository snapshot from the master branch, install all the python packages required for ``CAMSA`` work (listed in requirements.txt).
+We suggest using a ``virtual environments`` of python, to isolate the installation.
 
-    python3.5 -m venv camsa_env
-    source camsa_env/bin/activate
+    virtualenv camsa-env
+    source camsa-env/bin/activate
     pip install -r requirements.txt
 
 ``CAMSA`` usage instructions can be found by running:
 
-    python3.5 camsa.py --help
+    camsa.py --help
 
 With any questions about installation or usage, please, contact **Sergey Aganezov** *[aganezov(at)gwu.edu]*
 
