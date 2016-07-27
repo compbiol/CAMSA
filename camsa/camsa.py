@@ -181,7 +181,7 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--output-file", dest="output_report_file", default="report.html")
     parser.add_argument("--camsa-default-exact-cw", dest="cw_exact", type=float, default=1.0)
     parser.add_argument("--camsa-default-prob-cw", dest="cw_prob", type=float, default=0.9)
-    parser.add_argument("--cams-min-cw-threshold", dest="min_cw", type=float, default=0.0)
+    parser.add_argument("--camsa-min-cw-threshold", dest="min_cw", type=float, default=0.0)
     parser.add_argument("--version", action="version", version=VERSION)
     parser.add_argument("-o", "--output-dir", dest="output_report_dir", default=None)
     parser.add_argument("--logging-level", dest="logging_level", default=logging.INFO, type=int,
