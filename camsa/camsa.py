@@ -1,20 +1,20 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-import datetime
-import logging
 
+import argparse
+import datetime
+import itertools
+import logging
 import os
 import shutil
-import argparse
 from collections import defaultdict
+
 import six
-
-import itertools
-
-from data_structures import AssemblyPoint, AssemblyGraph, Assembly
 from jinja2 import Template
+
 import camsa_io as camsa_io
+from data_structures import AssemblyPoint, AssemblyGraph, Assembly
 
 VERSION = "1.0.0"
 
@@ -338,13 +338,18 @@ if __name__ == "__main__":
                 "aps": merged_aps,
                 "names_to_id": source_names_to_ids,
                 "source_colors": source_colors,
-                "grouped_assemblies": grouped_assemblies
+                "grouped_assemblies": grouped_assemblies,
+                "fragments": {
+                    "lengths": []
+                }
+            },
+            settings={
+                "cytoscape": {
+                    "draw_timeout": 300000
+                }
             },
             meta={
                 "camsa": {
                     "version": VERSION
-                },
-                "fragments": {
-
                 }
             }), file=dest)

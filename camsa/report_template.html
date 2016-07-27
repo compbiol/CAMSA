@@ -74,11 +74,18 @@
             BIOLOGY LABORATORY</h1></a>
         <img src="./libs/images/gwu_header_logo.png" style="width: 40%; padding-bottom: 15px; padding-top: 15px;">
     </div>
-    <div class="alert alert-warning alert-dismissible" role="alert">
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <p class="text-center"><strong>Report is generated with CAMSA v.{{ meta.camsa.version }}</strong></p>
+    {#    <div class="alert alert-warning alert-dismissible" role="alert">#}
+    {#        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>#}
+    {#        <p class="text-center"><strong>Report is generated with CAMSA v.{{ meta.camsa.version }}</strong></p>#}
+    {#    </div>#}
+    <div class="row" style="padding-top: 10px;">
+        <div class="col-lg-10 col-lg-offset-1 text-center">
+            <h1>CAMSA report</h1>
+        </div>
+        <div class="col-lg-1 text-right">
+            <button type="button" class="btn btn-default btn-xs">meta</button>
+        </div>
     </div>
-
     <div class="row" id="per_assembly_overview">
         <h3 class="text-center" id="per_assembly_overview_section">Per assembly overview</h3>
         <table class="table table-bordered table-condensed" id="overall_assemblies_comparison_table"
@@ -462,7 +469,7 @@
                         <label class="text-right col-lg-2" for="sap_query">map:</label>
                         <input type="text" class="col-lg-8" id="sap_query">
                     </div>
-                    {% if meta.fragments.lengths | length > 0 %}
+                    {% if data.fragments.lengths | length > 0 %}
                         <div class="range-slider">
                             <input type="text" id="fragments_lengths_query" value=""/>
                         </div>
@@ -470,9 +477,9 @@
                             $("#fragments_lengths_query").ionRangeSlider({
                                 type: "double",
                                 min: 0,
-                                max: {{ meta.fragments.max_length }},
+                                max: {{ data.fragments.max_length }},
                                 from: 0,
-                                to: {{ meta.fragments.max_length }},
+                                to: {{ data.fragments.max_length }},
                                 grid: true
                             });
                         </script>
@@ -858,10 +865,25 @@
     </div>
     <hr>
     <div class="row text-center" style="padding-bottom: 10px">
-        <button id="draw_graph" type="button" class="btn btn-info">Draw SAG with table data</button>
-        <button id="fit_graph" type="button" class="btn btn-warning">Fit</button>
-        <button id="save_graph" type="button" class="btn btn-success">Save image</button>
-        <button id="export_aps" type="button" class="btn btn-info">Export table assembly points</button>
+        <div class="col-lg-3">
+            <div class="row">
+                <button id="draw_graph" type="button" class="btn btn-info">Draw SAG with table data</button>
+            </div>
+            <div class="row">
+                using <select id="graph_layout">
+                <option selected="selected">cose-bilkent</option>
+                <option>grid</option>
+                <option>dagre</option>
+            </select> layout
+            </div>
+        </div>
+        <div class="col-lg-offset-1 col-lg-4 text-center">
+            <button id="fit_graph" type="button" class="btn btn-warning">Fit</button>
+            <button id="save_graph" type="button" class="btn btn-success">Save image</button>
+        </div>
+        <div class="col-lg-offset-1 col-lg-3">
+            <button id="export_aps" type="button" class="btn btn-info">Export table assembly points</button>
+        </div>
     </div>
     <div class="row">
         <div id="graph" style="margin: 1em;">
@@ -1114,24 +1136,13 @@
             function get_cc_nodes(cy, ele) {
                 var cc_node_ids = new Array();
 
-                {#                console.log(ele.id());#}
-                {#                console.log("#" + ele.id());#}
-                {#                console.log("neighbourhood", cy.$('#' + ele.id()).neighborhood().length);#}
-                {#                var elements_ids = new Array();#}
-                {#                cy.elements().forEach(function (elem) {#}
-                {#                    elements_ids.push(elem.id());#}
-                {#                });#}
-                {#                console.log("total ids", elements_ids);#}
                 cy.elements().bfs({
                     roots: ele,
                     visit: function (i, depth, v, e, u) {
-                        console.log("visited ", v.id());
                         cc_node_ids.push(v);
                     },
                     directed: false
                 });
-                {#                console.log(dfs.path);#}
-                {#                console.log(dfs.node);#}
                 return cc_node_ids;
             }
 
@@ -1146,8 +1157,6 @@
             }
 
             function get_cc_element(cy, cc_entry) {
-                {#                console.log("entered");#}
-                {#                console.log(cc_entry.id());#}
                 var nodes = get_cc_nodes(cy, cc_entry);
                 var edges = get_edges(cy, nodes);
                 return nodes.concat(edges);
@@ -1193,7 +1202,7 @@
                     var ctg_edges = get_ctg_edges(aps);
                     var edges = ap_edges.concat(ctg_edges);
                     var assembly_layout = {
-                        name: 'cose-bilkent',
+                        name: $('#graph_layout').val(),
                         ready: function () {
                             $("#graph").css('background', '')
                         },
@@ -1298,8 +1307,6 @@
                         }, {
                             content: 'mcc',
                             select: function (ele) {
-                                console.log(ele.id());
-                                {#                                get_cc_element_ids(cy, ele);#}
                                 get_cc_element(cy, ele).forEach(function (entry) {
                                     entry.addClass('marked');
                                 });
@@ -1403,7 +1410,35 @@
                             {
                                 content: 'redraw',
                                 select: function (ele) {
-                                    cy.elements().layout(assembly_layout)
+
+                                    $("#graph").css('background', 'url(./libs/images/giphy.gif) no-repeat center center');
+                                    var assembly_layout = {
+                                        name: $('#graph_layout').val(),
+                                        ready: function () {
+                                            $("#graph").css('background', '')
+                                        },
+                                        padding: 20,
+                                        randomize: true,
+                                        nodeRepulsion: 12000,
+                                        idealEdgeLength: 100,
+                                        edgeElasticity: .45,
+                                        nestingFactor: .1,
+                                        gravity: -1,
+                                        numIter: 300,
+                                        tile: true
+
+                                    };
+                                    var layout = cy.elements().makeLayout(assembly_layout);
+                                    layout.on('layoutstop', function () {
+                                        $("#graph").css('background', '');
+                                        cy.elements().layout(layout);
+
+                                    });
+                                    layout.run();
+                                    setTimeout(function () {
+                                        layout.stop();
+                                    }, {{ settings.cytoscape.draw_timeout }});
+
                                 }
                             },
                             {
