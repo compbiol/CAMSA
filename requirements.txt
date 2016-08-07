@@ -3,3 +3,4 @@ networkx
 six
 biopython
 enum34
+blist
