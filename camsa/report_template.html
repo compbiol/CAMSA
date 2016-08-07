@@ -6,7 +6,7 @@
     <meta name="author" content="Sergey Aganezov">
     <meta name="description" content="Assembly comparison">
 
-    <title>{% block title %}Assemblies comparison report{% endblock %}</title>
+    <title>{% block title %}CAMSA report{% endblock %}</title>
 
     <link rel="stylesheet" href="./libs/css/dataTables.bootstrap.min.css" media="screen">
     <link rel="stylesheet" href="./libs/css/bootstrap.min.css" media="screen">
@@ -74,10 +74,7 @@
             BIOLOGY LABORATORY</h1></a>
         <img src="./libs/images/gwu_header_logo.png" style="width: 40%; padding-bottom: 15px; padding-top: 15px;">
     </div>
-    {#    <div class="alert alert-warning alert-dismissible" role="alert">#}
-    {#        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>#}
-    {#        <p class="text-center"><strong>Report is generated with CAMSA v.{{ meta.camsa.version }}</strong></p>#}
-    {#    </div>#}
+
     <div class="row" style="padding-top: 10px;">
         <div class="col-lg-10 col-lg-offset-1 text-center">
             <h1>CAMSA report</h1>
@@ -92,11 +89,11 @@
                width="100%">
             <thead>
             <tr>
-                <th>id</th>
-                <th>name</th>
+                <th>ID</th>
+                <th>Name</th>
                 <th># APs</th>
-                <th>orientation (O / SO / U)</th>
-                <th>nc</th>
+                <th>Orientations (O / SO / U)</th>
+                <th>NC</th>
                 <th class="text-center">OC / OSC</th>
                 <th class="text-center">IC / ISC</th>
                 <th>MAP</th>
@@ -105,25 +102,25 @@
             <tbody>
             {% for assembly in data.assemblies %}
                 <tr>
-                    <td>{{ data.names_to_id[assembly.name] }}</td>
+                    <td>{{ data.assemblies_to_ids[assembly.name] }}</td>
                     <td>{{ assembly.name }}</td>
                     <td>{{ assembly.aps|length }}</td>
                     <td>{{ assembly.oriented_aps_cnt }} / {{ assembly.semi_oriented_aps_cnt }} / {{ assembly.unoriented_ap_cnt }}</td>
                     <td>{{ assembly.non_conflicted_cnt }}</td>
                     <td>{{ assembly.out_conflicted_cnt }} / {{ assembly.out_semi_conflicted_cnt }}</td>
                     <td>{{ assembly.in_conflicted_cnt }} / {{ assembly.in_semi_conflicted_cnt }}</td>
-                    <td>{{ assembly.aps|selectattr("participates_in_max_non_conflicting_assembly")|list|length }} ({{ "%0.2f" | format((assembly.aps|selectattr("participates_in_max_non_conflicting_assembly")|list|length *  100 / assembly.aps|length) | float) }} %)
+                    <td>{{ assembly.aps|selectattr("participates_in_merged")|list|length }} ({{ "%0.2f" | format((assembly.aps|selectattr("participates_in_merged")|list|length *  100 / assembly.aps|length) | float) }} %)
                     </td>
                 </tr>
             {% endfor %}
             </tbody>
             <tfoot>
             <tr>
-                <th>id</th>
-                <th>name</th>
+                <th>ID</th>
+                <th>Name</th>
                 <th># APs</th>
-                <th>orientation (O / SO / U)</th>
-                <th>nc</th>
+                <th>Orientations (O / SO / U)</th>
+                <th>NC</th>
                 <th>OC / OSC</th>
                 <th>IC / ISC</th>
                 <th>MAP</th>
@@ -137,7 +134,7 @@
                         this.api().columns().every(function () {
                             var column = this;
                             text = this.header().innerText;
-                            if (text == "name") {
+                            if (text == "Name") {
                                 $('<input type="text" placeholder="Search" />')
                                         .appendTo($(column.footer()).empty())
                                         .on('keyup change', function () {
@@ -185,7 +182,7 @@
                     xAxis: {
                         categories: [
                             {% for assembly in data.grouped_assemblies %}
-                                '{% for name in assembly.name %}{{ data.names_to_id[name] }}{% if not loop.last %},{% endif %}{% endfor %}'
+                                '{% for name in assembly.name %}{{ data.assemblies_to_ids[name] }}{% if not loop.last %},{% endif %}{% endfor %}'
                                 {% if not loop.last %}, {% endif %}
                             {% endfor %}
                         ],
@@ -216,7 +213,7 @@
                     legend: {
                         layout: 'vertical',
                         align: 'right',
-                        verticalAlign: 'top',
+                        verticalAlign: 'middle',
                         x: -40,
                         y: 80,
                         floating: true,
@@ -228,7 +225,7 @@
                         enabled: false
                     },
                     series: [{
-                        name: 'Assembly Points',
+                        name: 'Total # of assembly points',
                         data: [
                             {% for assembly in data.grouped_assemblies %}
                                 {{ assembly.aps|length }}
@@ -236,15 +233,15 @@
                             {% endfor %}
                         ]
                     }, {
-                        name: 'MAP',
+                        name: 'Merged assembly participation',
                         data: [
                             {% for assembly in data.grouped_assemblies %}
-                                {{ assembly.aps|selectattr("participates_in_max_non_conflicting_assembly")|list|length}}
+                                {{ assembly.aps|selectattr("participates_in_merged")|list|length}}
                                 {% if not loop.last %}, {% endif %}
                             {% endfor %}
                         ]
                     }, {
-                        name: 'IC',
+                        name: 'In-conflicting',
                         data: [
                             {% for assembly in data.grouped_assemblies %}
                                 {{ assembly.in_conflicted_cnt }}
@@ -252,7 +249,7 @@
                             {% endfor %}
                         ]
                     }, {
-                        name: 'ISC',
+                        name: 'In-semiconflicting',
                         data: [
                             {% for grouped_assembly in data.grouped_assemblies %}
                                 {{ grouped_assembly.in_semi_conflicted_cnt }}
@@ -272,83 +269,88 @@
         <div class="row">
             <div class="col-lg-6 col-lg-offset-3">
                 <p class="text-center">
-                    <a href="#assembly_overview_{{ assembly.name|replace(" ", "__") }}" data-toggle="collapse"
-                    ><strong
-                            style="font-size: large">{{ assembly.name }}</strong> [{{ data.names_to_id[assembly.name] }}]</a>
+                    <a href="#assembly_overview_{{ data.assemblies_to_ids[assembly.name] }}" data-toggle="collapse">
+                        <strong style="font-size: large">{{ assembly.name }}</strong> [{{ data.assemblies_to_ids[assembly.name] }}]</a>
                 </p>
             </div>
         </div>
 
 
-        <div id="assembly_overview_{{ assembly.name|replace(" ", "__") }}" class="container collapse">
+        <div id="assembly_overview_{{ data.assemblies_to_ids[assembly.name] }}" class="container collapse">
             <div class="row">
                 <div class="col-lg-10 col-lg-offset-1">
                     <table class="table table-bordered table-condensed"
-                           id="assembly_overview_{{ assembly.name|replace(" ", "__") }}_table"
+                           id="assembly_overview_{{ data.assemblies_to_ids[assembly.name] }}_table"
                            width="100%">
                         <thead>
                         <tr>
-                            <th>ctg1</th>
-                            <th>ctg2</th>
-                            <th>or1</th>
-                            <th>or2</th>
-                            <th>or</th>
-                            <th>ssc</th>
-                            <th>sc</th>
-                            <th>osc</th>
-                            <th>oc</th>
-                            <th>un</th>
-                            <th>map</th>
+                            <th>Seq1</th>
+                            <th>Seq2</th>
+                            <th>Or1</th>
+                            <th>Or2</th>
+                            <th>Or</th>
+                            <th>ISC</th>
+                            <th>IC</th>
+                            <th>OSC</th>
+                            <th>OC</th>
+                            <th>Unique</th>
+                            <th>MAP</th>
                         </tr>
                         </thead>
                         <tbody>
                         {% for ap in assembly.aps %}
                             <tr>
-                                <td>{{ ap.contig_1 }}</td>
-                                <td>{{ ap.contig_2 }}</td>
+                                <td>{{ ap.seq1 }}</td>
+                                <td>{{ ap.seq2 }}</td>
                                 <td
-                                        {% if ap.participation_ctg1_or != ap.contig_1_orientation and ap.participation_ctg1_or is not none %}
-                                            class="bg-success" {% endif %}>
-                                    {% if ap.participation_ctg1_or is not none %}
-                                        {{ ap.participation_ctg1_or }}{% else %}
-                                        {{ ap.contig_1_orientation }}{% endif %}</td>
-                                <td
-                                        {% if ap.participation_ctg2_or != ap.contig_2_orientation and ap.participation_ctg2_or is not none %}
-                                            class="bg-success" {% endif %}>
-                                    {% if ap.participation_ctg2_or is not none %}
-                                        {{ ap.participation_ctg2_or }}{% else %}
-                                        {{ ap.contig_2_orientation }}{% endif %}</td>
-                                <td>{{ ap.orientation_as_word }}</td>
-                                <td>{% if ap.is_in_semi_conflicted_for(assembly.name) %}
-                                    1 {% else %} 0 {% endif %}
+                                        {% if ap.seq1_par_or != ap.seq1_or and ap.seq1_par_or is not none %}
+                                            class="bg-success"
+                                        {% endif %}>
+                                    {{ ap.seq1_par_or if ap.seq1_par_or is not none else ap.seq1_or }}
                                 </td>
-                                <td>{% if ap.is_in_conflicted_for(assembly.name) %}
-                                    1 {% else %} 0
-                                {% endif %}</td>
-                                <td>{% if ap.is_out_semi_conflicted_for(assembly.name) %}
-                                    1 {% else %} 0 {% endif %}</td>
-                                <td>{% if ap.is_out_conflicted_for(assembly.name) %}
-                                    1 {% else %} 0 {% endif %}</td>
-                                <td>{% if ap.sources|length == 1 %}
-                                    1 {% else %} 0 {% endif %}</td>
-                                <td>{% if ap.participates_in_max_non_conflicting_assembly %}
-                                    1 {% else %} 0 {% endif %}</td>
+                                <td
+                                        {% if ap.seq2_par_or != ap.seq2_or and ap.seq2_par_or is not none %}
+                                            class="bg-success"
+                                        {% endif %}>
+                                    {{ ap.seq2_par_or if ap.seq2_par_or is not none else ap.seq2_or }}
+                                </td>
+                                <td>
+                                    {{ ap.orientation_as_word }}
+                                </td>
+                                <td>
+                                    {{ 1 if ap.is_in_semi_conflicted_for(assembly.name) else 0 }}
+                                </td>
+                                <td>
+                                    {{ 1 if ap.is_in_conflicted_for(assembly.name) else 0 }}
+                                </td>
+                                <td>
+                                    {{ 1 if ap.is_out_semi_conflicted_for(assembly.name) else 0 }}
+                                </td>
+                                <td>
+                                    {{ 1 if ap.is_out_conflicted_for(assembly.name) else 0 }}
+                                </td>
+                                <td>
+                                    {{ 1 if ap.sources|length == 1 else 0 }}
+                                </td>
+                                <td>
+                                    {{ 1 if ap.participates_in_merged else 0 }}
+                                </td>
                             </tr>
                         {% endfor %}
                         </tbody>
                         <tfoot>
                         <tr>
-                            <th>ctg1</th>
-                            <th>ctg2</th>
-                            <th>or1</th>
-                            <th>or2</th>
-                            <th>or</th>
-                            <th>ssc</th>
-                            <th>sc</th>
-                            <th>osc</th>
-                            <th>oc</th>
-                            <th>un</th>
-                            <th>map</th>
+                            <th>Seq1</th>
+                            <th>Seq2</th>
+                            <th>Or1</th>
+                            <th>Or2</th>
+                            <th>Or</th>
+                            <th>ISC</th>
+                            <th>IC</th>
+                            <th>OSC</th>
+                            <th>OC</th>
+                            <th>Unique</th>
+                            <th>MAP</th>
                         </tr>
                         </tfoot>
                     </table>
@@ -356,14 +358,14 @@
             </div>
             <script>
                 $(document).ready(function () {
-                    $('#assembly_overview_{{ assembly.name|replace(" ", "__") }}_table').DataTable(
+                    $('#assembly_overview_{{ data.assemblies_to_ids[assembly.name] }}_table').DataTable(
                             {
                                 "autowidth": false,
                                 "initComplete": function () {
                                     this.api().columns().every(function () {
                                         var column = this;
                                         text = this.header().innerText;
-                                        if (["or1", "or2", "ssc", "sc", "osc", "oc", "un", "or", "map"].indexOf(text) < 0) {
+                                        if (["Or1", "Or2", "ISC", "IC", "OSC", "OC", "Unique", "Or", "MAP"].indexOf(text) < 0) {
                                             var select = $('<input type="text" placeholder="Search" />')
                                                     .appendTo($(column.footer()).empty())
                                                     .on('keyup change', function () {
@@ -392,11 +394,11 @@
                                             });
                                         }
                                     });
-                                    var r = $('#assembly_overview_{{ assembly.name|replace(" ", "__") }}_table tfoot tr');
+                                    var r = $('#assembly_overview_{{ data.assemblies_to_ids[assembly.name] }}_table tfoot tr');
                                     r.find('th').each(function () {
                                         $(this).css('padding', 8);
                                     });
-                                    $('#assembly_overview_{{ assembly.name|replace(" ", "__") }}_table thead').append(r);
+                                    $('#assembly_overview_{{ data.assemblies_to_ids[assembly.name] }}_table thead').append(r);
                                     $('#search_0').css('text-align', 'center');
                                 }
                             }
@@ -408,13 +410,14 @@
     <div class="row">
         <hr>
         <h3 class="text-center">Assemblies comparison</h3>
-        <p class="text-center">[{% for assembly in data.assemblies %}
+        <p class="text-center">
+            [{% for assembly in data.assemblies %}
             <strong>{{ assembly.name }}</strong>{% if not loop.last %}; {% endif %}
         {% endfor %}]
     </div>
     <div class="row" style="padding-bottom: 10px">
         <div id="advanced_filtering_column" class="col-lg-6 col-lg-offset-3 text-center">
-            <a data-toggle="collapse" href="#advanced_filter_container">Advancedfilter options</a>
+            <a data-toggle="collapse" href="#advanced_filter_container">Advanced filter options</a>
         </div>
     </div>
     <style>
@@ -427,47 +430,47 @@
             <div class="row" style="margin: 1em;">
                 <div class="col-lg-6 col-lg-offset-3">
                     <div class="row search_query_div">
-                        <label class="col-lg-2 text-right" for="sources_query">sources:</label>
+                        <label class="col-lg-2 text-right" for="sources_query">Sources:</label>
                         <input type="text" class="col-lg-8" id="sources_query">
                     </div>
                     <div class="row search_query_div">
-                        <label class="text-right col-lg-2" for="ctg1_query">ctg1:</label>
-                        <input type="text" class="col-lg-8" id="ctg1_query"></div>
+                        <label class="text-right col-lg-2" for="seq1_query">Seq1:</label>
+                        <input type="text" class="col-lg-8" id="seq1_query"></div>
                     <div class="row search_query_div">
-                        <label class="text-right col-lg-2" for="ctg2_query">ctg2:</label>
-                        <input type="text" class="col-lg-8" id="ctg2_query">
+                        <label class="text-right col-lg-2" for="seq2_query">Seq2:</label>
+                        <input type="text" class="col-lg-8" id="seq2_query">
                     </div>
                     <div class="row search_query_div">
-                        <label class="text-right col-lg-2" for="or1_query">or1:</label>
+                        <label class="text-right col-lg-2" for="or1_query">Or1:</label>
                         <input type="text" class="col-lg-8" id="or1_query">
                     </div>
                     <div class="row search_query_div">
-                        <label class="text-right col-lg-2" for="or2_query">or2:</label>
+                        <label class="text-right col-lg-2" for="or2_query">Or2:</label>
                         <input type="text" class="col-lg-8" id="or2_query">
                     </div>
                     <div class="row search_query_div">
-                        <label class="text-right col-lg-2" for="am_query">am:</label>
-                        <input type="text" class="col-lg-8" id="am_query">
+                        <label class="text-right col-lg-2" for="or_query">Or:</label>
+                        <input type="text" class="col-lg-8" id="or_query">
                     </div>
                     <div class="row search_query_div">
-                        <label class="text-right col-lg-2" for="ssc_query">ssc:</label>
-                        <input type="text" class="col-lg-8" id="ssc_query">
+                        <label class="text-right col-lg-2" for="isc_query">ISC:</label>
+                        <input type="text" class="col-lg-8" id="isc_query">
                     </div>
                     <div class="row search_query_div">
-                        <label class="text-right col-lg-2" for="sc_query">sc:</label>
-                        <input type="text" class="col-lg-8" id="sc_query">
+                        <label class="text-right col-lg-2" for="ic_query">IC:</label>
+                        <input type="text" class="col-lg-8" id="ic_query">
                     </div>
                     <div class="row search_query_div">
-                        <label class="text-right col-lg-2" for="osc_query">osc:</label>
+                        <label class="text-right col-lg-2" for="osc_query">OSC:</label>
                         <input type="text" class="col-lg-8" id="osc_query">
                     </div>
                     <div class="row search_query_div">
-                        <label class="text-right col-lg-2" for="oc_query">oc:</label>
+                        <label class="text-right col-lg-2" for="oc_query">OC:</label>
                         <input type="text" class="col-lg-8" id="oc_query">
                     </div>
                     <div class="row search_query_div">
-                        <label class="text-right col-lg-2" for="sap_query">map:</label>
-                        <input type="text" class="col-lg-8" id="sap_query">
+                        <label class="text-right col-lg-2" for="map_query">MAP:</label>
+                        <input type="text" class="col-lg-8" id="map_query">
                     </div>
                     {% if data.fragments.lengths | length > 0 %}
                         <div class="range-slider">
@@ -503,7 +506,7 @@
                         <button id="advanced_filter_remove" class="btn btn-warning">Remove</button>
                     </div>
                     <div class="col-lg-offset-4 col-lg-2">
-                        <button id="revert_aps_table_button" type="button" class="btn btn-danger" style="display: none;">Remove filters
+                        <button id="revert_aps_table_button" type="button" class="btn btn-danger" style="display: none;">Remove all filters
                         </button>
                     </div>
                 </div>
@@ -513,77 +516,87 @@
     </div>
 
     <div class="row">
-
-
         <table class="table table-bordered table-condensed" id="overall_aps_table" width="100%">
             <thead>
             <tr>
-                <th>sources</th>
-                <th>ctg1</th>
-                <th>ctg2</th>
-                <th>oor1</th>
-                <th>oor2</th>
-                <th>por1</th>
-                <th>por2</th>
-                <th>or1</th>
-                <th>or2</th>
-                <th>cw</th>
-                <th>or</th>
-                <th>ssc</th>
-                <th>sc</th>
-                <th>osc</th>
-                <th>oc</th>
-                <th>map</th>
+                <th>Sources</th>
+                <th>Seq1</th>
+                <th>Seq2</th>
+                <th>OOr1</th>
+                <th>OOr2</th>
+                <th>POr1</th>
+                <th>POr2</th>
+                <th>Or1</th>
+                <th>Or2</th>
+                <th>CW</th>
+                <th>Or</th>
+                <th>ISC</th>
+                <th>IC</th>
+                <th>ISC</th>
+                <th>OC</th>
+                <th>MAP</th>
                 <th>self_id</th>
             </tr>
             </thead>
             <tbody>
             {% for ap in data.aps %}
                 <tr>
-                    <td>[{% for source_name in ap.sources|sort %}{{ data.names_to_id[source_name] }}{% if not loop.last %}, {% endif %}{% endfor %}]</td>
-                    <td>{{ ap.contig_1 }}</td>
-                    <td>{{ ap.contig_2 }}</td>
-                    <td>{{ ap.contig_1_orientation }}</td>
-                    <td>{{ ap.contig_2_orientation }}</td>
-                    <td>{{ ap.participation_ctg1_or }}</td>
-                    <td>{{ ap.participation_ctg2_or }}</td>
+                    <td>[{% for source_name in ap.sources|sort %}{{ data.assemblies_to_ids[source_name] }}{% if not loop.last %}, {% endif %}{% endfor %}]</td>
+                    <td>{{ ap.seq1 }}</td>
+                    <td>{{ ap.seq2 }}</td>
+                    <td>{{ ap.seq1_or }}</td>
+                    <td>{{ ap.seq2_or }}</td>
+                    <td>{{ ap.seq1_par_or }}</td>
+                    <td>{{ ap.seq2_par_or }}</td>
                     <td
-                            {% if ap.is_ambiguous and ap.participates_in_max_non_conflicting_assembly and ap.contig_1_orientation == "?" %}
-                                class="bg-success" {% endif %}>{% if ap.participates_in_max_non_conflicting_assembly %}
-                        {{ ap.participation_ctg1_or }} {% else %} {{ ap.contig_1_orientation }} {% endif %}</td>
+                            {% if ap.seq1_par_or != ap.seq1_or and ap.seq1_par_or is not none %}
+                                class="bg-success"
+                            {% endif %}>
+                        {% if ap.seq1_par_or is not none %}
+                            {{ ap.seq1_par_or }}
+                        {% else %}
+                            {{ ap.seq1_or }}
+                        {% endif %}
+                    </td>
                     <td
-                            {% if ap.is_ambiguous and ap.participates_in_max_non_conflicting_assembly and ap.contig_2_orientation == "?" %}
-                                class="bg-success" {% endif %}>{% if ap.participates_in_max_non_conflicting_assembly %}
-                        {{ ap.participation_ctg2_or }} {% else %} {{ ap.contig_2_orientation }} {% endif %}</td>
+                            {% if ap.seq2_par_or != ap.seq2_or and ap.seq2_par_or is not none %}
+                                class="bg-success"
+                            {% endif %}>
+                        {% if ap.seq2_par_or is not none %}
+                            {{ ap.seq2_par_or }}
+                        {% else %}
+                            {{ ap.seq2_or }}
+                        {% endif %}
+                    </td>
                     <td>{{ "%0.2f" | format(ap.cw) | float }}</td>
                     <td>{{ ap.orientation_as_word }}</td>
-                    <td>{% if ap.in_semi_conflicted|length > 0 %}[{% for source_name in ap.in_semi_conflicted|sort(case_sensitive=False) %}{{ data.names_to_id[source_name] }}{% if not loop.last %}, {% endif %}{% endfor %}]{% else %}0 {% endif %}</td>
-                    <td>{% if ap.in_conflicted|length>0 %}[{% for source_name in ap.in_conflicted|sort(case_sensitive=False) %}{{ data.names_to_id[source_name] }}{% if not loop.last %},{% endif %}{% endfor %}]{% else %}0 {% endif %}</td>
-                    <td>{% if ap.out_semi_conflicted|length>0 %}[{% for source_name in ap.out_semi_conflicted|sort(case_sensitive=False) %}{{ data.names_to_id[source_name] }}{% if not loop.last %}, {% endif %}{% endfor %}]{% else %}0{% endif %}</td>
-                    <td>{% if ap.out_conflicted|length>0 %}[{% for source_name in ap.out_conflicted|sort(case_sensitive=False) %}{{ data.names_to_id[source_name] }}{% if not loop.last %}, {% endif %}{% endfor %}]{% else %}0{% endif %}</td>
-                    <td>{{ 1 if ap.participates_in_max_non_conflicting_assembly else 0 }}</td>
+                    <td>{% if ap.in_semi_conflicted|length > 0 %}[{% for source_name in ap.in_semi_conflicted|sort(case_sensitive=False) %}{{ data.assemblies_to_ids[source_name] }}{% if not loop.last %}, {% endif %}{% endfor %}]{% else %}0 {% endif %}</td>
+                    <td>{% if ap.in_conflicted|length>0 %}[{% for source_name in ap.in_conflicted|sort(case_sensitive=False) %}{{ data.assemblies_to_ids[source_name] }}{% if not loop.last %},{% endif %}{% endfor %}]{% else %}0 {% endif %}</td>
+                    <td>{% if ap.out_semi_conflicted|length>0 %}[{% for source_name in ap.out_semi_conflicted|sort(case_sensitive=False) %}{{ data.assemblies_to_ids[source_name] }}{% if not loop.last %}, {% endif %}{% endfor %}]{% else %}0{% endif %}</td>
+                    <td>{% if ap.out_conflicted|length>0 %}[{% for source_name in ap.out_conflicted|sort(case_sensitive=False) %}{{ data.assemblies_to_ids[source_name] }}{% if not loop.last %}, {% endif %}{% endfor %}]{% else %}0{% endif %}</td>
+                    <td>{{ 1 if ap.participates_in_merged else 0 }}</td>
                     <td>{{ ap.self_id }}</td>
                 </tr>
             {% endfor %}
             </tbody>
             <tfoot>
             <tr>
-                <th>sources</th>
-                <th>ctg1</th>
-                <th>ctg2</th>
-                <th>oor1</th>
-                <th>oor2</th>
-                <th>por1</th>
-                <th>por2</th>
-                <th>or1</th>
-                <th>or2</th>
-                <th>cw</th>
-                <th>or</th>
-                <th>ssc</th>
-                <th>sc</th>
-                <th>osc</th>
-                <th>oc</th>
-                <th>map</th>
+                <th>Sources</th>
+                <th>Seq1</th>
+                <th>Seq2</th>
+                <th>OOr1</th>
+                <th>OOr2</th>
+                <th>POr1</th>
+                <th>POr2</th>
+                <th>Or1</th>
+                <th>Or2</th>
+                <th>CW</th>
+                <th>Or</th>
+                <th>ISC</th>
+                <th>IC</th>
+                <th>ISC</th>
+                <th>OC</th>
+                <th>MAP</th>
                 <th>self_id</th>
             </tr>
             </tfoot>
@@ -597,10 +610,7 @@
                                 this.api().columns().every(function () {
                                     var column = this;
                                     text = this.header().innerText;
-                                    if (
-                                            {#                                            true#}
-                                    ["or1", "or2", "ssc", "sc", "osc", "oc", "or", "map", "cw"].indexOf(text) < 0
-                                    ) {
+                                    if (["Or1", "Or2", "ISC", "IC", "OSC", "OC", "Or", "MAP", "CW"].indexOf(text) < 0) {
                                         var select = $('<input type="text" placeholder="Search" />')
                                                 .appendTo($(column.footer()).empty())
                                                 .on('keyup change', function () {
@@ -651,7 +661,7 @@
                     $("#revert_aps_table_button").hide();
                 });
 
-                function advacned_filter(dataTable, negate) {
+                function advanced_filter(dataTable, negate) {
                     $("#revert_aps_table_button").show();
                     dataTable.rows().every(function (rowidx, row, rowLoop) {
                         var data = this.data();
@@ -661,15 +671,15 @@
                             var items = new RegExp(sources_regex).test(data[0].trim().replace("\n", ""));
                             result.push(items);
                         }
-                        var ctg1_regex = $("#ctg1_query").val();
-                        if (ctg1_regex != '') {
-                            var regex = new RegExp(ctg1_regex);
+                        var seq1_regex = $("#seq1_query").val();
+                        if (seq1_regex != '') {
+                            var regex = new RegExp(seq1_regex);
                             var row_entry = data[1].trim().replace("\n", "");
                             result.push(regex.test(row_entry));
                         }
-                        var ctg2_regex = $("#ctg2_query").val();
-                        if (ctg2_regex != '') {
-                            result.push(new RegExp(ctg2_regex).test(data[2].trim().replace("\n", "")));
+                        var seq2_regex = $("#seq2_query").val();
+                        if (seq2_regex != '') {
+                            result.push(new RegExp(seq2_regex).test(data[2].trim().replace("\n", "")));
                         }
                         var or1_regex = $("#or1_query").val();
                         if (or1_regex != '') {
@@ -679,17 +689,17 @@
                         if (or2_regex != '') {
                             result.push(new RegExp(or2_regex).test(data[8].trim().replace("\n", "")));
                         }
-                        var am_regex = $("#am_query").val();
+                        var am_regex = $("#or_query").val();
                         if (am_regex != '') {
                             result.push(new RegExp(am_regex).test(data[10].trim().replace("\n", "")));
                         }
-                        var ssc_regex = $("#ssc_query").val();
-                        if (ssc_regex != '') {
-                            result.push(new RegExp(ssc_regex).test(data[11].trim().replace("\n", "")));
+                        var isc_regex = $("#isc_query").val();
+                        if (isc_regex != '') {
+                            result.push(new RegExp(isc_regex).test(data[11].trim().replace("\n", "")));
                         }
-                        var sc_regex = $("#sc_query").val();
-                        if (sc_regex != '') {
-                            result.push(new RegExp(sc_regex).test(data[12].trim().replace("\n", "")));
+                        var ic_regex = $("#ic_query").val();
+                        if (ic_regex != '') {
+                            result.push(new RegExp(ic_regex).test(data[12].trim().replace("\n", "")));
                         }
                         var osc_regex = $("#osc_query").val();
                         if (osc_regex != '') {
@@ -699,9 +709,9 @@
                         if (oc_regex != '') {
                             result.push(new RegExp(oc_regex).test(data[14].trim().replace("\n", "")));
                         }
-                        var sap_regex = $("#sap_query").val();
-                        if (sap_regex != '') {
-                            result.push(new RegExp(sap_regex).test(data[15].trim().replace("\n", "")));
+                        var map_regex = $("#map_query").val();
+                        if (map_regex != '') {
+                            result.push(new RegExp(map_regex).test(data[15].trim().replace("\n", "")));
                         }
                         var logical_or = $("#logical_or_search").is(":checked");
                         var keep = !logical_or;
@@ -729,10 +739,10 @@
                 }
 
                 $("#advanced_filter_keep").on('click', function () {
-                    advacned_filter(dataTable, false)
+                    advanced_filter(dataTable, false)
                 });
                 $("#advanced_filter_remove").on('click', function () {
-                    advacned_filter(dataTable, true)
+                    advanced_filter(dataTable, true)
                 });
 
             });
@@ -756,85 +766,81 @@
             <div class="row">
                 <h4 class="text-center">How to interpret column values</h4>
                 <ul>
-                    <li><strong>sources:</strong> column represents the list of assemblies, that reported a particular assembly point.
+                    <li><strong>Sources:</strong> column represents the list of assemblies, that reported a particular assembly point.
                         Assemblies are referred to by there ids,
                         which in turn can be found in <a href="#per_assembly_overview_section">Assemblies summary</a> table, as well as next
                         to each assembly in the <a href="#individual_assemblies_section">Individual assemblies</a> section
                     </li>
-                    <li><strong>ctg1:</strong> column corresponds to first, out of two fragments, that participate in the reported assembly
+                    <li><strong>Seq1:</strong> column corresponds to first, out of two fragments, that participate in the reported assembly
                         point.
                     </li>
-                    <li><strong>ctg2:</strong> column corresponds to second, out of two fragments, that participate in the reported assembly
+                    <li><strong>Seq2:</strong> column corresponds to second, out of two fragments, that participate in the reported assembly
                         point
                     </li>
-                    <li><strong>or1:</strong> column corresponds to relative orientation of <strong>ctg1</strong> wrt <strong>ctg2</strong>
+                    <li><strong>Or1:</strong> column corresponds to relative orientation of <strong>Seq1</strong> wrt <strong>Seq2</strong>
                         in the reported assembly.
                         <ol>
-                            <li><strong>+</strong> orientation corresponds to the <i>head</i> of <strong>ctg1</strong> being adjacent in the
+                            <li><strong>+</strong> orientation corresponds to the <i>head</i> of <strong>Seq1</strong> being adjacent in the
                                 reported assembly
                             </li>
-                            <li><strong>-</strong> orientation corresponds to the <i>tail</i> of <strong>ctg1</strong> being adjacent in the
+                            <li><strong>-</strong> orientation corresponds to the <i>tail</i> of <strong>Seq1</strong> being adjacent in the
                                 reported assembly
                             </li>
                         </ol>
                     </li>
-                    <li><strong>or2:</strong> column corresponds to relative orientation of <strong>ctg2</strong> wrt <strong>ctg1</strong>
+                    <li><strong>Or2:</strong> column corresponds to relative orientation of <strong>Seq2</strong> wrt <strong>Seq1</strong>
                         in the reported assembly.
                         <ol>
-                            <li><strong>+</strong> orientation corresponds to the <i>tail</i> of <strong>ctg2</strong> being adjacent in the
+                            <li><strong>+</strong> orientation corresponds to the <i>tail</i> of <strong>Seq2</strong> being adjacent in the
                                 reported assembly
                             </li>
-                            <li><strong>-</strong> orientation corresponds to the <i>head</i> of <strong>ctg1</strong> being adjacent in the
+                            <li><strong>-</strong> orientation corresponds to the <i>head</i> of <strong>Seq2</strong> being adjacent in the
                                 reported assembly
                             </li>
                         </ol>
                     </li>
-                    <li><strong>cw:</strong> confidence weight (score) for the reported assmebly point. Equals to the sum of individual assembly points,
-                        reported by each assembly
+                    <li><strong>CW:</strong> confidence weight (score) for the reported assembly point. Equals to the sum of assembly points's scores,
+                        reported by each source
                     </li>
-                    <li><strong>or:</strong> a flag determining the type os assembly point:
+                    <li><strong>Or:</strong> a flag determining the class of the assembly point:
                         <ol>
                             <li><strong>O</strong>: oriented assembly point, that is for both fragments their extremities are specified</li>
-                            <li><strong>SO</strong>: partially oriented assembly point, that is only for one out of two fragments an assembly extremity is specified</li>
+                            <li><strong>SO</strong>: semi-oriented assembly point, that is only for one out of two fragments an assembly extremity is specified</li>
                             <li><strong>U</strong>: unoriented assembly point, that is for both fragments their extremities used for assembly are not specified</li>
                         </ol>
                     </li>
-                    <li><strong>ssc:</strong> corresponds to the list of sources, with which this assembly point is
-                        <strong>S</strong>elf-<strong>S</strong>emi-<strong>C</strong>onflicted. This happens, if this assembly point (at
-                        least one of its representations , if the point was reported ambiguous)
-                        in the super assembly conflicts with some other assembly point (at least one of its representations) from same
-                        sourcee. At least one of two points taken part in this conflict had to be reported ambiguous.
+                    <li><strong>ISC:</strong> corresponds to the list of sources, with which this assembly point is
+                        <strong>In</strong>-<strong>S</strong>emi<strong>C</strong>onflicted. This is the case, when the assembly point (by some, but not all of its realizations)
+                        is conflicted with some other assembly point (with some, but not all of later one's realizations), and they both come from same
+                        source.<br>
                         <string>0</string>
-                        stands for non <strong>S</strong>elf-<strong>S</strong>emi-<strong>C</strong>onflicted.
+                        is specified if no in-semiconflicts were identified for this point.
                     </li>
 
-                    <li><strong>sc:</strong> corresponds to the list of sources, with which this assembly point is
-                        <strong>S</strong>elf-<strong>C</strong>onflicted. This happens, if this assembly point (regardless of the
-                        representations) in the super assembly,
-                        conflicts with some other assembly point (regardless of its representation) from the same source (which source is
-                        specified in the list).
+                    <li><strong>IC:</strong> corresponds to the list of sources, with which this assembly point is
+                        <strong>I</strong>n-<strong>C</strong>onflicted. This is the case, if the assembly point (by all of its realizations),
+                        is conflicted with some other assembly point (by all of later one's realizations), and they both come from the same source. <br>
                         <string>0</string>
-                        stands for non <strong>s</strong>elf-<strong>C</strong>onflicted.
+                        is specified if no in-conflicts were identified for this point.
                     </li>
 
-                    <li><strong>osc:</strong> corresponds to the list of sources, with which this assembly point is
-                        <strong>O</strong>out-<strong>S</strong>emi-<strong>C</strong>onflicted. This happens, if this assembly point (at
-                        least one of its representations , if the point was reported ambiguous)
-                        in the super assembly conflicts with some other assembly point (at least one of its representation) from the
-                        different source. At least one of two points taken part in this conflict had to be reported ambiguous.
+                    <li><strong>OSC:</strong> corresponds to the list of sources, with which this assembly point is
+                        <strong>O</strong>ut-<strong>S</strong>emi<strong>C</strong>onflicted. This is the case, when the assembly point (by some, but not all of its representations)
+                        is conflicted with some other assembly point (with some, but not all of later one's realizations), and they come from the
+                        different sources.
                         <string>0</string>
-                        stands for non <strong>O</strong>ut-<strong>S</strong>emi-<strong>C</strong>onflicted.
+                        is specified is no out-semiconflicts were identified for this point.
                     </li>
 
-                    <li><strong>oc:</strong> corresponds to the list of sources, with which this assembly point is
-                        <strong>O</strong>ut-<strong>C</strong>onflicted. This happens, if this assembly point (regardless of its
-                        representation) in the super assembly,
-                        conflicts with some other assembly point (regardless of its representation) from the different source.
+                    <li><strong>OC:</strong> corresponds to the list of sources, with which this assembly point is
+                        <strong>O</strong>ut-<strong>C</strong>onflicted. This is the case, when the assembly point (by all of its representations)
+                        is conflicted with some other assembly point (with all of later one's realizations), and they come from the
+                        different sources.
                         <string>0</string>
-                        stands for non <strong>O</strong>ut-<strong>C</strong>onflicted.
+                        is specified is no out-semiconflicts were identified for this point.
                     </li>
-                    <li><strong>map:</strong> is a boolean flag (i.e. aither <strong>0</strong> or <strong>1</strong>) corresponding whether
-                        this assmbely point participates in the reported <strong>M</strong>erged-<strong>A</strong>ssembly
+                    <li><strong>MAP:</strong> is a flag (i.e. either <strong>0</strong> or <strong>1</strong>) corresponding to whether
+                        this assembly point participates in the reported <strong>M</strong>erged-<strong>A</strong>ssembly.
                     </li>
                 </ul>
             </div>
@@ -843,23 +849,17 @@
                 <ul>
                     <li><strong>Built-in filters:</strong> every column has a filter in the table heading.
                         <ol>
-                            <li>If the filter is represented an <i>input</i> field, the value a substring of a column / row entry. Smart Datatables search is used.
-                            <li>If the input is represented with a <i>dropdown</i>, then all values matching the chose value will be kept.
-                            </li>
-                            <li>There is a <i>whole table filter</i> on the top right of the table. It also accepts a string
-                                expression, but for this filter at least one value in at least one column has to at least to contain the
-                                specified string.
-                            </li>
+                            <li>If the filter is represented an <i>input</i> field, then the <a href="https://datatables.net/reference/option/search.smart">smart</a> Datatables search is used.</li>
+                            <li>If the input is represented with a <i>dropdown</i>, then all rows with values matching the chosen value will be kept.</li>
+                            <li>There is a <i>table-wide filter</i> on the top right of the table. Again the smart search is used, but in this case it is table-wide, not column specific.</li>
                         </ol>
                     </li>
-                    <li><strong>Advanced filtering:</strong> There is a <a href="#advanced_filtering_column">collapsible panel</a> with
+                    <li><strong>Advanced filtering:</strong> There is a <a href="#advanced_filtering_column">panel</a> with
                         advance filtering capabilities. Please refer to instructions in it.
                     </li>
-
                 </ul>
                 Built-in and advanced filters can be combined together. The only difference is that build in filters revert filtering
-                changes on-the-fly, once the filter criteria is removed, while for advanced filtering one has to manually revert applied
-                filters.
+                changes on-the-fly, once the filter criteria is removed, while for advanced filtering has to be manually reverted, with the "Remove all filters button".
             </div>
         </div>
     </div>
@@ -882,7 +882,7 @@
             <button id="save_graph" type="button" class="btn btn-success">Save image</button>
         </div>
         <div class="col-lg-offset-1 col-lg-3">
-            <button id="export_aps" type="button" class="btn btn-info">Export table assembly points</button>
+            <button id="export_aps" type="button" class="btn btn-info">Export table</button>
         </div>
     </div>
     <div class="row">
@@ -890,9 +890,7 @@
             <div class="text-center"
                  style="height:1000px; width:100%; min-height:100%; min-width: 100%; position: relative; background: url('./libs/images/empty.png') no-repeat center center;">
                 <h2 class="text-center">Filter the table and draw the first graph</h2>
-
             </div>
-
         </div>
         <style>
             #graph {
@@ -905,14 +903,15 @@
         </style>
         <script>
             var colors = {
-                {% for source, color in data.source_colors.items() %}
+                {% for source, color in data.assemblies_to_colors.items() %}
                     '{{ source }}': '{{ color }}',
                 {% endfor %}
             };
-            function get_vertices(ctg1, ctg2, or1, or2) {
-                var ctg1_suffix = or1 == "+" ? "h" : "t";
-                var ctg2_suffix = or2 == "-" ? "h" : "t";
-                return [ctg1 + ctg1_suffix, ctg2 + ctg2_suffix]
+
+            function get_vertices(seq1, seq2, or1, or2) {
+                var seq1_suffix = or1 == "+" ? "h" : "t";
+                var seq2_suffix = or2 == "-" ? "h" : "t";
+                return [seq1 + seq1_suffix, seq2 + seq2_suffix];
             }
 
             function download_aps_as_text(text) {
@@ -927,9 +926,9 @@
                 document.body.removeChild(element);
             }
 
-            function AssemblyPoint(ctg1, ctg2, oor1, oor2, por1, por2, cw, self_id, source, sap) {
-                this.ctg1 = ctg1;
-                this.ctg2 = ctg2;
+            function AssemblyPoint(seq1, seq2, oor1, oor2, por1, por2, cw, self_id, source, map) {
+                this.seq1 = seq1;
+                this.seq2 = seq2;
                 this.oor1 = oor1;
                 this.oor2 = oor2;
                 this.por1 = por1;
@@ -937,10 +936,10 @@
                 this.cw = cw;
                 this.self_id = self_id;
                 this.source = source;
-                this.sap = sap;
+                this.map = map;
 
-                this.get_all_ctg_vertices_pairs = function () {
-                    return [[this.ctg1 + "t", this.ctg1 + "h"], [this.ctg2 + "t", this.ctg2 + "h"]];
+                this.get_all_seq_vertices_pairs = function () {
+                    return [[this.seq1 + "t", this.seq1 + "h"], [this.seq2 + "t", this.seq2 + "h"]];
                 };
 
                 this.get_adjacency_edges = function () {
@@ -964,7 +963,7 @@
                     var ap = this;
                     or1_variants.forEach(function (or1_v) {
                         or2_variants.forEach(function (or2_v) {
-                            var vertices = get_vertices(ap.ctg1, ap.ctg2, or1_v, or2_v);
+                            var vertices = get_vertices(ap.seq1, ap.seq2, or1_v, or2_v);
                             var v1 = vertices[0];
                             var v2 = vertices[1];
                             var data = {
@@ -974,11 +973,11 @@
                                 line_color: colors[ap.source]
                             };
 
-                            if (ap.sap && ap.por1 == or1_v && ap.por2 == or2_v) {
-                                data["sap"] = true;
+                            if (ap.map && ap.por1 == or1_v && ap.por2 == or2_v) {
+                                data["map"] = true;
                             }
                             if (ap.oor1 == "?" || ap.oor2 == "?") {
-                                data["ambiguous"] = true
+                                data["candidate"] = true
                             }
                             result.push({data: data});
                         });
@@ -996,18 +995,18 @@
                     var sources = data[0].slice(1, -1).split(',').map(function (str) {
                         return str.trim();
                     });
-                    var ctg1 = data[1].trim();
-                    var ctg2 = data[2].trim();
+                    var seq1 = data[1].trim();
+                    var seq2 = data[2].trim();
                     var oor1 = data[3].trim();
                     var oor2 = data[4].trim();
                     var por1 = data[5].trim();
                     var por2 = data[6].trim();
                     var cw = parseFloat(data[9].trim());
 
-                    var sap = data[data.length - 2].trim() == "1";
+                    var map = data[data.length - 2].trim() == "1";
                     var self_id = data[data.length - 1].trim();
                     sources.forEach(function (element) {
-                        aps.push(new AssemblyPoint(ctg1, ctg2, oor1, oor2, por1, por2, cw, self_id, element, sap))
+                        aps.push(new AssemblyPoint(seq1, seq2, oor1, oor2, por1, por2, cw, self_id, element, map))
                     });
                 });
                 return aps;
@@ -1028,12 +1027,11 @@
             function get_nodes(aps) {
                 var result = {};
                 aps.forEach(function (ap) {
-                    ap.get_all_ctg_vertices_pairs().forEach(function (v_pair) {
+                    ap.get_all_seq_vertices_pairs().forEach(function (v_pair) {
                         var v1 = v_pair[0];
                         var v2 = v_pair[1];
                         result[v1] = true;
                         result[v2] = true;
-
                     });
                 });
 
@@ -1050,11 +1048,11 @@
                 return result;
             }
 
-            function get_ctg_edges(aps) {
+            function get_seq_edges(aps) {
                 var result = [];
                 var seen = {};
                 aps.forEach(function (ap) {
-                    ap.get_all_ctg_vertices_pairs().forEach(function (v_pair) {
+                    ap.get_all_seq_vertices_pairs().forEach(function (v_pair) {
                         var v1 = v_pair[0];
                         var v2 = v_pair[1];
                         if (!(v1 in seen || v2 in seen)) {
@@ -1111,7 +1109,6 @@
             }
 
             function get_cc_element_ids(cy, ele) {
-                {#                console.log("entered");#}
                 var tmp_result = cy.elements().dijkstra(ele);
                 var cc_nodes = [];
                 cc_nodes.push(ele.id());
@@ -1121,7 +1118,6 @@
                         cc_nodes.push(node.id())
                     }
                 });
-                {#                console.log(cc_nodes);#}
                 var result = {};
                 cc_nodes.forEach(function (node_id) {
                     console.log(node_id);
@@ -1134,7 +1130,7 @@
             }
 
             function get_cc_nodes(cy, ele) {
-                var cc_node_ids = new Array();
+                var cc_node_ids = [];
 
                 cy.elements().bfs({
                     roots: ele,
@@ -1147,7 +1143,7 @@
             }
 
             function get_edges(cy, nodes) {
-                var result = new Array();
+                var result = [];
                 nodes.forEach(function (node) {
                     node.connectedEdges().forEach(function (edge) {
                         result.push(edge);
@@ -1165,11 +1161,10 @@
             function ap_as_string(ap) {
                 var result = "";
                 result += ap.source + "\t";
-                result += ap.ctg1 + "\t";
-                result += ap.ctg2 + "\t";
+                result += ap.seq1 + "\t";
                 result += ap.por1 + "\t";
+                result += ap.seq2 + "\t";
                 result += ap.por2 + "\t";
-                result += "?" + "\t";
                 result += ap.cw;
                 return result;
             }
@@ -1177,17 +1172,17 @@
             $(document).ready(function () {
                 window.merged_aps_by_id = {
                 {% for ap in data.aps %}
-                    {{ ap.self_id }} : new AssemblyPoint('{{ ap.contig_1 }}', '{{ ap.contig_2 }}',
-                        '{{ ap.contig_1_orientation }}', '{{ ap.contig_2_orientation }}',
-                        '{{ ap.participation_ctg1_or }}', '{{ ap.participation_ctg2_or }}',
-                        {{ ap.cw }}, '{{ ap.self_id }}', {{ ap.sources }}, {% if ap.participates_in_max_non_conflicting_assembly %}1{% else %}0{% endif %}),
+                    {{ ap.self_id }} :
+                    new AssemblyPoint('{{ ap.seq1 }}', '{{ ap.seq2 }}',
+                            '{{ ap.seq1_or }}', '{{ ap.seq2_or }}', '{{ ap.seq1_par_or }}', '{{ ap.seq2_par_or }}',
+                            {{ ap.cw }}, '{{ ap.self_id }}', {{ ap.sources }}, {{ 1 if ap.participates_in_merged else 0}}),
                 {% endfor %}
             }
                 ;
 
                 $("#export_aps").on('click', function () {
                     var aps = get_aps_by_ids();
-                    var result = "origin\tctg1\tctg2\tctg1_or\tctg2_or\tgap_size\tcw\n";
+                    var result = "origin\tseq1\tseq1_or\tseq2\tseq2_or\tcw\n";
                     aps.forEach(function (entry) {
                         result += ap_as_string(entry) + "\n";
                     });
@@ -1199,8 +1194,8 @@
                     var aps = get_aps();
                     var nodes = get_nodes(aps);
                     var ap_edges = get_ap_edges(aps);
-                    var ctg_edges = get_ctg_edges(aps);
-                    var edges = ap_edges.concat(ctg_edges);
+                    var seq_edges = get_seq_edges(aps);
+                    var edges = ap_edges.concat(seq_edges);
                     var assembly_layout = {
                         name: $('#graph_layout').val(),
                         ready: function () {
@@ -1227,7 +1222,6 @@
                                 .css({
                                     'width': 5,
                                     'height': 5
-
                                 })
                                 .selector('node .selected')
                                 .css({
@@ -1259,11 +1253,11 @@
                                     'target-arrow-shape': 'data(arrow_head)'
 
                                 })
-                                .selector('edge[sap]')
+                                .selector('edge[map]')
                                 .css({
                                     'width': 4
                                 })
-                                .selector('edge[ambiguous]')
+                                .selector('edge[candidate]')
                                 .css({
                                     'line-style': "dashed"
                                 })
@@ -1276,36 +1270,31 @@
                                     'opacity': 1,
                                     'border-width': 1,
                                     'border-color': 'black'
-                                })
-                        ,
+                                }),
 
                         elements: {
                             nodes: nodes,
-
                             edges: edges
                         },
 
                         layout: assembly_layout
                     });
+
                     cy.cxtmenu({
                         menuRadius: 100,
                         selector: 'node',
                         commands: [{
-                            content: 'mn',
+                            content: 'SN',
                             select: function (ele) {
                                 ele.addClass('marked');
                             }
                         }, {
-                            content: 'mnd',
+                            content: 'SNd',
                             select: function (ele) {
-                                console.log("element id:", ele.id());
-                                console.log("escaped element id", escape(ele.id()));
-                                console.log(cy.$("#" + ele.id()));
                                 ele.neighborhood().add(ele).addClass('marked');
-
                             }
                         }, {
-                            content: 'mcc',
+                            content: 'SCC',
                             select: function (ele) {
                                 get_cc_element(cy, ele).forEach(function (entry) {
                                     entry.addClass('marked');
@@ -1313,19 +1302,19 @@
 
                             }
                         }, {
-                            content: 'un',
+                            content: 'UsN',
                             select: function (ele) {
                                 ele.removeClass('marked');
                             }
                         }, {
-                            content: 'und',
+                            content: 'UsNd',
                             select: function (ele) {
                                 ele.neighborhood().add(ele).removeClass('marked');
                             }
                         }, {
-                            content: 'ucc',
+                            content: 'UsCC',
                             select: function (ele) {
-                                get_cc_element(cy, ele).forEach(function (entry, index, array) {
+                                get_cc_element(cy, ele).forEach(function (entry) {
                                     entry.removeClass('marked');
                                 });
                             }
@@ -1343,12 +1332,13 @@
                         itemColor: 'white',
                         zIndex: 9999
                     });
+
                     cy.cxtmenu({
                         menuRadius: 100,
                         selector: 'core',
                         commands: [{
-                            content: 'hum',
-                            select: function (ele) {
+                            content: 'HUsE',
+                            select: function () {
                                 var marked_ids = {};
                                 cy.$('.marked').forEach(function (ele) {
                                     marked_ids[ele.id()] = true;
@@ -1361,8 +1351,8 @@
                                 });
                             }
                         }, {
-                            content: 'sum',
-                            select: function (ele) {
+                            content: 'SUsE',
+                            select: function () {
                                 var marked_ids = {};
                                 cy.$('.marked').forEach(function (ele) {
                                     marked_ids[ele.id()] = true;
@@ -1375,8 +1365,8 @@
                                 });
                             }
                         }, {
-                            content: 'rm',
-                            select: function (ele) {
+                            content: 'RS',
+                            select: function () {
                                 var marked_ids = {};
                                 cy.$('.marked').forEach(function (ele) {
                                     marked_ids[ele.id()] = true;
@@ -1393,8 +1383,8 @@
 
                             }
                         }, {
-                            content: 'dum',
-                            select: function (ele) {
+                            content: 'DUsE',
+                            select: function () {
                                 var marked_ids = {};
                                 cy.$('.marked').forEach(function (ele) {
                                     marked_ids[ele.id()] = true;
@@ -1406,43 +1396,41 @@
 
                                 });
                             }
+                        }, {
+                            content: 'Redraw',
+                            select: function () {
+                                $("#graph").css('background', 'url(./libs/images/giphy.gif) no-repeat center center');
+                                var assembly_layout = {
+                                    name: $('#graph_layout').val(),
+                                    ready: function () {
+                                        $("#graph").css('background', '')
+                                    },
+                                    padding: 20,
+                                    randomize: true,
+                                    nodeRepulsion: 12000,
+                                    idealEdgeLength: 100,
+                                    edgeElasticity: .45,
+                                    nestingFactor: .1,
+                                    gravity: -1,
+                                    numIter: 300,
+                                    tile: true
+
+                                };
+                                var layout = cy.elements().makeLayout(assembly_layout);
+                                layout.on('layoutstop', function () {
+                                    $("#graph").css('background', '');
+                                    cy.elements().layout(layout);
+
+                                });
+                                layout.run();
+                                setTimeout(function () {
+                                    layout.stop();
+                                }, {{ settings.cytoscape.draw_timeout }});
+
+                            }
                         },
                             {
-                                content: 'redraw',
-                                select: function (ele) {
-
-                                    $("#graph").css('background', 'url(./libs/images/giphy.gif) no-repeat center center');
-                                    var assembly_layout = {
-                                        name: $('#graph_layout').val(),
-                                        ready: function () {
-                                            $("#graph").css('background', '')
-                                        },
-                                        padding: 20,
-                                        randomize: true,
-                                        nodeRepulsion: 12000,
-                                        idealEdgeLength: 100,
-                                        edgeElasticity: .45,
-                                        nestingFactor: .1,
-                                        gravity: -1,
-                                        numIter: 300,
-                                        tile: true
-
-                                    };
-                                    var layout = cy.elements().makeLayout(assembly_layout);
-                                    layout.on('layoutstop', function () {
-                                        $("#graph").css('background', '');
-                                        cy.elements().layout(layout);
-
-                                    });
-                                    layout.run();
-                                    setTimeout(function () {
-                                        layout.stop();
-                                    }, {{ settings.cytoscape.draw_timeout }});
-
-                                }
-                            },
-                            {
-                                content: 'umall',
+                                content: 'Us',
                                 select: function (ele) {
                                     cy.elements().removeClass('marked');
                                 }
@@ -1493,12 +1481,10 @@
             <h2 class="text-center">Reading the graph</h2>
             <hr>
             <div class="row">
-
-                <h3 class="text-center">Colors</h3>
+                <h3 class="text-center">Coloring</h3>
                 {% for assembly in data.assemblies %}
                     <div class="row text-center" style="padding: 15px;">
-                        {#                        <div style="height:5px; width:200px; background: ; vertical-align: middle; margin: 0px;"></div>#}
-                        <strong style="border: {{ data.source_colors[data.names_to_id[assembly.name]] }} solid 4px; padding: 5px; ">{{ assembly.name }}</strong>
+                        <strong style="border: {{ data.assemblies_to_colors[data.assemblies_to_ids[assembly.name]] }} solid 4px; padding: 5px; ">{{ data.assemblies_to_ids[assembly.name] }}</strong>
                     </div>
                 {% endfor %}
             </div>
@@ -1506,37 +1492,33 @@
             <div class="row">
                 <h3 class="text-center">Edges</h3>
                 <ul>
-                    <li><strong>Contig edge</strong>: is a directed black edge with contig name written on it. Represents the contig,
-                        participating in one or more assembly points. Direction of the edge corresponds to respective contig orientation.
-                        <div class="row text-center">Example:<br><img width="200px" src="./libs/images/contig_edge.png"/>
+                    <li><strong>Scaffold edge</strong>: is a directed black edge with scaffold name written on it. Represents the scaffold,
+                        participating in one or more assembly points. Direction of the edge corresponds to its relative orientation.
+                        <div class="row text-center">Example:<br><img width="200px" src="./libs/images/scaffold_edge.png"/>
                             <hr>
                         </div>
                     </li>
-                    <br>
-                    <li><strong>Assembly edge</strong>: colored (based on the source) non-directed edge corresponds to the reported assembly
+                    <li><strong>Assembly edge</strong>: colored (based on the source assembly) undirected edge corresponding to the reported assembly
                         point.
                         <ul>
-                            <li><strong>Non-ambiguous:</strong>
-                                all assembly edges from ambiguous assembly points are shown as dashed.
-                                <div class="row text-center">Example:<br><img width="200px" src="./libs/images/ambiguous_edge.png"/>
+                            <li><strong>Candidate:</strong> all assembly edges from un/semi-oriented assembly points are shown as dashed.
+                                <div class="row text-center">Example:<br><img width="200px" src="./libs/images/candidate_edge.png"/>
                                     <hr>
                                 </div>
                             </li>
-                            <li><strong>Ambiguous:</strong>
-                                all assembly edges from non-ambiguous assembly points are shown as solid.
-                                <div class="row text-center">Example:<br><img width="400px" src="./libs/images/non_ambiguous_edge.png"/>
+                            <li><strong>Exact:</strong> all assembly edges from orientedassembly points are shown as solid.
+                                <div class="row text-center">Example:<br><img width="400px" src="./libs/images/exact_edge.png"/>
                                     <hr>
                                 </div>
                             </li>
                         </ul>
-                        If the edge is shown in <strong>bold</strong>, that means that the assembly point (or a particular representation of
-                        it), that it represents participates in the produced <strong>super assembly</strong>.
-                        <div class="row text-center">Example:<br><img width="200px" src="./libs/images/sap_edge.png"/>
+                        If the edge is shown in <strong>bold</strong>, it means that the assembly point (its particular realization , corresponding to the egde),
+                        participates in the produced <strong>merged assembly</strong>.
+                        <div class="row text-center">Example:<br><img width="200px" src="./libs/images/map_edge.png"/>
                             <hr>
                         </div>
                         <br>
-                        Parallel edges correspond to assembly points, reported by respective list of sources, where such list can be
-                        determined by the color of parallel edges.
+                        Parallel assembly edges of several colors correspond to assembly points' representations, where the colors determine the list of source assemblies.
                         <div class="row text-center">Example:<br><img width="400px" src="./libs/images/parallel_edges.png"/></div>
                     </li>
                 </ul>
@@ -1544,7 +1526,6 @@
             <hr>
             <div class="row">
                 <h3 class="text-center">Modifying the graph</h3>
-                One can work with thr graph, using the mouse / touchpad.
                 <ul>
                     <li><strong>Zooming:</strong> using the scroll of the mouse, one can zoom in and out of the graph. Note that the
                         position of the pointer determines where the zoom will be focused.
@@ -1563,7 +1544,6 @@
         </div>
     </div>
     <hr>
-    {#    <footer class="footer">#}
     <div class="row" style="background-color: #EAEAEA; border-top-right-radius: 15px; border-top-left-radius: 15px;">
         <p class="text-center footer-text" style="padding-top: 15px;"> Sergey Aganezov: <a
                 href="mailto:aganezov@gwu.edu">aganezov@gwu.edu</a></p>

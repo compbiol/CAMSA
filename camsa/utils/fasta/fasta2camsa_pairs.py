@@ -146,6 +146,24 @@ def get_assembly_points_from_aligned_contigs(coords_entries, strategy):
         return pairs
 
 
+def filter_fully_covered_contigs(contigs):
+    start_entries = [(contig.scaffold_start, contig, "start") for contig in contigs]
+    end_entries = [(contig.scaffold_end, contig, "end") for contig in contigs]
+    entries = sorted(start_entries + end_entries, key=lambda it: it[0])
+    result_chain = []
+    processing = deque()
+    for entry in entries:
+        if entry[2] == "start":
+            processing.append(entry[1])
+        else:
+            if entry[1] == processing[0]:
+                result_chain.append(entry[1])
+                processing.popleft()
+            else:
+                processing.remove(entry[1])
+    return result_chain
+
+
 if __name__ == "__main__":
     full_description = "=" * 80 + \
                        "\nSergey Aganezov & Max A. Alekseyev (c)\n" + \
@@ -157,8 +175,8 @@ if __name__ == "__main__":
 
     parser.add_argument("contigs", metavar="CONTIGS", help="fasta formatted file with contigs, that served as input for scaffolding purposes")
     parser.add_argument("scaffolds", metavar="SCAFFOLDS", nargs="+", help="fasta formatted result files of contigs scaffolding")
-    parser.add_argument("-o", metavar="OUTPUT_DIR", dest="output_dir", default="output", help="output directory to store temporary and final files.\nDEFAULT: ./output/")
-    parser.add_argument("--tmp-dir", metavar="TMP_DIR", dest="tmp_dir", default=None, help="directory with all intermediate (.delta | .coords) files.")
+    parser.add_argument("-o", metavar="OUTPUT_DIR", dest="output_dir", default="output", help="Output directory to store temporary and final files.\nDEFAULT: ./output/")
+    parser.add_argument("--tmp-dir", metavar="TMP_DIR", dest="tmp_dir", default=None, help="Directory with all intermediate (.delta | .coords) files.")
     parser.add_argument("--overwrite", dest="overwrite", action="store_true", help="Disregards already present \"*.delta\" as well as \"*.coords\" and runs all the stages from scratch.\nDEFAULT: False")
     parser.add_argument("--ensure-all", dest="ensure_all", default=False, type=bool, help="Flag indicating, that is any subprocess of this converter fails, than the whole operation will be canceled.\nDEFAULT: False")
 
@@ -178,8 +196,10 @@ if __name__ == "__main__":
 
     parser.add_argument("--c-cov-threshold", default=90.0, type=float, dest="c_cov_threshold",
                         help="lower coverage bound with respect to each aligned contig. All contigs with coverage less than the threshold are omitted.\nDEAFULT: 90.0")
-    parser.add_argument("--coords-pairs-strategy", choices=["mid-point-sort", "sliding-window"], default="sliding-window", dest="coords_to_pairs_strategy",
-                        help="a strategy that determines on how assembly pairs from contigs on each scaffold are inferred.\n"
+    parser.add_argument("--keep-fully-covered-contigs", action="store_false", dest="filter_fully_covered_contigs", default=True,
+                        help="Whether to keep contigs, that are mapped some other contigs, or not.\nDEFAULT: False")
+    parser.add_argument("--coords-pairs-strategy", choices=["mid-point-sort", "sliding-window", "all"], default="sliding-window", dest="coords_to_pairs_strategy",
+                        help="A strategy that determines on how assembly pairs from contigs on each scaffold are inferred.\n"
                              "\"mid-point-sort\" -- all contig mapping on each scaffold are sorted by their mid coordinate (start + end) / 2.\n\tSorted sequence of contigs determines n-1 assembly points.\n"
                              "\"sliding-window\" -- all pairs of adjacent extremities of non overlapping contigs will be reported as assembly points."
                              "\nDEFAULT: sliding-window ")
@@ -285,6 +305,8 @@ if __name__ == "__main__":
                 writer = csv.writer(destination, delimiter="\t")
                 writer.writerow(['origin', 'ctg1', 'ctg1_or', 'ctg2', 'ctg2_or', 'gap_size', 'cw'])
                 for scaffold, contigs_chain in chains.items():
+                    if args.filter_fully_covered_contigs:
+                        contigs_chain = filter_fully_covered_contigs(contigs=contigs_chain)
                     assembly_points = get_assembly_points_from_aligned_contigs(coords_entries=contigs_chain,
                                                                                strategy=args.coords_to_pairs_strategy)
                     for left, right in assembly_points:

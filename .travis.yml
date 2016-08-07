@@ -51,9 +51,9 @@ install:
   - pip install -r requirements.txt
   - chmod +x camsa/utils/fasta/fasta2camsa_pairs.py
   - chmod +x camsa/utils/fasta/fasta2camsa_lengths.py
-  - chmod +x camsa/camsa.py
+  - chmod +x camsa/run_camsa.py
 
 script:
   - camsa/utils/fasta/fasta2camsa_pairs.py --help
   - camsa/utils/fasta/fasta2camsa_lengths.py --help
-  - camsa/camsa.py --help
+  - camsa/run_camsa.py --help

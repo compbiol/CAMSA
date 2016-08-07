@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import csv
+import os
 from collections import defaultdict
 
-from data_structures import AssemblyPoint
+from core.data_structures import AssemblyPoint
 
 
 def get_fn_relations_for_column_names(fieldnames, aliases):
@@ -17,15 +18,15 @@ PAIRS_COLUMN_ALIASES = {
     "species": "origin",
     "organisms": "origin",
     ########################
-    "ctg1": "ctg1",
+    "ctg1": "seq1",
     ########################
-    "ctg2": "ctg2",
+    "ctg2": "seq2",
     ########################
-    "orientation_ctg1": "ctg1_or",
-    "ctg1_orientation": "ctg1_or",
+    "orientation_ctg1": "seq1_or",
+    "ctg1_orientation": "seq1_or",
     ########################
-    "ctg2_orientation": "ctg2_or",
-    "orientation_ctg2": "ctg2_or",
+    "ctg2_orientation": "seq2_or",
+    "orientation_ctg2": "seq2_or",
     ########################
     "distance": "gap_size",
     "ctg1-ctg2_gap": "gap_size",
@@ -34,7 +35,7 @@ PAIRS_COLUMN_ALIASES = {
 }
 
 
-def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, default_cw_pae=0.9):
+def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, default_cw_cae=0.9):
     if destination is None:
         destination = defaultdict(list)
     reader = csv.DictReader(source, delimiter=delimiter)
@@ -48,14 +49,29 @@ def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, defau
         except ValueError:
             cw = "?"
         if cw == "?":
-            cw = default_cw_eae if "?" not in [row[fn_relations["ctg1_or"]], row[fn_relations["ctg2_or"]]] else default_cw_pae
-        destination[origin].append(AssemblyPoint(ctg1=row[fn_relations["ctg1"]],
-                                                 ctg2=row[fn_relations["ctg2"]],
-                                                 ctg1_or=row[fn_relations["ctg1_or"]],
-                                                 ctg2_or=row[fn_relations["ctg2_or"]],
+            cw = default_cw_eae if "?" not in [row[fn_relations["seq1_or"]], row[fn_relations["seq2_or"]]] else default_cw_cae
+        seq1 = row[fn_relations["seq1"]]
+        seq2 = row[fn_relations["seq2"]]
+        if seq1 == seq2:
+            # no support for duplicated contigs presence
+            continue
+        destination[origin].append(AssemblyPoint(seq1=seq1,
+                                                 seq2=seq2,
+                                                 seq1_or=row[fn_relations["seq1_or"]],
+                                                 seq2_or=row[fn_relations["seq2_or"]],
                                                  sources=[row[fn_relations["origin"]]],
                                                  cw=cw))
     return destination
+
+
+def read_assembly_points_from_input_sources(sources, delimiter="\t", default_cw_eae=1, default_cw_cae=0.75):
+    result = defaultdict(list)
+    for file_name in sources:
+        file_name = os.path.abspath(os.path.expanduser(file_name))
+        with open(file_name, "rt") as source:
+            read_pairs(source=source, delimiter=delimiter, destination=result,
+                       default_cw_eae=default_cw_eae, default_cw_cae=default_cw_cae)
+    return result
 
 
 LENGTHS_COLUMN_ALIASES = {

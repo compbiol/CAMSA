@@ -2,3 +2,4 @@ Jinja2
 networkx
 six
 biopython
+enum34

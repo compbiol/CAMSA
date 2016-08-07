@@ -19,7 +19,7 @@ We suggest using a ``virtual environments`` of python, to isolate the installati
 
 ``CAMSA`` usage instructions can be found by running:
 
-    camsa.py --help
+    run_camsa.py --help
 
 With any questions about installation or usage, please, contact **Sergey Aganezov** *[aganezov(at)gwu.edu]*
 
@@ -29,7 +29,7 @@ Input
 ``CAMSA`` expect as an input a set of different assemblies on the same set of scaffolds.
 Assemblies are ought to be provided in CSV files, with the following format:
 
-    origin    ctg1    ctg1_or    ctg2    ctg2_or    gap_size    cw
+    origin    seq1    seq1_or    seq2    seq2_or    gap_size    cw
     A1        s1      +          s2      -          ?           ?
     A1        s2      -          s3      +          ?           ?
     ...
@@ -38,10 +38,10 @@ Assemblies are ought to be provided in CSV files, with the following format:
 Fields description:
 
 * ``origin``:   ``id`` of the assembly, that provides an assembly point
-* ``ctg1``:     ``id`` of the first fragment, that participates in the assembly point
-* ``ctg1_or``:  relative orientation, of the first fragment in the assembly point. (+/-/?)
-* ``ctg2``:     ``id`` of the second fragment, that participates in the assembly point
-* ``ctg2_or``:  relative orientation, of the second fragment in the assembly point. (+/-/?)
+* ``seq1``:     ``id`` of the first fragment, that participates in the assembly point
+* ``seq1_or``:  relative orientation, of the first fragment in the assembly point. (+/-/?)
+* ``seq2``:     ``id`` of the second fragment, that participates in the assembly point
+* ``seq2_or``:  relative orientation, of the second fragment in the assembly point. (+/-/?)
 * ``gap_size``: integer value, determining a gap size between two assembled fragments (>=0 / ?)
 * ``cw``:       confidence weight, of the reported assembly point ([0, 1]/?)
 
