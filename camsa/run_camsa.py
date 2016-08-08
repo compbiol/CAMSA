@@ -38,24 +38,23 @@ if __name__ == "__main__":
                                       formatter_class=configargparse.RawTextHelpFormatter,
                                       default_config_files=[os.path.join(os.path.dirname(os.path.abspath(__file__)), "run_camsa.ini")])
     parser.add_argument("input-points", nargs="+",
-                        help="")
+                        help="A list of input files, representing a standard CAMSA format for assembly points.")
     parser.add_argument("-c", "--config", is_config_file=True,
-                        help="")
+                        help="Config file path with settings for CAMSA to run with.\nOverwrites the default CAMSA configuration file.\nValues in config file can be overwritten by command line arguments.")
     parser.add_argument("--c-cw-exact", type=float,
-                        help="")
+                        help="A confidence weight value assigned to oriented assembly points and respective exact assembly edges,\nin case \"?\" is specified as the respective assembly point confidence weight.\nDEFAULT: 1.0")
     parser.add_argument("--c-cw-candidate", type=float,
-                        help="")
+                        help="A confidence weight value assigned to semi/un-oriented assembly points and respective candidate assembly edges,\nin case \"?\" is specified as the respective assembly point confidence weight.\nDEFAULT: 0.75")
     parser.add_argument("--c-merging-cw-min", type=float,
-                        help="")
+                        help="A threshold for the minimum cumulative confidence weight for merged edges in MSAG.\nEdges with confidence weight below are not considered in the \"merged\" assembly construction.\nDEFAULT: 0.0")
     parser.add_argument("--c-merging-strategy", choices=[MergingStrategies.progressive_merging.value, MergingStrategies.maximal_matching.value],
                         default=MergingStrategies.maximal_matching.value,
-                        help="")
+                        help="A strategy to produced a merged assembly from the given ones.\nDEFAULT: maximal-matching")
     parser.add_argument("--c-merging-cycles", action="store_true", default=False,
-                        help="")
-    parser.add_argument("--version", action="version", version=camsa.VERSION,
-                        help="")
+                        help="Allow cycles in the produced merged assembly.\nDEFAULT: False")
+    parser.add_argument("--version", action="version", version=camsa.VERSION)
     parser.add_argument("-o", "--output-dir",
-                        help="")
+                        help="A directory, where CAMSA will store all of the produced output (report, assets, etc).")
     parser.add_argument("--c-logging-level", default=logging.INFO, type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
                         help="Logging level for CAMSA.\nDEFAULT: {info}".format(info=logging.INFO))
