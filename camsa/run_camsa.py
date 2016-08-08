@@ -14,8 +14,8 @@ import configargparse
 import six
 from jinja2 import Template
 
-sys.path.append(os.path.dirname(__file__))
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import camsa
 from core import io as camsa_io
@@ -36,8 +36,8 @@ if __name__ == "__main__":
 
     parser = configargparse.ArgParser(description=full_description,
                                       formatter_class=configargparse.RawTextHelpFormatter,
-                                      default_config_files=[os.path.join(os.path.dirname(__file__), "default_conf.ini")])
-    parser.add_argument("input", nargs="+",
+                                      default_config_files=[os.path.join(os.path.dirname(os.path.abspath(__file__)), "default_conf.ini")])
+    parser.add_argument("input-pairs-files", nargs="+",
                         help="")
     parser.add_argument("-c", "--config", is_config_file=True,
                         help="")

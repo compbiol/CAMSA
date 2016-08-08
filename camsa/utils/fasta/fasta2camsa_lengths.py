@@ -1,24 +1,32 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-import argparse
 import csv
 import datetime
 import logging
+import os
 import sys
 
+import configargparse
 from Bio import SeqIO
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+
+import camsa
+
 if __name__ == "__main__":
-    full_description = "=" * 80 + \
-                       "\nSergey Aganezov & Max A. Alekseyev (c)\n" + \
-                       "Computational Biology Institute, The George Washington University.\n\n" + \
-                       "Extracting contigs lengths from *.fasta files for further CAMSA processing.\n" + \
-                       "With any questions, please, contact Sergey Aganezov [aganezov(at)gwu.edu].\n" + \
-                       "=" * 80 + "\n"
-    parser = argparse.ArgumentParser(description=full_description, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("-o", "--output-file", metavar="OUTPUT", dest="output", type=argparse.FileType("wt"), default=sys.stdout,
+    full_description = camsa.full_description_template.format(
+        names=camsa.CAMSA_AUTHORS,
+        affiliations=camsa.AFFILIATIONS,
+        dummy=" ",
+        tool="Converting FASTA formatted scaffolding results for further CAMSA processing.",
+        information="For more information refer to wiki at github.com/aganezov/camsa/wiki",
+        contact=camsa.CONTACT)
+    full_description = "=" * 80 + "\n" + full_description + "=" * 80 + "\n"
+    parser = configargparse.ArgParser(description=full_description, formatter_class=configargparse.RawTextHelpFormatter)
+    parser.add_argument("-o", "--output-file", metavar="OUTPUT", dest="output", type=configargparse.FileType("wt"), default=sys.stdout,
                         help="A file to which the CAMSA readable fragments lengths would be written. Standard extension is \".camsa.lengths\".\nDEFAULT: stdout")
-    parser.add_argument("contigs", nargs="+", metavar="CONTIGS", type=argparse.FileType("rt"), default=sys.stdin,
+    parser.add_argument("contigs", nargs="+", metavar="CONTIGS", type=configargparse.FileType("rt"), default=sys.stdin,
                         help="A list of input *.fasta files with contigs.\nDEFAULT: stdin")
     parser.add_argument("--logging-level", dest="logging_level", default=logging.INFO, type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
@@ -26,12 +34,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
     start_time = datetime.datetime.now()
 
-    logger = logging.getLogger("fasta2camsa_lengths")
+    logger = logging.getLogger("CAMSA.utils.fasta2camsa_lengths")
     ch = logging.StreamHandler()
     ch.setLevel(args.logging_level)
     logger.setLevel(args.logging_level)
     logger.addHandler(ch)
     logger.info(full_description)
+    ch.setFormatter(camsa.formatter)
     logger.info("Starting the converting process")
 
     entries = {}

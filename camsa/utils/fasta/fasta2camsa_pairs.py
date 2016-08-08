@@ -10,8 +10,10 @@ import sys
 from collections import defaultdict, deque
 from os.path import isfile
 
-sys.path.append(os.path.dirname(__file__))
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+import configargparse
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
 import camsa
 
@@ -175,10 +177,11 @@ if __name__ == "__main__":
         names=camsa.CAMSA_AUTHORS,
         affiliations=camsa.AFFILIATIONS,
         dummy=" ",
-        tool="Preparation of fasta formatted scaffolding results for further CAMSA processing.",
+        tool="Converting FASTA formatted scaffolding results for further CAMSA processing.",
         information="For more information refer to wiki at github.com/aganezov/camsa/wiki",
         contact=camsa.CONTACT)
-    parser = argparse.ArgumentParser(description=full_description, formatter_class=argparse.RawTextHelpFormatter)
+    full_description = "=" * 80 + "\n" + full_description + "=" * 80 + "\n"
+    parser = configargparse.ArgParser(description=full_description, formatter_class=configargparse.RawTextHelpFormatter)
 
     parser.add_argument("contigs", metavar="CONTIGS", help="fasta formatted file with contigs, that served as input for scaffolding purposes")
     parser.add_argument("scaffolds", metavar="SCAFFOLDS", nargs="+", help="fasta formatted result files of contigs scaffolding")
@@ -217,12 +220,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
     start_time = datetime.datetime.now()
 
-    logger = logging.getLogger("fasta2camsa_pairs")
+    logger = logging.getLogger("CAMSA.utils.fasta2camsa_pairs")
     ch = logging.StreamHandler()
     ch.setLevel(args.logging_level)
     logger.setLevel(args.logging_level)
     logger.addHandler(ch)
     logger.info(full_description)
+    ch.setFormatter(camsa.formatter)
     logger.info("Starting the converting process")
 
     args.output_dir = os.path.expanduser(args.output_dir)
