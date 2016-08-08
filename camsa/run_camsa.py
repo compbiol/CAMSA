@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     parser = configargparse.ArgParser(description=full_description,
                                       formatter_class=configargparse.RawTextHelpFormatter,
-                                      default_config_files=[os.path.join(os.path.dirname(os.path.abspath(__file__)), "default_conf.ini")])
+                                      default_config_files=[os.path.join(os.path.dirname(os.path.abspath(__file__)), "run_camsa.ini")])
     parser.add_argument("input-pairs-files", nargs="+",
                         help="")
     parser.add_argument("-c", "--config", is_config_file=True,

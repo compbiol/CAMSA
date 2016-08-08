@@ -54,6 +54,8 @@ install:
   - chmod +x camsa/run_camsa.py
 
 script:
-  - camsa/utils/fasta/fasta2camsa_pairs.py --help
+  - cd ~/aganezov
+  - gzip -d CAMSA/camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta.gz CAMSA/camsa/examples/utils/fasta/data/B_anthracis_Mslice.fasta.gz
+  - CAMSA/camsa/utils/fasta/fasta2camsa_pairs.py CAMSA/camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta CAMSA/camsa/examples/utils/fasta/data/B_anthracis_Mslice.fasta --output-dir CAMSA/camsa/examples/utils/fasta/data/output
   - camsa/utils/fasta/fasta2camsa_lengths.py --help
   - camsa/run_camsa.py --help

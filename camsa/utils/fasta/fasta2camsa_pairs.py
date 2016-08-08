@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-import argparse
 import csv
 import datetime
 import logging
@@ -106,8 +105,10 @@ def run_nucmer(contigs_file_name, reference_file_name, nucmer_executable_path, c
                      "".format(delta_output=os.path.join(output_dir, "{prefix}.delta".format(prefix=prefix))))
         logger.debug("NUCmer log is stored in \"{nucmer_log}\".".format(scaffolds_file=reference_file_name, nucmer_log=nucmer_stdout))
     else:
-        logger.error("NUCmer exited with non-zero code, running for \"{scaffolds}\" scaffolds file. "
-                     "NUCmer logs are stored in:\n\tstdout: \"{nucmer_log}\"\n\tstderr: \"{nucmer_err}\"\n---".format(scaffolds=reference_file_name, nucmer_log=nucmer_stdout, nucmer_err=nucmer_stderr))
+        logger.error("NUCmer exited with non-zero code, running for \"{scaffolds}\" scaffolds file.".format(scaffolds=reference_file_name))
+        logger.error("NUCmer logs are stored in:")
+        logger.error("\tstdout: \"{nucmer_log}\"".format(scaffolds=reference_file_name, nucmer_log=nucmer_stdout, nucmer_err=nucmer_stderr))
+        logger.error("\tstderr: \"{nucmer_err}\"".format(scaffolds=reference_file_name, nucmer_log=nucmer_stdout, nucmer_err=nucmer_stderr))
     return exitcode
 
 
@@ -123,8 +124,8 @@ def run_show_coords(delta_file_name, output_dir, logs_dir, show_coords_executabl
         logger.info("show-coords util has finished running for \"{delta_file}\".".format(delta_file=delta_file_name))
         logger.debug("show-coords output is stored in \"{coords_output}\" file.".format(coords_output=output_file_name))
     else:
-        logger.error("show-coords exited with non-zero code, running for \"{delta_file}\".\n"
-                     "show-coords error log is stored in \"{show_coords_error_log}\"\n---\n".format(delta_file=delta_file_name, show_coords_error_log=show_coords_stderr))
+        logger.error("show-coords exited with non-zero code, running for \"{delta_file}\".".format(delta_file=delta_file_name, show_coords_error_log=show_coords_stderr))
+        logger.error("\tshow-coords error log is stored in \"{show_coords_error_log}\"".format(delta_file=delta_file_name, show_coords_error_log=show_coords_stderr))
     return exitcode
 
 
@@ -181,18 +182,20 @@ if __name__ == "__main__":
         information="For more information refer to wiki at github.com/aganezov/camsa/wiki",
         contact=camsa.CONTACT)
     full_description = "=" * 80 + "\n" + full_description + "=" * 80 + "\n"
-    parser = configargparse.ArgParser(description=full_description, formatter_class=configargparse.RawTextHelpFormatter)
+    parser = configargparse.ArgParser(description=full_description, formatter_class=configargparse.RawTextHelpFormatter,
+                                      default_config_files=[os.path.join(os.path.dirname(os.path.abspath(__file__)), "fasta2camsa_pairs.ini")])
 
     parser.add_argument("contigs", metavar="CONTIGS", help="fasta formatted file with contigs, that served as input for scaffolding purposes")
     parser.add_argument("scaffolds", metavar="SCAFFOLDS", nargs="+", help="fasta formatted result files of contigs scaffolding")
-    parser.add_argument("-o", metavar="OUTPUT_DIR", dest="output_dir", default="output", help="Output directory to store temporary and final files.\nDEFAULT: ./output/")
+    parser.add_argument("-c", "--config", is_config_file=True, help="Config file overwriting some of the default settings as well as any flag starting with \"--\".")
+    parser.add_argument("-o", "--output-dir", metavar="OUTPUT_DIR", dest="output_dir", default="output", help="Output directory to store temporary and final files.\nDEFAULT: ./output/")
     parser.add_argument("--tmp-dir", metavar="TMP_DIR", dest="tmp_dir", default=None, help="Directory with all intermediate (.delta | .coords) files.")
     parser.add_argument("--overwrite", dest="overwrite", action="store_true", help="Disregards already present \"*.delta\" as well as \"*.coords\" and runs all the stages from scratch.\nDEFAULT: False")
     parser.add_argument("--ensure-all", dest="ensure_all", default=False, type=bool, help="Flag indicating, that is any subprocess of this converter fails, than the whole operation will be canceled.\nDEFAULT: False")
 
     parser.add_argument("--nucmer-cli-arguments", dest="nucmer_cli_arguments", default="-maxmatch -c 100")
 
-    parser.add_argument("--show-coords-arguments", dest="show_coords_cli_arguments", default="-r -c -l")
+    parser.add_argument("--show-coords-cli-arguments", dest="show_coords_cli_arguments", default="-r -c -l")
 
     #######################################################################################################################
     # will definitely make two options this work, once the python bug is fixed: http://bugs.python.org/issue15112
@@ -206,15 +209,15 @@ if __name__ == "__main__":
 
     parser.add_argument("--c-cov-threshold", default=90.0, type=float, dest="c_cov_threshold",
                         help="lower coverage bound with respect to each aligned contig. All contigs with coverage less than the threshold are omitted.\nDEAFULT: 90.0")
-    parser.add_argument("--keep-fully-covered-contigs", action="store_false", dest="filter_fully_covered_contigs", default=True,
+    parser.add_argument("--c-keep-fully-covered-contigs", action="store_true", default=False,
                         help="Whether to keep contigs, that are mapped some other contigs, or not.\nDEFAULT: False")
-    parser.add_argument("--coords-pairs-strategy", choices=["mid-point-sort", "sliding-window", "all"], default="sliding-window", dest="coords_to_pairs_strategy",
+    parser.add_argument("--c-coords-pairs-strategy", choices=["mid-point-sort", "sliding-window", "all"], default="sliding-window", dest="coords_to_pairs_strategy",
                         help="A strategy that determines on how assembly pairs from contigs on each scaffold are inferred.\n"
                              "\"mid-point-sort\" -- all contig mapping on each scaffold are sorted by their mid coordinate (start + end) / 2.\n\tSorted sequence of contigs determines n-1 assembly points.\n"
                              "\"sliding-window\" -- all pairs of adjacent extremities of non overlapping contigs will be reported as assembly points."
                              "\nDEFAULT: sliding-window ")
 
-    parser.add_argument("--logging-level", dest="logging_level", default=logging.INFO, type=int,
+    parser.add_argument("--c-logging-level", dest="logging_level", default=logging.INFO, type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
                         help="Logging level for the converter.\nDEFAULT: {info}".format(info=logging.INFO))
     args = parser.parse_args()
@@ -226,6 +229,7 @@ if __name__ == "__main__":
     logger.setLevel(args.logging_level)
     logger.addHandler(ch)
     logger.info(full_description)
+    logger.info(parser.format_values())
     ch.setFormatter(camsa.formatter)
     logger.info("Starting the converting process")
 
@@ -250,7 +254,7 @@ if __name__ == "__main__":
 
     for scaffolds_file in args.scaffolds:
         prefix = get_file_prefix(file_name=scaffolds_file)
-        logger.info("---\nWorking with \"{scaffolds_file}\"".format(scaffolds_file=scaffolds_file))
+        logger.info("Working with \"{scaffolds_file}\"".format(scaffolds_file=scaffolds_file))
         ##################################################################################################
         # obtaining NUCmer alignments results in a form of *.delta file.
         ##################################################################################################
@@ -284,7 +288,7 @@ if __name__ == "__main__":
             delta_file_name = [f for f in delta_file_name if os.path.splitext(f)[1] == ".delta"]
             delta_file_name = [f for f in delta_file_name if os.path.splitext(f)[0] == prefix]
             if len(delta_file_name) == 0:
-                logger.error("Delta file for prefix=\"{prefix}\" was not found in the output folder.\n---".format(prefix=prefix))
+                logger.error("Delta file for prefix=\"{prefix}\" was not found in the output folder.".format(prefix=prefix))
                 if args.ensure_all:
                     exit_program()
                 continue
@@ -301,7 +305,7 @@ if __name__ == "__main__":
         ##################################################################################################
         coords_file = os.path.join(args.tmp_dir, prefix + ".coords")
         if not os.path.exists(coords_file):
-            logger.error("Coords file for \"{prefix}\" doesn't exist in the tmp output directory.\n---")
+            logger.error("Coords file for \"{prefix}\" doesn't exist in the tmp output directory.")
             if args.ensure_all:
                 exit_program()
             continue
@@ -314,9 +318,9 @@ if __name__ == "__main__":
             with open(result_file, "wt") as destination:
                 logger.info("Writing coords data in terms of CAMSA assembly points in \"{camsa_input_file}\"".format(camsa_input_file=result_file))
                 writer = csv.writer(destination, delimiter="\t")
-                writer.writerow(['origin', 'ctg1', 'ctg1_or', 'ctg2', 'ctg2_or', 'gap_size', 'cw'])
+                writer.writerow(['origin', 'seq1', 'seq1_or', 'seq2', 'seq22_or', 'gap_size', 'cw'])
                 for scaffold, contigs_chain in chains.items():
-                    if args.filter_fully_covered_contigs:
+                    if not args.c_keep_fully_covered_contigs:
                         contigs_chain = filter_fully_covered_contigs(contigs=contigs_chain)
                     assembly_points = get_assembly_points_from_aligned_contigs(coords_entries=contigs_chain,
                                                                                strategy=args.coords_to_pairs_strategy)
@@ -326,6 +330,5 @@ if __name__ == "__main__":
                                          right.fragment_name, right.fragment_orientation,
                                          min(right.scaffold_start, right.scaffold_end) - max(left.scaffold_end, left.scaffold_start),
                                          "?"])
-            logger.info("Finished converting data for \"{prefix}\"\n---".format(prefix=prefix))
-    end_time = datetime.datetime.now()
-    logger.info("Elapsed time: {el_time}".format(el_time=str(end_time - start_time)))
+            logger.info("Finished converting data for \"{prefix}\"".format(prefix=prefix))
+    logger.info("Elapsed time: {el_time}".format(el_time=str(datetime.datetime.now() - start_time)))
