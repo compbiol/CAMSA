@@ -28,7 +28,7 @@ if __name__ == "__main__":
                         help="A file to which the CAMSA readable fragments lengths would be written. Standard extension is \".camsa.lengths\".\nDEFAULT: stdout")
     parser.add_argument("contigs", nargs="+", metavar="CONTIGS", type=configargparse.FileType("rt"), default=sys.stdin,
                         help="A list of input *.fasta files with contigs.\nDEFAULT: stdin")
-    parser.add_argument("--logging-level", dest="logging_level", default=logging.INFO, type=int,
+    parser.add_argument("--c-logging-level", dest="logging_level", default=logging.INFO, type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
                         help="Logging level for the converter.\nDEFAULT: {info}".format(info=logging.INFO))
     args = parser.parse_args()
