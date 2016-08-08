@@ -6,8 +6,14 @@ import datetime
 import logging
 import os
 import subprocess
+import sys
 from collections import defaultdict, deque
 from os.path import isfile
+
+sys.path.append(os.path.dirname(__file__))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+
+import camsa
 
 
 class CoordsEntry(object):
@@ -165,12 +171,13 @@ def filter_fully_covered_contigs(contigs):
 
 
 if __name__ == "__main__":
-    full_description = "=" * 80 + \
-                       "\nSergey Aganezov & Max A. Alekseyev (c)\n" + \
-                       "Computational Biology Institute, The George Washington University.\n\n" + \
-                       "Preparation of fasta formatted scaffolding results for further CAMSA processing.\n" + \
-                       "With any questions, please, contact Sergey Aganezov [aganezov(at)gwu.edu].\n" + \
-                       "=" * 80 + "\n"
+    full_description = camsa.full_description_template.format(
+        names=camsa.CAMSA_AUTHORS,
+        affiliations=camsa.AFFILIATIONS,
+        dummy=" ",
+        tool="Preparation of fasta formatted scaffolding results for further CAMSA processing.",
+        information="For more information refer to wiki at github.com/aganezov/camsa/wiki",
+        contact=camsa.CONTACT)
     parser = argparse.ArgumentParser(description=full_description, formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument("contigs", metavar="CONTIGS", help="fasta formatted file with contigs, that served as input for scaffolding purposes")

@@ -1,0 +1,4 @@
+include LICENSE.txt README.md requirements.txt setup.py
+recursive-include camsa/libs *
+include camsa/default_conf.ini
+include camsa/report_template.html

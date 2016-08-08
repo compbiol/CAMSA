@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-import argparse
 import datetime
 import itertools
 import logging
@@ -11,6 +10,7 @@ import shutil
 import sys
 from collections import defaultdict
 
+import configargparse
 import six
 from jinja2 import Template
 
@@ -24,7 +24,6 @@ from core.comparative_analysis import compute_and_update_assembly_points_conflic
 from core.data_structures import Assembly, assign_ids_to_assembly_points, merge_assembly_points, assign_parents_to_children
 from core.merging import MergingStrategies, update_assembly_points_with_merged_assembly
 
-
 if __name__ == "__main__":
     full_description = camsa.full_description_template.format(
         names=camsa.CAMSA_AUTHORS,
@@ -35,19 +34,31 @@ if __name__ == "__main__":
         contact=camsa.CONTACT)
     full_description = "=" * 80 + "\n" + full_description + "=" * 80 + "\n"
 
-    parser = argparse.ArgumentParser(description=full_description, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("input", nargs="+")
-    parser.add_argument("--c-default-exact-cw", dest="cw_exact", type=float, default=1.0)
-    parser.add_argument("--c-default-candidate-cw", dest="cw_candidate", type=float, default=0.9)
-    parser.add_argument("--c-min-cw-threshold", dest="min_cw", type=float, default=0.0)
+    parser = configargparse.ArgParser(description=full_description,
+                                      formatter_class=configargparse.RawTextHelpFormatter,
+                                      default_config_files=[os.path.join(os.path.dirname(__file__), "default_conf.ini")])
+    parser.add_argument("input", nargs="+",
+                        help="")
+    parser.add_argument("-c", "--config", is_config_file=True,
+                        help="")
+    parser.add_argument("--c-cw-exact", type=float,
+                        help="")
+    parser.add_argument("--c-cw-candidate", type=float,
+                        help="")
+    parser.add_argument("--c-merging-cw-min", type=float,
+                        help="")
     parser.add_argument("--c-merging-strategy", choices=[MergingStrategies.progressive_merging.value, MergingStrategies.maximal_matching.value],
-                        default=MergingStrategies.maximal_matching.value, dest="merging_strategy")
-    parser.add_argument("--c-merging-allow-cycles", action="store_false", dest="acyclic", default=True)
-    parser.add_argument("--version", action="version", version=camsa.VERSION)
-    parser.add_argument("-o", "--c-output-dir", dest="output_report_dir", default=None)
-    parser.add_argument("--c-logging-level", dest="logging_level", default=logging.INFO, type=int,
+                        default=MergingStrategies.maximal_matching.value,
+                        help="")
+    parser.add_argument("--c-merging-cycles", action="store_true", default=False,
+                        help="")
+    parser.add_argument("--version", action="version", version=camsa.VERSION,
+                        help="")
+    parser.add_argument("-o", "--output-dir",
+                        help="")
+    parser.add_argument("--c-logging-level", default=logging.INFO, type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
-                        help="Logging level for the converter.\nDEFAULT: {info}".format(info=logging.INFO))
+                        help="Logging level for CAMSA.\nDEFAULT: {info}".format(info=logging.INFO))
     args = parser.parse_args()
 
     start_time = datetime.datetime.now()
@@ -57,9 +68,10 @@ if __name__ == "__main__":
     #######################################
     logger = logging.getLogger("CAMSA.main")
     ch = logging.StreamHandler()
-    logger.setLevel(args.logging_level)
+    logger.setLevel(args.c_logging_level)
     logger.addHandler(ch)
     logger.info(full_description)
+    logger.info(parser.format_values())
     ch.setFormatter(camsa.formatter)
     logger.info("Starting the analysis")
 
@@ -70,8 +82,8 @@ if __name__ == "__main__":
 
     # key is the origin of assembly point; values is the list of all points from that source
     assembly_points_by_sources = camsa_io.read_assembly_points_from_input_sources(sources=args.input,
-                                                                                  default_cw_eae=args.cw_exact,
-                                                                                  default_cw_cae=args.cw_candidate)
+                                                                                  default_cw_eae=args.c_cw_exact,
+                                                                                  default_cw_cae=args.c_cw_candidate)
     id_generator = itertools.count()
     original_assembly_points_by_ids = {}
     for assembly_points in assembly_points_by_sources.values():
@@ -116,10 +128,10 @@ if __name__ == "__main__":
     #######################################
     #       merging assemblies            #
     #######################################
-    logger.info("Obtaining a merged assembly, using {strategy} strategy".format(strategy=args.merging_strategy))
-    merged_assembly_graph = merging.strategies_bindings[args.merging_strategy](assembly_points_by_sources=assembly_points_by_sources,
-                                                                               acyclic=args.acyclic,
-                                                                               min_cw=args.min_cw)
+    logger.info("Obtaining a merged assembly, using {strategy} strategy".format(strategy=args.c_merging_strategy))
+    merged_assembly_graph = merging.strategies_bindings[args.c_merging_strategy](assembly_points_by_sources=assembly_points_by_sources,
+                                                                                 acyclic=args.c_merging_cycles,
+                                                                                 min_cw=args.c_merging_cw_min)
     update_assembly_points_with_merged_assembly(original_assembly_points_by_ids=original_assembly_points_by_ids,
                                                 merged_assembly_points_by_ids=merged_assembly_points_by_ids,
                                                 merged_assembly_graph=merged_assembly_graph)
@@ -128,22 +140,22 @@ if __name__ == "__main__":
     #           output stage              #
     #######################################
     logger.info("Preparing output")
-    if args.output_report_dir is None:
-        args.output_report_dir = os.path.join(os.getcwd(), "camsa_{date}".format(
+    if args.output_dir is None:
+        args.output_dir = os.path.join(os.getcwd(), "camsa_{date}".format(
             date=datetime.datetime.now().strftime("%b_%d_%Y__%H_%M")))
         logger.debug("Output directory was not specified. Automatically generated name: \"{out_dir}\"."
-                     "".format(out_dir=args.output_report_dir))
+                     "".format(out_dir=args.output_dir))
 
-    args.output_report_dir = os.path.abspath(os.path.expanduser(args.output_report_dir))
-    if not os.path.exists(args.output_report_dir):
-        os.makedirs(args.output_report_dir)
+    args.output_dir = os.path.abspath(os.path.expanduser(args.output_dir))
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
 
-    if os.path.exists(os.path.join(args.output_report_dir, "libs")) and os.path.isdir(
-            os.path.join(args.output_report_dir, "libs")):
-        shutil.rmtree(os.path.join(args.output_report_dir, "libs"))
+    if os.path.exists(os.path.join(args.output_dir, "libs")) and os.path.isdir(
+            os.path.join(args.output_dir, "libs")):
+        shutil.rmtree(os.path.join(args.output_dir, "libs"))
     root_dir = os.path.dirname(os.path.realpath(__file__))
-    shutil.copytree(src=os.path.join(root_dir, "libs"), dst=os.path.join(args.output_report_dir, "libs"))
-    output_html_report_file_name = os.path.join(args.output_report_dir, "report.html")
+    shutil.copytree(src=os.path.join(root_dir, "libs"), dst=os.path.join(args.output_dir, "libs"))
+    output_html_report_file_name = os.path.join(args.output_dir, "report.html")
 
     template = Template(source=open(os.path.join(root_dir, "report_template.html"), "rt").read())
 
