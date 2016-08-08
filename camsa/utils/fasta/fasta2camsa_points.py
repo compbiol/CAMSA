@@ -314,7 +314,7 @@ if __name__ == "__main__":
             parser = CoordsParser(source=source, lower_frag_cover=args.c_cov_threshold)
             chains = parser.parse_data()
 
-            result_file = os.path.join(args.output_dir, prefix + ".camsa.pairs")
+            result_file = os.path.join(args.output_dir, prefix + ".camsa.points")
             with open(result_file, "wt") as destination:
                 logger.info("Writing coords data in terms of CAMSA assembly points in \"{camsa_input_file}\"".format(camsa_input_file=result_file))
                 writer = csv.writer(destination, delimiter="\t")

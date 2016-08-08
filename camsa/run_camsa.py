@@ -37,7 +37,7 @@ if __name__ == "__main__":
     parser = configargparse.ArgParser(description=full_description,
                                       formatter_class=configargparse.RawTextHelpFormatter,
                                       default_config_files=[os.path.join(os.path.dirname(os.path.abspath(__file__)), "run_camsa.ini")])
-    parser.add_argument("input-pairs-files", nargs="+",
+    parser.add_argument("input-points", nargs="+",
                         help="")
     parser.add_argument("-c", "--config", is_config_file=True,
                         help="")
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     logger.info("Processing input")
 
     # key is the origin of assembly point; values is the list of all points from that source
-    assembly_points_by_sources = camsa_io.read_assembly_points_from_input_sources(sources=args.input,
+    assembly_points_by_sources = camsa_io.read_assembly_points_from_input_sources(sources=args.input_points,
                                                                                   default_cw_eae=args.c_cw_exact,
                                                                                   default_cw_cae=args.c_cw_candidate)
     id_generator = itertools.count()
