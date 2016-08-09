@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='CAMSA',
-    version='0.9.10',
+    version='0.9.13',
     author='Sergey Aganezov',
     author_email='aganezov@gwu.edu',
     description='CAMSA: a tool for Comparative Analysis and Merging of Scaffold Assemblies',

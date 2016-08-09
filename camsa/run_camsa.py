@@ -151,11 +151,10 @@ if __name__ == "__main__":
     if os.path.exists(os.path.join(args.output_dir, "libs")) and os.path.isdir(
             os.path.join(args.output_dir, "libs")):
         shutil.rmtree(os.path.join(args.output_dir, "libs"))
-    root_dir = os.path.dirname(os.path.realpath(__file__))
-    shutil.copytree(src=os.path.join(root_dir, "libs"), dst=os.path.join(args.output_dir, "libs"))
+    shutil.copytree(src=os.path.join(camsa.root_dir, "libs"), dst=os.path.join(args.output_dir, "libs"))
     output_html_report_file_name = os.path.join(args.output_dir, "report.html")
 
-    template = Template(source=open(os.path.join(root_dir, "report_template.html"), "rt").read())
+    template = Template(source=open(os.path.join(camsa.root_dir, "report_template.html"), "rt").read())
 
     individual_assemblies.sort(key=lambda it: it.name.lower())
     assemblies_to_ids = {assembly.name: cnt for cnt, assembly in enumerate(individual_assemblies, start=1)}
