@@ -48,7 +48,8 @@ before_install:
 
 install:
   - source camsa-env/bin/activate
-  - python setup.py install
+  - pip install -e .
+  - pip install -e .[fasta]
 #  - chmod +x camsa/utils/fasta/fasta2camsa_points.py
 #  - chmod +x camsa/utils/fasta/fasta2camsa_lengths.py
 #  - chmod +x camsa/run_camsa.py
