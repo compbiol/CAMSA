@@ -55,6 +55,8 @@ if __name__ == "__main__":
     parser.add_argument("--c-logging-level", default=logging.INFO, type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
                         help="Logging level for CAMSA.\nDEFAULT: {info}".format(info=logging.INFO))
+    parser.add_argument("--c-logging-formatter-entry",
+                        help="Format string for python logger.")
     args = parser.parse_args()
 
     start_time = datetime.datetime.now()
@@ -68,7 +70,7 @@ if __name__ == "__main__":
     logger.addHandler(ch)
     logger.info(full_description)
     logger.info(parser.format_values())
-    ch.setFormatter(camsa.formatter)
+    ch.setFormatter(args.c_logging_formatter_entry)
     logger.info("Starting the analysis")
 
     #######################################

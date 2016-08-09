@@ -31,6 +31,8 @@ if __name__ == "__main__":
     parser.add_argument("--c-logging-level", dest="logging_level", default=logging.INFO, type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
                         help="Logging level for the converter.\nDEFAULT: {info}".format(info=logging.INFO))
+    parser.add_argument("--c-logging-formatter-entry",
+                        help="Format string for python logger.")
     args = parser.parse_args()
     start_time = datetime.datetime.now()
 

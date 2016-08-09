@@ -217,10 +217,11 @@ if __name__ == "__main__":
                              "\"mid-point-sort\" -- all contig mapping on each scaffold are sorted by their mid coordinate (start + end) / 2.\n\tSorted sequence of contigs determines n-1 assembly points.\n"
                              "\"sliding-window\" -- all pairs of adjacent extremities of non overlapping contigs will be reported as assembly points."
                              "\nDEFAULT: sliding-window ")
-
     parser.add_argument("--c-logging-level", dest="logging_level", default=logging.INFO, type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
                         help="Logging level for the converter.\nDEFAULT: {info}".format(info=logging.INFO))
+    parser.add_argument("--c-logging-formatter-entry",
+                        help="Format string for python logger.")
     args = parser.parse_args()
     start_time = datetime.datetime.now()
 
@@ -231,7 +232,7 @@ if __name__ == "__main__":
     logger.addHandler(ch)
     logger.info(full_description)
     logger.info(parser.format_values())
-    ch.setFormatter(camsa.formatter)
+    ch.setFormatter(args.c_logging_formatter_entry)
     logger.info("Starting the converting process")
 
     args.output_dir = os.path.expanduser(args.output_dir)
