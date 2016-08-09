@@ -183,7 +183,8 @@ if __name__ == "__main__":
         contact=camsa.CONTACT)
     full_description = "=" * 80 + "\n" + full_description + "=" * 80 + "\n"
     parser = configargparse.ArgParser(description=full_description, formatter_class=configargparse.RawTextHelpFormatter,
-                                      default_config_files=[os.path.join(os.path.dirname(os.path.abspath(__file__)), "fasta2camsa_pairs.ini")])
+                                      default_config_files=[os.path.join(camsa.root_dir, "utils", "fasta", "fasta2camsa_points.ini"),
+                                                            os.path.join(camsa.root_dir, "logging.ini")])
 
     parser.add_argument("contigs", metavar="CONTIGS", help="fasta formatted file with contigs, that served as input for scaffolding purposes")
     parser.add_argument("scaffolds", metavar="SCAFFOLDS", nargs="+", help="fasta formatted result files of contigs scaffolding")

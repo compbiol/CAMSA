@@ -7,15 +7,11 @@ import itertools
 import logging
 import os
 import shutil
-import sys
 from collections import defaultdict
 
 import configargparse
 import six
 from jinja2 import Template
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import camsa
 from core import io as camsa_io
@@ -36,7 +32,8 @@ if __name__ == "__main__":
 
     parser = configargparse.ArgParser(description=full_description,
                                       formatter_class=configargparse.RawTextHelpFormatter,
-                                      default_config_files=[os.path.join(os.path.dirname(os.path.abspath(__file__)), "run_camsa.ini")])
+                                      default_config_files=[os.path.join(camsa.root_dir, "run_camsa.ini"),
+                                                            os.path.join(camsa.root_dir, "logging.ini")])
     parser.add_argument("input-points", nargs="+",
                         help="A list of input files, representing a standard CAMSA format for assembly points.")
     parser.add_argument("-c", "--config", is_config_file=True,

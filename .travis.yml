@@ -56,6 +56,9 @@ install:
 script:
   - cd ..
   - gzip -d CAMSA/camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta.gz CAMSA/camsa/examples/utils/fasta/data/B_anthracis_Mslice.fasta.gz
+  - CAMSA/camsa/utils/fasta/fasta2camsa_points.py --help
   - CAMSA/camsa/utils/fasta/fasta2camsa_points.py CAMSA/camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta CAMSA/camsa/examples/utils/fasta/data/B_anthracis_Mslice.fasta --output-dir CAMSA/camsa/examples/utils/fasta/data/output
+  - CAMSA/camsa/utils/fasta/fasta2camsa_lengths.py --help
   - CAMSA/camsa/utils/fasta/fasta2camsa_lengths.py CAMSA/camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta -o CAMSA/camsa/examples/utils/fasta/data/output/B_anthracis_contigs.camsa.lengths
   - CAMSA/camsa/run_camsa.py --help
+  - CAMSA/camsa/run_camsa.py CAMSA/camsa/examples/utils/fasta/data/output/B_anthracis_contigs.camsa.points -o CAMSA/camsa/examples/B_antracis
