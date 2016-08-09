@@ -59,7 +59,7 @@ script:
   - gzip -d B_anthracis_contigs.fasta.gz B_anthracis_Mslice.fasta.gz
   - cd ../../../../../
   - camsa-env/bin/fasta2camsa_points.py --help
-  - camsa-env/bin/fasta2camsa_points.py camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta camsa/examples/utils/fasta/data/B_anthracis_Mslice.fasta --output-dir camsa/examples/utils/fasta/data/output
+  - camsa-env/bin/fasta2camsa_points.py --nucmer-path `which nucmer` --show-coords-path `which show-coords` camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta camsa/examples/utils/fasta/data/B_anthracis_Mslice.fasta --output-dir camsa/examples/utils/fasta/data/output
   - camsa-env/bin/fasta2camsa_lengths.py --help
   - camsa-env/bin/fasta2camsa_lengths.py camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta -o camsa/examples/utils/fasta/data/output/B_anthracis_contigs.camsa.lengths
   - camsa-env/bin/run_camsa.py --help
