@@ -320,7 +320,7 @@ if __name__ == "__main__":
             with open(result_file, "wt") as destination:
                 logger.info("Writing coords data in terms of CAMSA assembly points in \"{camsa_input_file}\"".format(camsa_input_file=result_file))
                 writer = csv.writer(destination, delimiter="\t")
-                writer.writerow(['origin', 'seq1', 'seq1_or', 'seq2', 'seq22_or', 'gap_size', 'cw'])
+                writer.writerow(['origin', 'seq1', 'seq1_or', 'seq2', 'seq2_or', 'gap_size', 'cw'])
                 for scaffold, contigs_chain in chains.items():
                     if not args.c_keep_fully_covered_contigs:
                         contigs_chain = filter_fully_covered_contigs(contigs=contigs_chain)

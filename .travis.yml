@@ -60,9 +60,6 @@ script:
   - cd ../../../../../
   - camsa-env/bin/fasta2camsa_points.py --help
   - camsa-env/bin/fasta2camsa_points.py camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta camsa/examples/utils/fasta/data/B_anthracis_Mslice.fasta --output-dir camsa/examples/utils/fasta/data/output
-  - cat camsa/examples/utils/fasta/data/output/logs/nucmer_B_anthracis_Mslice.stdout.txt
-  - cat camsa/examples/utils/fasta/data/output/logs/nucmer_B_anthracis_Mslice.stderr.txt
-  - cat nucmer.error
   - camsa-env/bin/fasta2camsa_lengths.py --help
   - camsa-env/bin/fasta2camsa_lengths.py camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta -o camsa/examples/utils/fasta/data/output/B_anthracis_contigs.camsa.lengths
   - camsa-env/bin/run_camsa.py --help
