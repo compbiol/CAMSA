@@ -232,7 +232,7 @@ if __name__ == "__main__":
     logger.addHandler(ch)
     logger.info(full_description)
     logger.info(parser.format_values())
-    ch.setFormatter(args.c_logging_formatter_entry)
+    ch.setFormatter(logging.Formatter(args.c_logging_formatter_entry))
     logger.info("Starting the converting process")
 
     args.output_dir = os.path.expanduser(args.output_dir)

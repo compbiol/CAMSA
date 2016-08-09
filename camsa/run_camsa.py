@@ -34,7 +34,7 @@ if __name__ == "__main__":
                                       formatter_class=configargparse.RawTextHelpFormatter,
                                       default_config_files=[os.path.join(camsa.root_dir, "run_camsa.ini"),
                                                             os.path.join(camsa.root_dir, "logging.ini")])
-    parser.add_argument("input-points", nargs="+",
+    parser.add_argument("points", nargs="+",
                         help="A list of input files, representing a standard CAMSA format for assembly points.")
     parser.add_argument("-c", "--config", is_config_file=True,
                         help="Config file path with settings for CAMSA to run with.\nOverwrites the default CAMSA configuration file.\nValues in config file can be overwritten by command line arguments.")
@@ -70,7 +70,7 @@ if __name__ == "__main__":
     logger.addHandler(ch)
     logger.info(full_description)
     logger.info(parser.format_values())
-    ch.setFormatter(args.c_logging_formatter_entry)
+    ch.setFormatter(logging.Formatter(args.c_logging_formatter_entry))
     logger.info("Starting the analysis")
 
     #######################################
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     logger.info("Processing input")
 
     # key is the origin of assembly point; values is the list of all points from that source
-    assembly_points_by_sources = camsa_io.read_assembly_points_from_input_sources(sources=args.input_points,
+    assembly_points_by_sources = camsa_io.read_assembly_points_from_input_sources(sources=args.points,
                                                                                   default_cw_eae=args.c_cw_exact,
                                                                                   default_cw_cae=args.c_cw_candidate)
     id_generator = itertools.count()

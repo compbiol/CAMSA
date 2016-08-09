@@ -48,16 +48,16 @@ before_install:
 
 install:
   - source camsa-env/bin/activate
-  - pip install -r requirements.txt
-  - chmod +x camsa/utils/fasta/fasta2camsa_points.py
-  - chmod +x camsa/utils/fasta/fasta2camsa_lengths.py
-  - chmod +x camsa/run_camsa.py
+  - python setup.py install
+#  - chmod +x camsa/utils/fasta/fasta2camsa_points.py
+#  - chmod +x camsa/utils/fasta/fasta2camsa_lengths.py
+#  - chmod +x camsa/run_camsa.py
 
 script:
   - gzip -d camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta.gz camsa/examples/utils/fasta/data/B_anthracis_Mslice.fasta.gz
-  - camsa/utils/fasta/fasta2camsa_points.py --help
-  - camsa/utils/fasta/fasta2camsa_points.py camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta camsa/examples/utils/fasta/data/B_anthracis_Mslice.fasta --output-dir camsa/examples/utils/fasta/data/output
-  - camsa/utils/fasta/fasta2camsa_lengths.py --help
-  - camsa/utils/fasta/fasta2camsa_lengths.py camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta -o camsa/examples/utils/fasta/data/output/B_anthracis_contigs.camsa.lengths
-  - camsa/run_camsa.py --help
-  - camsa/run_camsa.py camsa/examples/utils/fasta/data/output/B_anthracis_contigs.camsa.points -o camsa/examples/B_antracis
+  - camsa-env/bin/fasta2camsa_points.py --help
+  - camsa-env/bin/fasta2camsa_points.py camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta camsa/examples/utils/fasta/data/B_anthracis_Mslice.fasta --output-dir camsa/examples/utils/fasta/data/output
+  - camsa-env/bin/fasta2camsa_lengths.py --help
+  - camsa-env/bin/fasta2camsa_lengths.py camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta -o camsa/examples/utils/fasta/data/output/B_anthracis_contigs.camsa.lengths
+  - camsa-env/bin/run_camsa.py --help
+  - camsa-env/bin/run_camsa.py camsa/examples/utils/fasta/data/output/B_anthracis_contigs.camsa.points -o camsa/examples/B_antracis
