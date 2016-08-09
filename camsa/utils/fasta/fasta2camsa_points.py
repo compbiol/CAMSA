@@ -217,7 +217,7 @@ if __name__ == "__main__":
                              "\"mid-point-sort\" -- all contig mapping on each scaffold are sorted by their mid coordinate (start + end) / 2.\n\tSorted sequence of contigs determines n-1 assembly points.\n"
                              "\"sliding-window\" -- all pairs of adjacent extremities of non overlapping contigs will be reported as assembly points."
                              "\nDEFAULT: sliding-window ")
-    parser.add_argument("--c-logging-level", default=logging.INFO, type=int,
+    parser.add_argument("--c-logging-level", type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
                         help="Logging level for the converter.\nDEFAULT: {info}".format(info=logging.INFO))
     parser.add_argument("--c-logging-formatter-entry",

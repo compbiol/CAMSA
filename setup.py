@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='CAMSA',
-    version='0.9.5',
+    version='0.9.10',
     author='Sergey Aganezov',
     author_email='aganezov@gwu.edu',
     description='CAMSA: a tool for Comparative Analysis and Merging of Scaffold Assemblies',
@@ -10,6 +10,7 @@ setup(
     keywords="comparative genomics, scaffolding, genome assembly",
     url='https://github.com/aganezov/camsa',
     packages=['', 'camsa', 'camsa.core', 'camsa.utils', 'camsa.utils.camsa', 'camsa.utils.fasta'],
+    include_package_data=True,
     install_requires=['six>=1.10.0', 'networkx>=1.11', 'Jinja2>=2.8', 'enum34>=1.1.6', 'blist>=1.3.6', 'ConfigArgParse>=0.10.0'],
     extras_require={
         'fasta': ['biopython>=1.67'],
