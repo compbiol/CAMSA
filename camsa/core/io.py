@@ -3,7 +3,7 @@ import csv
 import os
 from collections import defaultdict
 
-from core.data_structures import AssemblyPoint
+from camsa.core.data_structures import AssemblyPoint
 
 
 def get_fn_relations_for_column_names(fieldnames, aliases):

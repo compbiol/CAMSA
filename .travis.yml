@@ -61,4 +61,4 @@ script:
   - camsa-env/bin/fasta2camsa_lengths.py --help
   - camsa-env/bin/fasta2camsa_lengths.py camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta -o camsa/examples/utils/fasta/data/output/B_anthracis_contigs.camsa.lengths
   - camsa-env/bin/run_camsa.py --help
-  - camsa-env/bin/run_camsa.py camsa/examples/utils/fasta/data/output/B_anthracis_contigs.camsa.points -o camsa/examples/B_antracis
+  - camsa-env/bin/run_camsa.py camsa/examples/utils/fasta/data/output/B_anthracis_Mslice.camsa.points -o camsa/examples/B_antracis

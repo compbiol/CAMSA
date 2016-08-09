@@ -6,7 +6,7 @@ from collections import defaultdict
 import blist
 import networkx
 
-from core.data_structures import MergedAssemblyGraph, inverse_orientation
+from camsa.core.data_structures import MergedAssemblyGraph, inverse_orientation
 
 
 class MergingStrategies(enum.Enum):
