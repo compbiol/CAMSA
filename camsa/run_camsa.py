@@ -14,11 +14,11 @@ import six
 from jinja2 import Template
 
 import camsa
-from core import io as camsa_io
-from core import merging
-from core.comparative_analysis import compute_and_update_assembly_points_conflicts
-from core.data_structures import Assembly, assign_ids_to_assembly_points, merge_assembly_points, assign_parents_to_children
-from core.merging import MergingStrategies, update_assembly_points_with_merged_assembly
+from camsa.core import io as camsa_io
+from camsa.core import merging
+from camsa.core.comparative_analysis import compute_and_update_assembly_points_conflicts
+from camsa.core.data_structures import Assembly, assign_ids_to_assembly_points, merge_assembly_points, assign_parents_to_children
+from camsa.core.merging import MergingStrategies, update_assembly_points_with_merged_assembly
 
 if __name__ == "__main__":
     full_description = camsa.full_description_template.format(
