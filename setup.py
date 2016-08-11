@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='CAMSA',
-    version='0.9.13',
+    version='0.9.15',
     author='Sergey Aganezov',
     author_email='aganezov@gwu.edu',
     description='CAMSA: a tool for Comparative Analysis and Merging of Scaffold Assemblies',
@@ -33,5 +33,6 @@ setup(
         'Intended Audience :: Science/Research',
         'Programming Language :: Python :: Implementation :: CPython',
     ],
+    long_description=open("pypi_full.rst").read()
 
 )
