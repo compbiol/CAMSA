@@ -9,7 +9,7 @@ CAMSA  - is a tool for **C**omparative **A**nalysis and **M**erging of **S**caff
 CAMSA is developed using Python programming language and is compatible with both Python2 (2.7+) and Python3 (3.3+). This means CAMSA can be ran on any modern operating system properly.
 >Note: only Linux and MacOS were tested with respect to CAMSA installation and usage. If you want to use CAMSA on windows, please contact us.
 
-For detailed instructions and documentation please refer to [CAMSA wiki]().
+For detailed instructions and documentation please refer to [CAMSA wiki](https://github.com/aganezov/CAMSA/wiki).
 
 Installation:
 ---
@@ -18,7 +18,7 @@ The simplest way to install CAMSA is by using `pip`. Open your terminal and exec
 
     pip install camsa
 
-For more details please refer to the [CAMSA installation wiki page]().
+For more details please refer to the [CAMSA installation wiki page](https://github.com/aganezov/CAMSA/wiki/Installation).
 
 Input
 --
@@ -43,14 +43,14 @@ Fields description:
 * ``cw``:       confidence weight, of the reported assembly point `([0, 1]/?)`
 
 
-For more details please refer to the [CAMSA input wiki page]().
+For more details please refer to the [CAMSA input wiki page](https://github.com/aganezov/CAMSA/wiki/Usage).
 
 Output
 --
 ``CAMSA`` comparative analysis results are stored in the automatically generated comprehensive report, powered by HTML, CSS and JavaScript.
 This report format allows one to process the report on any operating system, easily share results with colleges and collaborators, as well as ensure reproducibility of each experiment. The enclosing folder also contains all the required libraries for the report to properly work, so internet connection is required.
 
-For more details please refer to the [CAMSA output wiki page]().
+For more details please refer to the [CAMSA output wiki page](https://github.com/aganezov/CAMSA/wiki/Usage).
 
 Contributing / Bug reports
 --
