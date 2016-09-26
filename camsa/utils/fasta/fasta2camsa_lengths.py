@@ -42,7 +42,8 @@ if __name__ == "__main__":
     logger.setLevel(args.logging_level)
     logger.addHandler(ch)
     logger.info(full_description)
-    ch.setFormatter(camsa.formatter)
+    logger.info(parser.format_values())
+    ch.setFormatter(logging.Formatter(args.c_logging_formatter_entry))
     logger.info("Starting the converting process")
 
     entries = {}

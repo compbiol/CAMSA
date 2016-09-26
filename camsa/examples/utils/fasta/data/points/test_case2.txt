@@ -1,0 +1,5 @@
+origin	seq1	seq2	seq1_or	seq2_or
+1	seq_id_1	seq_id_2	+	+
+1	seq_id_2	seq_id_1	+	+
+1	seq_id_3	seq_id_4	+	+
+1	seq_id_3	seq_id_5	-	+
