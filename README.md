@@ -1,7 +1,7 @@
 CAMSA
 ==
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/hyperium/hyper/master/LICENSE)
-[![Build Status](https://travis-ci.org/compbiol/CAMSA.svg?branch=master)](https://travis-ci.org/aganezov/CAMSA)
+[![Build Status](https://travis-ci.org/compbiol/CAMSA.svg?branch=master)](https://travis-ci.org/compbiol/CAMSA)
 [![Build status](https://ci.appveyor.com/api/projects/status/u9f7fwsx86k7y8r4/branch/master?svg=true)](https://ci.appveyor.com/project/aganezov/camsa/branch/master)
 
 
