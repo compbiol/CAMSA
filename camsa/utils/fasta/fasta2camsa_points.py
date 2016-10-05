@@ -198,6 +198,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--show-coords-cli-arguments", dest="show_coords_cli_arguments", default="-r -c -l")
 
+    parser.add_argument("--delta-filter-cli-arguments", dest="delta_filter_cli_arguments", default="-r -q")
+
     #######################################################################################################################
     # will definitely make two options this work, once the python bug is fixed: http://bugs.python.org/issue15112
     # by now all the delta files, that match the contigs files name will results in alignment stage for those file to be
@@ -207,6 +209,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--nucmer-path", default="/usr/local/bin/nucmer", dest="nucmer", help="full path to the nucmer executable.\nDEFAULT: /usr/local/bin/nucmer")
     parser.add_argument("--show-coords-path", default="/usr/local/bin/show-coords", dest="show_coords", help="full path to the show-coords executable.\nDEFAULT: /usr/local/bin/show-coords")
+    parser.add_argument("--delta-filter-path", default="/usr/local/bin/delta-filter", dest="delta_filter", help="")
 
     parser.add_argument("--c-cov-threshold", default=90.0, type=float, dest="c_cov_threshold",
                         help="lower coverage bound with respect to each aligned contig. All contigs with coverage less than the threshold are omitted.\nDEAFULT: 90.0")
