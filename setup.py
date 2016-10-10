@@ -16,7 +16,8 @@ setup(
         'fasta': ['biopython>=1.67'],
     },
     scripts=["camsa/run_camsa.py",
-             "camsa/utils/fasta/fasta2camsa_points.py", "camsa/utils/fasta/fasta2camsa_lengths.py"],
+             "camsa/utils/fasta/fasta2camsa_points.py", "camsa/utils/fasta/fasta2camsa_lengths.py",
+             "camsa/utils/fasta/camsa_points2fasta.py"],
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
