@@ -8,8 +8,8 @@ setup(
     description='CAMSA: a tool for Comparative Analysis and Merging of Scaffold Assemblies',
     license='MIT',
     keywords="comparative genomics, scaffolding, genome assembly",
-    url='https://github.com/aganezov/camsa',
-    packages=['', 'camsa', 'camsa.core', 'camsa.utils', 'camsa.utils.camsa', 'camsa.utils.fasta'],
+    url='https://github.com/compbiol/camsa',
+    packages=['', 'camsa', 'tests', 'camsa.core', 'camsa.utils', 'camsa.utils.camsa', 'camsa.utils.fasta'],
     include_package_data=True,
     install_requires=['six>=1.10.0', 'networkx>=1.11', 'Jinja2>=2.8', 'enum34>=1.1.6', 'blist>=1.3.6', 'ConfigArgParse>=0.10.0'],
     extras_require={
