@@ -43,7 +43,7 @@ def get_sequence_of_fragments_from_path(path):
         logger.error("A sequence, that contains a half of a scaffold. Something went wrong.")
         exit(1)
     result = []
-    for scaf_extremity_vertex in path[:2]:
+    for scaf_extremity_vertex in path[::2]:
         orientation = "+" if scaf_extremity_vertex.endswith("t") else "-"
         result.append((get_scaffold_name_from_vertex(v=scaf_extremity_vertex), orientation))
     return result
