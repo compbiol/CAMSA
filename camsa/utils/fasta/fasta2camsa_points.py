@@ -71,14 +71,14 @@ class CoordsParser(object):
 
     @staticmethod
     def from_string(string):
-        data = [entry.strip() for entry in string.split("|")]
+        data = [entry.strip() for entry in string.split(" | ")]
         reference_coords_data, query_coords_data = data[0], data[1]
         names_data = data[-1]
         lengths_data, coverage_data = data[-3], data[-2]
         ref_start, ref_end = [int(entry.strip()) for entry in reference_coords_data.split()]
         frag_start, frag_end = [int(entry.strip()) for entry in query_coords_data.split()]
         ref_name, frag_name = [entry.strip() for entry in names_data.split()]
-        frag_length = int(lengths_data.split()[1].strip())
+        frag_length = float(lengths_data.split()[1].strip())
         frag_cov = float(coverage_data.split()[1].strip())
         return CoordsEntry(scaffold_name=ref_name, fragment_name=frag_name,
                            scaf_start=ref_start, scaf_end=ref_end,
@@ -114,6 +114,8 @@ def run_nucmer(contigs_file_name, reference_file_name, nucmer_executable_path, c
 
 def run_show_coords(delta_file_name, output_dir, logs_dir, show_coords_executable_path, cli_arguments, show_coords_stderr=None):
     prefix = get_file_prefix(delta_file_name)
+    if prefix.endswith(".filtered"):
+        prefix = prefix[:-9]
     output_file_name = os.path.join(output_dir, prefix + ".coords")
     if show_coords_stderr is None:
         show_coords_stderr = os.path.join(logs_dir, "show_coords_{prefix}.stderr.txt".format(prefix=prefix))
@@ -129,8 +131,25 @@ def run_show_coords(delta_file_name, output_dir, logs_dir, show_coords_executabl
     return exitcode
 
 
+def run_delta_filter(delta_file_name, output_dir, logs_dir, delta_filter_executable_path, cli_arguments, delta_filter_stderr=None):
+    prefix = get_file_prefix(delta_file_name)
+    output_file_name = os.path.join(output_dir, prefix + ".filtered.delta")
+    if delta_filter_stderr is None:
+        delta_filter_stderr = os.path.join(logs_dir, "delta_filter_{prefix}.stderr.txt".format(prefix=prefix))
+    cli_args = [delta_filter_executable_path] + cli_arguments.split(" ") + [delta_file_name, ">", output_file_name, "2>", delta_filter_stderr]
+    logger.info("\t" + " ".join(cli_args))
+    exitcode = subprocess.call(" ".join(cli_args), shell=True)
+    if exitcode == 0:
+        logger.info("delta-filter util has finished running for \"{delta_file}\"".format(delta_file=delta_file_name))
+        logger.debug("delta-filter output is stored in \"{delta_filter_output}\" file".format(delta_filter_output=output_file_name))
+    else:
+        logger.error("delta-filter exited with non-zero code, running for \"{delta_file}\"".format(delta_file=delta_file_name, show_coords_error_log=delta_filter_stderr))
+        logger.error("\tdelta-filter error log is stored in \"{delta_filter_error_log}\"".format(delta_file=delta_file_name, delta_filter_error_log=delta_filter_stderr))
+    return exitcode
+
+
 def exit_program():
-    logger.critical("An error was encountered and `--ensure-all` flag was set to true. NUCmer-to-CAMSA exists.")
+    logger.critical("An error was encountered and `--ensure-all` flag was set to true. fasta2camsa_points.py exists.")
     exit(1)
 
 
@@ -207,15 +226,15 @@ if __name__ == "__main__":
     # parser.add_argument("--delta-files", default=None, nargs="*", help="paths to the nucmer \"*.delta\" files. For each file present, corresponding alignment stage will be skipped")
     # parser.add_argument("--coords-files", default=None, nargs="*", help="paths to the nucmer \"*.coords\" files. For each file present, corresponding show-coords stage will be skipped")
 
-    parser.add_argument("--nucmer-path", dest="nucmer", help="full path to the nucmer executable.\nDEFAULT: /usr/local/bin/nucmer")
-    parser.add_argument("--show-coords-path", dest="show_coords", help="full path to the show-coords executable.\nDEFAULT: /usr/local/bin/show-coords")
-    parser.add_argument("--delta-filter-path", dest="delta_filter", help="")
+    parser.add_argument("--nucmer-path", dest="nucmer", help="full path to the nucmer executable.\nDEFAULT: nucmer")
+    parser.add_argument("--show-coords-path", dest="show_coords", help="full path to the show-coords executable.\nDEFAULT: show-coords")
+    parser.add_argument("--delta-filter-path", dest="delta_filter", help="full path to the delta-filter executable.\nDEFAULT: delta-filter")
 
     parser.add_argument("--c-cov-threshold", default=90.0, type=float, dest="c_cov_threshold",
                         help="lower coverage bound with respect to each aligned contig. All contigs with coverage less than the threshold are omitted.\nDEAFULT: 90.0")
     parser.add_argument("--c-keep-fully-covered-contigs", action="store_true", default=False,
                         help="Whether to keep contigs, that are mapped some other contigs, or not.\nDEFAULT: False")
-    parser.add_argument("--c-coords-pairs-strategy", choices=["mid-point-sort", "sliding-window", "all"], default="sliding-window", dest="coords_to_pairs_strategy",
+    parser.add_argument("--c-coords-pairs-strategy", choices=["mid-point-sort", "sliding-window", "all"], default="mid-point-sort", dest="coords_to_pairs_strategy",
                         help="A strategy that determines on how assembly pairs from contigs on each scaffold are inferred.\n"
                              "\"mid-point-sort\" -- all contig mapping on each scaffold are sorted by their mid coordinate (start + end) / 2.\n\tSorted sequence of contigs determines n-1 assembly points.\n"
                              "\"sliding-window\" -- all pairs of adjacent extremities of non overlapping contigs will be reported as assembly points."
@@ -297,9 +316,19 @@ if __name__ == "__main__":
                 if args.ensure_all:
                     exit_program()
                 continue
-            delta_file_name = os.path.join(args.tmp_dir, delta_file_name[0])
+            original_name_prefix = ".".join(delta_file_name[0].split(".")[:-1])
+            delta_file_name = os.path.join(args.tmp_dir, original_name_prefix + ".delta")
+            logger.info("Running delta-filter util for \"{delta_file}\" file.".format(delta_file=delta_file_name))
+            logger.debug("Results will be stored in \"{prefix}.filtered.delta\"".format(prefix=prefix))
+            result = run_delta_filter(delta_file_name=delta_file_name, output_dir=args.tmp_dir, logs_dir=args.logs_dir,
+                                      delta_filter_executable_path=args.delta_filter,
+                                      cli_arguments=args.delta_filter_cli_arguments)
+            if result != 0 and args.ensure_all:
+                exit_program()
+
+            delta_file_name = os.path.join(args.tmp_dir, original_name_prefix + ".filtered.delta")
             logger.info("Running show-coords util for \"{delta_file}\" file.".format(delta_file=delta_file_name))
-            logger.debug("Results will be stored in \"{prefix}.coords\"".format(prefix=prefix))
+            logger.debug("Results will be stored in \"{prefix}.coords\"".format(prefix=original_name_prefix))
             result = run_show_coords(delta_file_name=delta_file_name, output_dir=args.tmp_dir, logs_dir=args.logs_dir, show_coords_executable_path=args.show_coords, cli_arguments=args.show_coords_cli_arguments)
             if result != 0 and args.ensure_all:
                 exit_program()
@@ -310,7 +339,7 @@ if __name__ == "__main__":
         ##################################################################################################
         coords_file = os.path.join(args.tmp_dir, prefix + ".coords")
         if not os.path.exists(coords_file):
-            logger.error("Coords file for \"{prefix}\" doesn't exist in the tmp output directory.")
+            logger.error("Coords file for \"{prefix}\" doesn't exist in the tmp output directory.".format(prefix=prefix))
             if args.ensure_all:
                 exit_program()
             continue
