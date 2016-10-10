@@ -12,6 +12,9 @@ from collections import defaultdict
 import configargparse
 import six
 from jinja2 import Template
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import camsa
 from camsa.core import io as camsa_io
