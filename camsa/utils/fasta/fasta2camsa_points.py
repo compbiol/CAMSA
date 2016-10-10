@@ -194,11 +194,11 @@ if __name__ == "__main__":
     parser.add_argument("--overwrite", dest="overwrite", action="store_true", help="Disregards already present \"*.delta\" as well as \"*.coords\" and runs all the stages from scratch.\nDEFAULT: False")
     parser.add_argument("--ensure-all", dest="ensure_all", default=False, type=bool, help="Flag indicating, that is any subprocess of this converter fails, than the whole operation will be canceled.\nDEFAULT: False")
 
-    parser.add_argument("--nucmer-cli-arguments", dest="nucmer_cli_arguments", default="-maxmatch -c 100")
+    parser.add_argument("--nucmer-cli-arguments", dest="nucmer_cli_arguments")
 
-    parser.add_argument("--show-coords-cli-arguments", dest="show_coords_cli_arguments", default="-r -c -l")
+    parser.add_argument("--show-coords-cli-arguments", dest="show_coords_cli_arguments")
 
-    parser.add_argument("--delta-filter-cli-arguments", dest="delta_filter_cli_arguments", default="-r -q")
+    parser.add_argument("--delta-filter-cli-arguments", dest="delta_filter_cli_arguments")
 
     #######################################################################################################################
     # will definitely make two options this work, once the python bug is fixed: http://bugs.python.org/issue15112
@@ -207,9 +207,9 @@ if __name__ == "__main__":
     # parser.add_argument("--delta-files", default=None, nargs="*", help="paths to the nucmer \"*.delta\" files. For each file present, corresponding alignment stage will be skipped")
     # parser.add_argument("--coords-files", default=None, nargs="*", help="paths to the nucmer \"*.coords\" files. For each file present, corresponding show-coords stage will be skipped")
 
-    parser.add_argument("--nucmer-path", default="/usr/local/bin/nucmer", dest="nucmer", help="full path to the nucmer executable.\nDEFAULT: /usr/local/bin/nucmer")
-    parser.add_argument("--show-coords-path", default="/usr/local/bin/show-coords", dest="show_coords", help="full path to the show-coords executable.\nDEFAULT: /usr/local/bin/show-coords")
-    parser.add_argument("--delta-filter-path", default="/usr/local/bin/delta-filter", dest="delta_filter", help="")
+    parser.add_argument("--nucmer-path", dest="nucmer", help="full path to the nucmer executable.\nDEFAULT: /usr/local/bin/nucmer")
+    parser.add_argument("--show-coords-path", dest="show_coords", help="full path to the show-coords executable.\nDEFAULT: /usr/local/bin/show-coords")
+    parser.add_argument("--delta-filter-path", dest="delta_filter", help="")
 
     parser.add_argument("--c-cov-threshold", default=90.0, type=float, dest="c_cov_threshold",
                         help="lower coverage bound with respect to each aligned contig. All contigs with coverage less than the threshold are omitted.\nDEAFULT: 90.0")
