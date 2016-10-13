@@ -36,6 +36,15 @@ PAIRS_COLUMN_ALIASES = {
 
 
 def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, default_cw_cae=0.9):
+    """
+
+    :param source: file like object tot APs data from
+    :param delimiter: tab/comma/etc separator
+    :param destination: data structure, where information about APs will be stored
+    :param default_cw_eae: confidence weight for exact AE, in case ? is provided in source
+    :param default_cw_cae: confidence wight for candidate AE, in case ? is provided in source
+    :return: destination data structure, that can be viewed as a default dict of list of APs, where key is the source of the AP
+    """
     if destination is None:
         destination = defaultdict(list)
     reader = csv.DictReader(source, delimiter=delimiter)
@@ -53,7 +62,7 @@ def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, defau
         seq1 = row[fn_relations["seq1"]]
         seq2 = row[fn_relations["seq2"]]
         if seq1 == seq2:
-            # no support for duplicated contigs presence
+            # no support for duplicated seqs present
             continue
         destination[origin].append(AssemblyPoint(seq1=seq1,
                                                  seq2=seq2,
@@ -65,6 +74,14 @@ def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, defau
 
 
 def read_assembly_points_from_input_sources(sources, delimiter="\t", default_cw_eae=1, default_cw_cae=0.75):
+    """
+
+    :param sources: list of file paths with input AP data
+    :param delimiter: tab/comma/etc separator
+    :param default_cw_eae: confidence weight for exact AE, in case ? is provided in source
+    :param default_cw_cae: confidence wight for candidate AE, in case ? is provided in source
+    :return: destination data structure, that can be viewed as a default dict of list of APs, where key is the source of the AP
+    """
     result = defaultdict(list)
     for file_name in sources:
         file_name = os.path.abspath(os.path.expanduser(file_name))
