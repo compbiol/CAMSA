@@ -176,6 +176,8 @@ if __name__ == "__main__":
             used_fragments.add(f2)
             if f_cnt > 0:
                 sep_length = gap_size if isinstance(gap_size, numbers.Number) else args.c_sep_length
+                if sep_length <= 0:
+                    sep_length = args.c_sep_length
                 current += Seq(args.c_sep * sep_length)
             if f1_or == "+":
                 current += frag_fasta_by_id[f1].seq
