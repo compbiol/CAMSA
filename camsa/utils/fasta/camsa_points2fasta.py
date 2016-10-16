@@ -44,7 +44,7 @@ def get_sequence_of_fragments_from_path(path, assembly_points_by_edges):
         logger.error("A sequence, that contains a half of a scaffold. Something went wrong.")
         exit(1)
     result = []
-    for frag_extremity_v1, frag_extremity_v2 in zip(path[1::2], path[1::2]):
+    for frag_extremity_v1, frag_extremity_v2 in zip(path[1::2], path[2::2]):
         f1_or = "+" if frag_extremity_v1.endswith("h") else "-"
         f2_or = "-" if frag_extremity_v1.endswith("h") else "+"
         ap = assembly_points_by_edges[tuple(sorted([frag_extremity_v1, frag_extremity_v2]))]
