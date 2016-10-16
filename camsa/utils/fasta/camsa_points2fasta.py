@@ -47,7 +47,7 @@ def get_sequence_of_fragments_from_path(path, assembly_points_by_edges):
     for frag_extremity_v1, frag_extremity_v2 in zip(path[1::2], path[1::2]):
         f1_or = "+" if frag_extremity_v1.endswith("h") else "-"
         f2_or = "-" if frag_extremity_v1.endswith("h") else "+"
-        ap = assembly_points_by_edges[tuple(sorted(frag_extremity_v1, frag_extremity_v2))]
+        ap = assembly_points_by_edges[tuple(sorted([frag_extremity_v1, frag_extremity_v2]))]
         gap_size = ap.gap_size
         result.append((get_scaffold_name_from_vertex(v=frag_extremity_v1), f1_or, get_scaffold_name_from_vertex(v=frag_extremity_v2), f2_or, gap_size))
     return result
@@ -108,7 +108,7 @@ if __name__ == "__main__":
     for ap in assembly_points_by_sources:
         for (u, v, weight) in ap.get_edges(sort=True, weight=True):
             assembly_graph.add_edge(u, v)
-            assembly_points_by_edges[tuple(sorted(u, v))] = ap
+            assembly_points_by_edges[tuple(sorted([u, v]))] = ap
 
     logger.debug("Checking that there are no in(semi)conflicting assembly points")
     for vertex in assembly_graph.nodes():
