@@ -40,16 +40,18 @@ def get_assembly_edge(graph):
 
 def get_sequence_of_fragments_from_path(path, assembly_points_by_edges):
     path, path_type = path
-    if len(path) == 1:
-        logger.error("A sequence, that contains a half of a scaffold. Something went wrong.")
+    if len(path) < 2:
+        logger.error("A sequence resembling an assembly points, that contains less than two scaffolds. Something went wrong.")
         exit(1)
     result = []
     for frag_extremity_v1, frag_extremity_v2 in zip(path[1::2], path[2::2]):
         f1_or = "+" if frag_extremity_v1.endswith("h") else "-"
-        f2_or = "-" if frag_extremity_v1.endswith("h") else "+"
+        f2_or = "-" if frag_extremity_v2.endswith("h") else "+"
         ap = assembly_points_by_edges[tuple(sorted([frag_extremity_v1, frag_extremity_v2]))]
         gap_size = ap.gap_size
-        result.append((get_scaffold_name_from_vertex(v=frag_extremity_v1), f1_or, get_scaffold_name_from_vertex(v=frag_extremity_v2), f2_or, gap_size))
+        result.append((get_scaffold_name_from_vertex(v=frag_extremity_v1), f1_or,
+                       get_scaffold_name_from_vertex(v=frag_extremity_v2), f2_or,
+                       gap_size))
     return result
 
 
@@ -174,7 +176,7 @@ if __name__ == "__main__":
         for f_cnt, (f1, f1_or, f2, f2_or, gap_size) in enumerate(fragment_aps):
             used_fragments.add(f1)
             used_fragments.add(f2)
-            if f_cnt > 0:
+            if f_cnt > 0 or f_cnt == len(fragment_aps) - 1:
                 sep_length = gap_size if isinstance(gap_size, numbers.Number) else args.c_sep_length
                 if sep_length <= 0:
                     sep_length = args.c_sep_length
@@ -192,6 +194,7 @@ if __name__ == "__main__":
         seq_record = SeqRecord(seq=current, id=name, description="")
         SeqIO.write(sequences=seq_record, handle=args.output, format="fasta")
     if args.allow_singletons:
+        logger.inf("Adding singleton fragments, that did not participate in any assembly points to the resulting assmebly")
         for f_id, fragment in frag_fasta_by_id.items():
             if f_id not in used_fragments:
                 SeqIO.write(sequences=fragment, handle=args.output, format="fasta")
