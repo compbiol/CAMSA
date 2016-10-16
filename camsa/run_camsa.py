@@ -7,12 +7,12 @@ import itertools
 import logging
 import os
 import shutil
+import sys
 from collections import defaultdict
 
 import configargparse
 import six
 from jinja2 import Template
-import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -151,11 +151,29 @@ if __name__ == "__main__":
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
-    if os.path.exists(os.path.join(args.output_dir, "libs")) and os.path.isdir(
-            os.path.join(args.output_dir, "libs")):
-        shutil.rmtree(os.path.join(args.output_dir, "libs"))
-    shutil.copytree(src=os.path.join(camsa.root_dir, "libs"), dst=os.path.join(args.output_dir, "libs"))
+    # copying assets required for the HTML report
+    libs_report_dir = os.path.join(args.output_dir, "libs")
+    camsa_io.remove_dir(dir_path=libs_report_dir)
+    shutil.copytree(src=os.path.join(camsa.root_dir, "libs"), dst=libs_report_dir)
     output_html_report_file_name = os.path.join(args.output_dir, "report.html")
+
+    # "input" subdir of the report
+    # will contain a configuration as well as assembly points files
+    input_report_dir = os.path.join(args.output_dir, "input")
+    camsa_io.remove_dir(dir_path=input_report_dir)
+    os.makedirs(input_report_dir)
+
+    # "merged" subdir of the report
+    # will contain assembly points, that constitute the merged assembly
+    merged_report_dir = os.path.join(args.output_dir, "merged")
+    camsa_io.remove_dir(dir_path=merged_report_dir)
+    os.makedirs(merged_report_dir)
+
+    # "comparative" subdir of the report
+    # will contain assembly points divided into subgroups based in the agreement in input assemblies
+    comparative_report_dir = os.path.join(args.output_dir, "comparative")
+    camsa_io.remove_dir(dir_path=comparative_report_dir)
+    os.makedirs(comparative_report_dir)
 
     template = Template(source=open(os.path.join(camsa.root_dir, "report_template.html"), "rt").read())
 

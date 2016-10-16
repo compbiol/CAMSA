@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import csv
 import os
+import shutil
 from collections import defaultdict
+from enum import Enum
 
 from camsa.core.data_structures import AssemblyPoint
 
@@ -47,6 +49,7 @@ def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, defau
     :param default_cw_cae: confidence wight for candidate AE, in case ? is provided in source
     :return: destination data structure, that can be viewed as a default dict of list of APs, where key is the source of the AP
     """
+
     def extract_nullable_numerical_value(field, row, fn_relations):
         value = row.get(fn_relations[field], "?")
         try:
@@ -118,3 +121,33 @@ def read_lengths(source, delimiter="\t", destination=None):
         seq_length = row(fn_relations["seq_length"])
         destination[seq_id] = seq_length
     return destination
+
+
+class OrientationChoice(Enum):
+    original = 0
+    merged = 1
+
+
+def write_assembly_points(assembly_points, destination, delimiter="\t", orientation_type=OrientationChoice.original):
+    """ Output a collection of assembly point in a text format to the specified stream
+
+    :param assembly_points: an iterable with a collection of assembly points to be written down
+    :param destination: a file like object to write to
+    :param delimiter: a separator used for the SV format
+    :param orientation_type: a choice for AP relative seq orientations to be displayed (original = input vs inferred = merged).
+        Makes a difference only for the un/semi-oriented APs
+    """
+    intra_delimiter = "," if delimiter != "," else ";"
+
+    writer = csv.writer(destination, delimiter=delimiter)
+    headers_list = ["origin", "seq1", "seq1_or", "seq2", "seq2_or", "gap_size", "cw"]
+    writer.writerow(headers_list)
+    for ap in assembly_points:
+        or1, or2 = (ap.seq1_or, ap.seq2_or) if orientation_type == OrientationChoice.original else (ap.seq1_par_or, ap.seq2_par_or)
+        assembly_points_entries_list = [intra_delimiter.join(ap.sources), ap.seq1, or1, ap.seq2, or2, ap.gap_size, ap.cw]
+        writer.writerow(assembly_points_entries_list)
+
+
+def remove_dir(dir_path):
+    if os.path.exists(dir_path) and os.path.isdir(dir_path):
+        shutil.rmtree(dir_path)
