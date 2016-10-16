@@ -5,6 +5,7 @@ from __future__ import print_function, division
 
 import datetime
 import logging
+import numbers
 import os
 import sys
 from collections import defaultdict
@@ -37,15 +38,18 @@ def get_assembly_edge(graph):
     return None, None
 
 
-def get_sequence_of_fragments_from_path(path):
+def get_sequence_of_fragments_from_path(path, assembly_points_by_edges):
     path, path_type = path
     if len(path) == 1:
         logger.error("A sequence, that contains a half of a scaffold. Something went wrong.")
         exit(1)
     result = []
-    for scaf_extremity_vertex in path[::2]:
-        orientation = "+" if scaf_extremity_vertex.endswith("t") else "-"
-        result.append((get_scaffold_name_from_vertex(v=scaf_extremity_vertex), orientation))
+    for frag_extremity_v1, frag_extremity_v2 in zip(path[1::2], path[1::2]):
+        f1_or = "+" if frag_extremity_v1.endswith("h") else "-"
+        f2_or = "-" if frag_extremity_v1.endswith("h") else "+"
+        ap = assembly_points_by_edges[tuple(sorted(frag_extremity_v1, frag_extremity_v2))]
+        gap_size = ap.gap_size
+        result.append((get_scaffold_name_from_vertex(v=frag_extremity_v1), f1_or, get_scaffold_name_from_vertex(v=frag_extremity_v2), f2_or, gap_size))
     return result
 
 
@@ -65,6 +69,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--fasta", type=configargparse.FileType("rt"), required=True)
     parser.add_argument("--points", type=configargparse.FileType("rt"), required=True)
+    parser.add_argument("--allow-singletons", action="store_true", dest="allow_singletons", default=False)
     parser.add_argument("--c-sep", type=str)
     parser.add_argument("--c-sep-length", type=int)
     parser.add_argument("--scaffold-name-template", type=str)
@@ -98,10 +103,12 @@ if __name__ == "__main__":
 
     scaffold_edges = get_scaffold_edges(assembly_points=assembly_points_by_sources)
     assembly_graph.add_edges_from(ebunch=scaffold_edges)
+    assembly_points_by_edges = {}
 
     for ap in assembly_points_by_sources:
         for (u, v, weight) in ap.get_edges(sort=True, weight=True):
             assembly_graph.add_edge(u, v)
+            assembly_points_by_edges[tuple(sorted(u, v))] = ap
 
     logger.debug("Checking that there are no in(semi)conflicting assembly points")
     for vertex in assembly_graph.nodes():
@@ -142,8 +149,8 @@ if __name__ == "__main__":
     logger.debug("Out of which {linear_cnt} are linear, and {circular_cnt} are circular"
                  "".format(linear_cnt=len([p for p in paths if p[1] == "l"]),
                            circular_cnt=len([p for p in paths if p[1] == "c"])))
-    scaffolds = [get_sequence_of_fragments_from_path(path=p) for p in paths]
-    logger.info("Total number of {scaffold_cnt} scaffolds was obtained from observed assembly points".format(scaffold_cnt=len(scaffolds)))
+    fragments = [get_sequence_of_fragments_from_path(path=p, assembly_points_by_edges=assembly_points_by_edges) for p in paths]
+    logger.info("Total number of {scaffold_cnt} scaffolds was obtained from observed assembly points".format(scaffold_cnt=len(fragments)))
 
     logger.info("Reading fasta of contigs/scaffolds involved in the assembly points")
     frag_fasta_by_id = {}
@@ -154,25 +161,38 @@ if __name__ == "__main__":
     logger.debug("Processed {cnt} records from fasta file \"{file_name}\"".format(cnt=s_cnt, file_name=args.fasta))
     logger.info("Total number of contig/scaffold sequences is {seq_cnt}".format(seq_cnt=len(frag_fasta_by_id)))
 
-    for scaffold in scaffolds:
-        for f, orientation in scaffold:
-            if f not in frag_fasta_by_id:
-                logging.critical("Fragment {f} which is present assembly points is not present in supplied fasta file. Exiting.")
+    for fragment_aps in fragments:
+        for f1, f1_or, f2, f2_or, gap_size in fragment_aps:
+            if f1 not in frag_fasta_by_id or f2 not in frag_fasta_by_id:
+                logging.critical("Fragment {f1} or {f2} which is present assembly points is not present in supplied fasta file. Exiting.".format(f1=f1, f2=f2))
                 exit(1)
 
+    used_fragments = set()
     logger.info("Outputting new scaffolds. Data is written to {file_name}".format(file_name=args.output))
-    for s_cnt, scaffold in enumerate(scaffolds):
+    for s_cnt, fragment_aps in enumerate(fragments):
         current = Seq("")
-        for f_cnt, (fragment, orientation) in enumerate(scaffold):
+        for f_cnt, (f1, f1_or, f2, f2_or, gap_size) in enumerate(fragment_aps):
+            used_fragments.add(f1)
+            used_fragments.add(f2)
             if f_cnt > 0:
-                current += Seq(args.c_sep * args.c_sep_length)
-            if orientation == "+":
-                current += frag_fasta_by_id[fragment].seq
+                sep_length = gap_size if isinstance(gap_size, numbers.Number) else args.c_sep_length
+                current += Seq(args.c_sep * sep_length)
+            if f1_or == "+":
+                current += frag_fasta_by_id[f1].seq
             else:
-                current += frag_fasta_by_id[fragment].reverse_complement().seq
+                current += frag_fasta_by_id[f1].reverse_complement().seq
+            if f_cnt == len(fragment_aps) - 1:
+                if f2_or == "+":
+                    current += frag_fasta_by_id[f2].seq
+                else:
+                    current += frag_fasta_by_id[f2].reverse_complement().seq
         name = args.scaffold_name_template.format(cnt=s_cnt)
         seq_record = SeqRecord(seq=current, id=name, description="")
         SeqIO.write(sequences=seq_record, handle=args.output, format="fasta")
+    if args.allow_singletons:
+        for f_id, fragment in frag_fasta_by_id.items():
+            if f_id not in used_fragments:
+                SeqIO.write(sequences=fragment, handle=args.output, format="fasta")
     logger.info("All done!")
     logger.info("Elapsed time: {el_time}".format(el_time=str(datetime.datetime.now() - start_time)))
 
