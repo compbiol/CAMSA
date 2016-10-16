@@ -21,7 +21,7 @@ from camsa.core import io as camsa_io
 from camsa.core import merging
 from camsa.core.comparative_analysis import compute_and_update_assembly_points_conflicts
 from camsa.core.data_structures import Assembly, assign_ids_to_assembly_points, merge_assembly_points, assign_parents_to_children
-from camsa.core.merging import MergingStrategies, update_assembly_points_with_merged_assembly
+from camsa.core.merging import MergingStrategies, update_assembly_points_with_merged_assembly, update_gap_sizes_in_merged_assembly
 
 if __name__ == "__main__":
     full_description = camsa.full_description_template.format(
@@ -136,6 +136,8 @@ if __name__ == "__main__":
     update_assembly_points_with_merged_assembly(original_assembly_points_by_ids=original_assembly_points_by_ids,
                                                 merged_assembly_points_by_ids=merged_assembly_points_by_ids,
                                                 merged_assembly_graph=merged_assembly_graph)
+    update_gap_sizes_in_merged_assembly(original_assembly_points_by_ids=original_assembly_points_by_ids,
+                                        merged_assembly_points_by_ids=merged_assembly_points_by_ids)
 
     #######################################
     #           output stage              #

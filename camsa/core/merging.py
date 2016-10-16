@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # noinspection PyCompatibility
 import enum
+import numbers
 from collections import defaultdict
 
 import blist
@@ -174,3 +175,20 @@ def update_assembly_points_with_merged_assembly(original_assembly_points_by_ids,
                     child.seq1_par_or = par_or_1
                     child.seq2_par_or = par_or_2
                 break
+
+
+def update_gap_sizes_in_merged_assembly(original_assembly_points_by_ids, merged_assembly_points_by_ids):
+    aps_in_merged_assembly = [ap for ap in merged_assembly_points_by_ids.values() if ap.participates_in_merged]
+    for ap in aps_in_merged_assembly:
+        children_aps = [original_assembly_points_by_ids[c_id] for c_id in ap.children_ids]
+        cumulative_gap_size = 0.0
+        gap_size_sources_cnt = 0.0
+        for c_ap in children_aps:
+            if isinstance(c_ap.gap_size, numbers.Number):
+                gap_size_sources_cnt += 1
+                cumulative_gap_size += c_ap.gap_size
+        if gap_size_sources_cnt == 0:
+            inferred_gap_size = "?"
+        else:
+            inferred_gap_size = cumulative_gap_size / gap_size_sources_cnt
+        ap.gap_size = inferred_gap_size
