@@ -176,12 +176,23 @@ if __name__ == "__main__":
     merged_report_dir = os.path.join(args.output_dir, "merged")
     camsa_io.remove_dir(dir_path=merged_report_dir)
     os.makedirs(merged_report_dir)
+    merged_report_points_path = os.path.join(merged_report_dir, "merged.camsa.points")
+    with open(merged_report_points_path, "wt") as destination:
+        camsa_io.write_assembly_points(destination=destination,
+                                       assembly_points=[ap for ap in merged_assembly_points if ap.participates_in_merged],
+                                       orientation_type=camsa_io.OrientationChoice.merged)
 
     # "comparative" subdir of the report
     # will contain assembly points divided into subgroups based in the agreement in input assemblies
     comparative_report_dir = os.path.join(args.output_dir, "comparative")
     camsa_io.remove_dir(dir_path=comparative_report_dir)
     os.makedirs(comparative_report_dir)
+    for group in grouped_assemblies:
+        comparative_report_group_points_path = os.path.join(comparative_report_dir, "{group_name}.camsa.points".format(group_name="__".join(group.name)))
+        with open(comparative_report_group_points_path, "wt") as destination:
+            camsa_io.write_assembly_points(assembly_points=group.aps,
+                                           destination=destination,
+                                           orientation_type=camsa_io.OrientationChoice.original)
 
     template = Template(source=open(os.path.join(camsa.root_dir, "report_template.html"), "rt").read())
 

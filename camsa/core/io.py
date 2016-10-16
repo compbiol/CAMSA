@@ -144,7 +144,7 @@ def write_assembly_points(assembly_points, destination, delimiter="\t", orientat
     writer.writerow(headers_list)
     for ap in assembly_points:
         or1, or2 = (ap.seq1_or, ap.seq2_or) if orientation_type == OrientationChoice.original else (ap.seq1_par_or, ap.seq2_par_or)
-        assembly_points_entries_list = [intra_delimiter.join(ap.sources), ap.seq1, or1, ap.seq2, or2, ap.gap_size, ap.cw]
+        assembly_points_entries_list = [intra_delimiter.join(sorted(set(ap.sources))), ap.seq1, or1, ap.seq2, or2, ap.gap_size, ap.cw]
         writer.writerow(assembly_points_entries_list)
 
 
