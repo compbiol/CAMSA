@@ -162,6 +162,14 @@ if __name__ == "__main__":
     input_report_dir = os.path.join(args.output_dir, "input")
     camsa_io.remove_dir(dir_path=input_report_dir)
     os.makedirs(input_report_dir)
+    input_report_config_path = os.path.join(input_report_dir, "camsa_config.txt")
+    with open(input_report_config_path, "wt") as destination:
+        print("# NOTE: this is not a valid config, but rather a summary of the utilized options", file=destination)
+        print(parser.format_values(), file=destination)
+    for pairs_path in args.points:
+        full_path = os.path.abspath(os.path.expanduser(pairs_path))
+        base_name = os.path.basename(full_path)
+        shutil.copyfile(src=full_path, dst=os.path.join(input_report_dir, base_name))
 
     # "merged" subdir of the report
     # will contain assembly points, that constitute the merged assembly
