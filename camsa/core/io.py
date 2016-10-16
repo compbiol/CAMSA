@@ -24,9 +24,11 @@ PAIRS_COLUMN_ALIASES = {
     ########################
     "orientation_ctg1": "seq1_or",
     "ctg1_orientation": "seq1_or",
+    "ctg1_or": "seq1_or",
     ########################
     "ctg2_orientation": "seq2_or",
     "orientation_ctg2": "seq2_or",
+    "ctg2_or": "seq2_or",
     ########################
     "distance": "gap_size",
     "ctg1-ctg2_gap": "gap_size",
