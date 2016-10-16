@@ -45,6 +45,14 @@ def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, defau
     :param default_cw_cae: confidence wight for candidate AE, in case ? is provided in source
     :return: destination data structure, that can be viewed as a default dict of list of APs, where key is the source of the AP
     """
+    def extract_nullable_numerical_value(field, row, fn_relations):
+        value = row.get(fn_relations[field], "?")
+        try:
+            value = float(value)
+        except ValueError:
+            value = "?"
+        return value
+
     if destination is None:
         destination = defaultdict(list)
     reader = csv.DictReader(source, delimiter=delimiter)
@@ -52,13 +60,10 @@ def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, defau
     fn_relations = get_fn_relations_for_column_names(fieldnames=fieldnames, aliases=PAIRS_COLUMN_ALIASES)
     for row in filter(lambda entry: not entry[fieldnames[0]].startswith("#"), reader):
         origin = row[fn_relations["origin"]]
-        cw = row.get(fn_relations["cw"], "?")
-        try:
-            cw = float(cw)
-        except ValueError:
-            cw = "?"
+        cw = extract_nullable_numerical_value(field="cw", row=row, fn_relations=fn_relations)
         if cw == "?":
             cw = default_cw_eae if "?" not in [row[fn_relations["seq1_or"]], row[fn_relations["seq2_or"]]] else default_cw_cae
+        gap_size = extract_nullable_numerical_value(field="gap_size", row=row, fn_relations=fn_relations)
         seq1 = row[fn_relations["seq1"]]
         seq2 = row[fn_relations["seq2"]]
         if seq1 == seq2:
@@ -69,7 +74,8 @@ def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, defau
                                                  seq1_or=row[fn_relations["seq1_or"]],
                                                  seq2_or=row[fn_relations["seq2_or"]],
                                                  sources=[row[fn_relations["origin"]]],
-                                                 cw=cw))
+                                                 cw=cw,
+                                                 gap_size=gap_size))
     return destination
 
 

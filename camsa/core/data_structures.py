@@ -7,7 +7,8 @@ import six
 
 
 class AssemblyPoint(object):
-    def __init__(self, seq1, seq2, seq1_or, seq2_or, sources, cw=None, parent_id=None, children_ids=None, self_id=None):
+    def __init__(self, seq1, seq2, seq1_or, seq2_or, sources, cw=None, parent_id=None, children_ids=None, self_id=None,
+                 gap_size=None):
         self.seq1 = seq1
         self.seq2 = seq2
         self.seq1_or = seq1_or
@@ -21,6 +22,7 @@ class AssemblyPoint(object):
         self.seq1_par_or = None
         self.seq2_par_or = None
         self.cw = cw
+        self.gap_size = gap_size
         self.self_id = self_id
         self.parent_id = parent_id
         self.children_ids = children_ids if children_ids is not None else []
