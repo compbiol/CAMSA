@@ -58,7 +58,7 @@ def merge_progressively(assembly_points_by_sources, acyclic=True, min_cw=0.0):
     assembly_edges_graph = MergedAssemblyGraph()
     assembly_points_by_edges = defaultdict(list)
     for ap in assembly_points_by_sources:
-        for (u, v, weight) in ap.get_edges(sorted=True, weight=True):
+        for (u, v, weight) in ap.get_edges(sort=True, weight=True):
             assembly_points_by_edges[(u, v)].append(ap)
             assembly_edges_graph.add_edge(u, v, weight=weight)
     assembly_edges_graph.remove_edges_with_low_cw(cw_threshold=min_cw)
