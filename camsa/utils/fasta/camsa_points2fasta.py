@@ -194,7 +194,7 @@ if __name__ == "__main__":
         seq_record = SeqRecord(seq=current, id=name, description="")
         SeqIO.write(sequences=seq_record, handle=args.output, format="fasta")
     if args.allow_singletons:
-        logger.inf("Adding singleton fragments, that did not participate in any assembly points to the resulting assmebly")
+        logger.info("Adding singleton fragments, that did not participate in any assembly points to the resulting assmebly")
         for f_id, fragment in frag_fasta_by_id.items():
             if f_id not in used_fragments:
                 SeqIO.write(sequences=fragment, handle=args.output, format="fasta")
