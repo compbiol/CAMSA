@@ -176,16 +176,15 @@ if __name__ == "__main__":
         for f_cnt, (f1, f1_or, f2, f2_or, gap_size) in enumerate(fragment_aps):
             used_fragments.add(f1)
             used_fragments.add(f2)
-            if f_cnt > 0 or f_cnt == len(fragment_aps):
-                sep_length = gap_size if isinstance(gap_size, numbers.Number) else args.c_sep_length
-                if sep_length <= 0:
-                    sep_length = args.c_sep_length
-                current += Seq(args.c_sep * int(sep_length))
             if f1_or == "+":
                 current += frag_fasta_by_id[f1].seq
             else:
                 current += frag_fasta_by_id[f1].reverse_complement().seq
-            if f_cnt == len(fragment_aps):
+            sep_length = gap_size if isinstance(gap_size, numbers.Number) else args.c_sep_length
+            if sep_length <= 0:
+                sep_length = args.c_sep_length
+            current += Seq(args.c_sep * int(sep_length))
+            if f_cnt == len(fragment_aps) - 1:
                 if f2_or == "+":
                     current += frag_fasta_by_id[f2].seq
                 else:
