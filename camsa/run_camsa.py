@@ -199,7 +199,7 @@ if __name__ == "__main__":
     template = Template(source=open(os.path.join(camsa.root_dir, "report_template.html"), "rt").read())
 
     individual_assemblies.sort(key=lambda it: it.name.lower())
-    assemblies_to_ids = {assembly.name: cnt for cnt, assembly in enumerate(individual_assemblies, start=1)}
+    assemblies_to_ids = {assembly.name: "A" + str(cnt) for cnt, assembly in enumerate(individual_assemblies, start=1)}
     sources = [assembly.name for assembly in individual_assemblies]
 
     assemblies_to_colors = {assemblies_to_ids[source]: color for source, color in zip(sources, ['red', 'blue', 'green', 'purple',
