@@ -7,5 +7,6 @@ full_description_template = "| {names:<76} |\n| {affiliations:<76} |\n| {dummy:<
 CAMSA_AUTHORS = "Sergey Aganezov & Max A. Alekseyev (c)"
 AFFILIATIONS = "Computational Biology Institute, The George Washington University"
 CONTACT = "With any questions, please, contact Sergey Aganezov [aganezov(at)gwu.edu]"
+CAMSA_DOCS_URL = "github.com/compbiol/camsa/wiki"
 formatter = logging.Formatter('%(asctime)s - %(name)-15s - %(levelname)-7s - %(message)s')
 root_dir = os.path.dirname(os.path.abspath(__file__))

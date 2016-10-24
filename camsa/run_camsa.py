@@ -29,7 +29,7 @@ if __name__ == "__main__":
         affiliations=camsa.AFFILIATIONS,
         dummy=" ",
         tool="CAMSA is a tool for Comparative Analysis and Merging of Scaffold Assemblies",
-        information="For more information refer to wiki at github.com/compbiol/camsa/wiki",
+        information="For more information refer to {docs}".format(docs=camsa.CAMSA_DOCS_URL),
         contact=camsa.CONTACT)
     full_description = "=" * 80 + "\n" + full_description + "=" * 80 + "\n"
 
