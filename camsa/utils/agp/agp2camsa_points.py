@@ -12,6 +12,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
 import camsa
+import camsa.core.io as camsa_io
+from camsa.core.data_structures import AssemblyPoint
 
 
 class Component(object):
@@ -24,6 +26,9 @@ class Component(object):
 
     @classmethod
     def from_agp_data(cls, data):
+        raise NotImplementedError("Only specific heirs have implementation for this method")
+
+    def is_gap_component(self):
         raise NotImplementedError("Only specific heirs have implementation for this method")
 
     @staticmethod
@@ -53,6 +58,10 @@ class ScaffoldComponent(Component):
         return cls(object_id=object_id, object_beg=object_beg, object_end=object_end, part_number=part_number, component_type=component_type,
                    component_id=component_id, component_beg=component_beg, component_end=component_end, orientation=orientation)
 
+    @property
+    def is_gap_component(self):
+        return False
+
 
 class GapComponent(Component):
     def __init__(self, object_id, object_beg, object_end, part_number, component_type, gap_length, gap_type, linkage, linkage_evidence):
@@ -76,6 +85,65 @@ class GapComponent(Component):
         return cls(object_id=object_id, object_beg=object_beg, object_end=object_end, part_number=part_number, component_type=component_type,
                    gap_length=gap_length, gap_type=gap_type, linkage=linkage, linkage_evidence=linkage_evidence)
 
+    @property
+    def is_gap_component(self):
+        return True
+
+
+def get_index_of_first_non_gap_element(component_sequence):
+    for cnt, component in enumerate(component_sequence):
+        if not component.is_gap_component:
+            return cnt
+    return -1
+
+
+def get_next_non_gap_element(components, current_index):
+    for i in range(current_index + 1, len(components)):
+        next = components[i]
+        if not next.is_gap_component:
+            return i, next
+    return None, None
+
+
+def get_gap_size(components, current_index, next_index):
+    if current_index == next_index - 1:
+        return 1
+    gap_components = components[current_index+1:next_index]
+    result = 0
+    for component in gap_components:
+        assert component.is_gap_component
+        if component.component_type == "U":
+            return "?"
+        result += component.gap_length
+    return result
+
+
+def camsa_orientation_from_agp(agp_or):
+    if agp_or in ["?", "0", "na"]:
+        return "?"
+    return agp_or
+
+
+def object_as_camsa_points(object_as_components, extra_data):
+    result = []
+    components = object_as_components
+    f_non_gap_element = get_index_of_first_non_gap_element(component_sequence=components)
+    current_element = components[f_non_gap_element]
+    current_index = f_non_gap_element
+    next_index, next_element = get_next_non_gap_element(components=components, current_index=current_index)
+    while next_element is not None:
+        gap_size = get_gap_size(components, current_index, next_index)
+        seq1_or = camsa_orientation_from_agp(agp_or=current_element.orientation)
+        seq2_or = camsa_orientation_from_agp(agp_or=next_element.orientation)
+        assembly_point = AssemblyPoint(seq1=current_element.component_id, seq2=next_element.component_id,
+                                       seq1_or=seq1_or, seq2_or=seq2_or, sources=[extra_data.sources],
+                                       gap_size=gap_size, cw="?")
+        result.append(assembly_point)
+        current_element = next_element
+        current_index = next_index
+        next_index, next_element = get_next_non_gap_element(components=components, current_index=current_index)
+    return result
+
 
 if __name__ == "__main__":
     full_description = camsa.full_description_template.format(
@@ -98,6 +166,7 @@ if __name__ == "__main__":
                         help="Format string for python logger.")
 
     parser.add_argument("agp", type=configargparse.FileType("rt"), default=sys.stdin)
+    parser.add_argument("--sources", type=str, default=None)
     parser.add_argument("-o", "--output", type=configargparse.FileType("wt"), default=sys.stdout)
 
     args = parser.parse_args()
@@ -117,7 +186,12 @@ if __name__ == "__main__":
     logger.info("Starting the converting process")
 
     objects = defaultdict(list)
+    assembly_points = []
 
+    if args.sources is None:
+        logger.debug("\"sources\" were not specified explicitly for this AGP data. Inferring from the data stream")
+        args.sources = os.path.basename(str(args.agp.name))
+        logger.debug("\"sources\" has been inferred to \"{sources}\"".format(sources=args.sources))
     #######################################
     #      reading input AGP data         #
     #######################################
@@ -125,12 +199,25 @@ if __name__ == "__main__":
     for line in args.agp:
         line = line.strip()
         if line.startswith("#"):
-            continue    # skipping comment lines
+            logger.debug("Skipping comment line: {line}".format(line=line))
+            continue
         data = line.split("\t", 8)
         if Component.is_scaffold_component(data[4]):
+            logger.debug("Processing a non-gap data line: {line}".format(line=line))
             component = ScaffoldComponent.from_agp_data(data=data)
         else:
+            logger.debug("Processing a gap data line: {line}".format(line=line))
             component = GapComponent.from_agp_data(data=data)
         objects[component.object_id].append(component)
 
+    for object_id in objects.keys():
+        logger.debug("Processing object {object_id}".format(object_id=object_id))
+        objects[object_id] = sorted(objects[object_id], key=lambda component: (component.object_beg, component.object_end))
+        components = objects[object_id]
+        camsa_points = object_as_camsa_points(object_as_components=components, extra_data=args)
+        assembly_points.extend(camsa_points)
+
+    logger.info("Writing CAMSA formatted assembly poitns to {file}".format(file=args.output.name))
+    camsa_io.write_assembly_points(assembly_points=assembly_points, destination=args.output)
+    logger.info("Finished the conversion.")
     logger.info("Elapsed time: {el_time}".format(el_time=str(datetime.datetime.now() - start_time)))
