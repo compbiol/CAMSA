@@ -65,6 +65,6 @@ script:
   - run_camsa.py camsa/examples/gage/exp2/sga.camsa.points camsa/examples/gage/exp2/sspace.camsa.points camsa/examples/gage/exp2/soap2.camsa.points camsa/examples/gage/exp2/scaffmatch.camsa.points camsa/examples/gage/exp2/metassembler.camsa.points camsa/examples/gage/exp2/gam-ngs.camsa.points -o camsa/examples/gage/exp2/scaffolders_gm
   - camsa_points2fasta.py --points camsa/examples/gage/exp2/scaffolders_gm/merged/merged.camsa.points --fasta camsa/examples/gage/exp2/contigs.fasta --allow-singletons -o camsa/examples/gage/exp2/scaffolders_gm/merged/camsa.fasta
 
-#  - run_camsa.py camsa/examples/gage/exp3/sga.camsa.points camsa/examples/gage/exp3/sspace.camsa.points camsa/examples/gage/exp3/soap2.camsa.points camsa/examples/gage/exp3/scaffmatch.camsa.points -o camsa/examples/gage/exp3/scaffolders
-#  - run_camsa.py camsa/examples/gage/exp3/sga.camsa.points camsa/examples/gage/exp3/sspace.camsa.points camsa/examples/gage/exp3/soap2.camsa.points camsa/examples/gage/exp3/scaffmatch.camsa.points camsa/examples/gage/exp3/metassembler.camsa.points camsa/examples/gage/exp3/gam-ngs.camsa.points -o camsa/examples/gage/exp3/scaffolders_gm
+  - run_camsa.py camsa/examples/gage/exp3/sga.camsa.points camsa/examples/gage/exp3/sspace.camsa.points camsa/examples/gage/exp3/soap2.camsa.points camsa/examples/gage/exp3/scaffmatch.camsa.points -o camsa/examples/gage/exp3/scaffolders
+  - run_camsa.py camsa/examples/gage/exp3/sga.camsa.points camsa/examples/gage/exp3/sspace.camsa.points camsa/examples/gage/exp3/soap2.camsa.points camsa/examples/gage/exp3/scaffmatch.camsa.points camsa/examples/gage/exp3/metassembler.camsa.points camsa/examples/gage/exp3/gam-ngs.camsa.points -o camsa/examples/gage/exp3/scaffolders_gm
 
