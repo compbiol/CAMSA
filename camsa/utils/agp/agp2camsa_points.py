@@ -15,7 +15,8 @@ import camsa
 
 
 class Component(object):
-    def __init__(self, object_beg, object_end, part_number, component_type):
+    def __init__(self, object_id, object_beg, object_end, part_number, component_type):
+        self.object_id = object_id
         self.object_beg = object_beg
         self.object_end = object_end
         self.part_number = part_number
@@ -25,23 +26,55 @@ class Component(object):
     def from_agp_data(cls, data):
         raise NotImplementedError("Only specific heirs have implementation for this method")
 
+    @staticmethod
+    def is_scaffold_component(component_type):
+        return component_type not in ["U", "N"]
+
 
 class ScaffoldComponent(Component):
-    def __init__(self, object_beg, object_end, part_number, component_type, component_id, component_beg, component_end, orientation):
-        super(ScaffoldComponent, self).__init__(object_beg=object_beg, object_end=object_end, part_number=part_number, component_type=component_type)
+    def __init__(self, object_id, object_beg, object_end, part_number, component_type, component_id, component_beg, component_end, orientation):
+        super(ScaffoldComponent, self).__init__(object_id=object_id, object_beg=object_beg, object_end=object_end, part_number=part_number, component_type=component_type)
         self.component_id = component_id
         self.component_beg = component_beg
         self.component_end = component_end
         self.orientation = orientation
 
+    @classmethod
+    def from_agp_data(cls, data):
+        object_id = data[0]
+        object_beg = int(data[1])
+        object_end = int(data[2])
+        part_number = int(data[3])
+        component_type = data[4]
+        component_id = data[5]
+        component_beg = int(data[6])
+        component_end = int(data[7])
+        orientation = data[8]
+        return cls(object_id=object_id, object_beg=object_beg, object_end=object_end, part_number=part_number, component_type=component_type,
+                   component_id=component_id, component_beg=component_beg, component_end=component_end, orientation=orientation)
+
 
 class GapComponent(Component):
-    def __init__(self, object_beg, object_end, part_number, component_type, gap_length, gap_type, linkage, linkage_evidence):
-        super(GapComponent, self).__init__(object_beg=object_beg, object_end=object_end, part_number=part_number, component_type=component_type)
+    def __init__(self, object_id, object_beg, object_end, part_number, component_type, gap_length, gap_type, linkage, linkage_evidence):
+        super(GapComponent, self).__init__(object_id=object_id, object_beg=object_beg, object_end=object_end, part_number=part_number, component_type=component_type)
         self.gap_length = gap_length
         self.gap_type = gap_type
         self.linkage = linkage
         self.linkage_evidence = linkage_evidence
+
+    @classmethod
+    def from_agp_data(cls, data):
+        object_id = data[0]
+        object_beg = int(data[1])
+        object_end = int(data[2])
+        part_number = int(data[3])
+        component_type = data[4]
+        gap_length = int(data[5])
+        gap_type = data[6]
+        linkage = data[7]
+        linkage_evidence = data[8]
+        return cls(object_id=object_id, object_beg=object_beg, object_end=object_end, part_number=part_number, component_type=component_type,
+                   gap_length=gap_length, gap_type=gap_type, linkage=linkage, linkage_evidence=linkage_evidence)
 
 
 if __name__ == "__main__":
@@ -64,7 +97,7 @@ if __name__ == "__main__":
     parser.add_argument("--c-logging-formatter-entry",
                         help="Format string for python logger.")
 
-    parser.add_argument("agp", type=configargparse.FileType("rt"), required=True)
+    parser.add_argument("agp", type=configargparse.FileType("rt"), default=sys.stdin)
     parser.add_argument("-o", "--output", type=configargparse.FileType("wt"), default=sys.stdout)
 
     args = parser.parse_args()
@@ -85,11 +118,19 @@ if __name__ == "__main__":
 
     objects = defaultdict(list)
 
+    #######################################
+    #      reading input AGP data         #
+    #######################################
+    logger.info("Reading input AGP formatted data")
     for line in args.agp:
         line = line.strip()
         if line.startswith("#"):
-            continue
-
-
+            continue    # skipping comment lines
+        data = line.split("\t", 8)
+        if Component.is_scaffold_component(data[4]):
+            component = ScaffoldComponent.from_agp_data(data=data)
+        else:
+            component = GapComponent.from_agp_data(data=data)
+        objects[component.object_id].append(component)
 
     logger.info("Elapsed time: {el_time}".format(el_time=str(datetime.datetime.now() - start_time)))
