@@ -45,6 +45,11 @@ script:
   - cd camsa/examples/utils/fasta/data
   - gzip -d B_anthracis_contigs.fasta.gz B_anthracis_Mslice.fasta.gz
   - cd ../../../../../
+  - cd camsa/examples/gage/exp1
+  - gzip -d contigs.fasta.gz
+  - cd ../exp2
+  - gzip -d contigs.fasta/gz
+  - cd ../../../../
   # B_antracis_Mslice fasta files used in nucmer documentation as an example
   - fasta2camsa_points.py camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta camsa/examples/utils/fasta/data/B_anthracis_Mslice.fasta --output-dir camsa/examples/utils/fasta/output
   - mkdir camsa/examples/utils/agp/output
