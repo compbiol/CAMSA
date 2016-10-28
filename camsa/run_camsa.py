@@ -50,7 +50,7 @@ if __name__ == "__main__":
     parser.add_argument("--c-merging-strategy", choices=[MergingStrategies.progressive_merging.value, MergingStrategies.maximal_matching.value],
                         default=MergingStrategies.maximal_matching.value,
                         help="A strategy to produced a merged assembly from the given ones.\nDEFAULT: maximal-matching")
-    parser.add_argument("--c-merging-cycles", action="store_true", default=False,
+    parser.add_argument("--c-merging-cycles", dest="allow_cycles", action="store_true", default=False,
                         help="Allow cycles in the produced merged assembly.\nDEFAULT: False")
     parser.add_argument("--version", action="version", version=camsa.VERSION)
     parser.add_argument("-o", "--output-dir",
@@ -131,7 +131,7 @@ if __name__ == "__main__":
     #######################################
     logger.info("Obtaining a merged assembly, using {strategy} strategy".format(strategy=args.c_merging_strategy))
     merged_assembly_graph = merging.strategies_bindings[args.c_merging_strategy](assembly_points_by_sources=assembly_points_by_sources,
-                                                                                 acyclic=args.c_merging_cycles,
+                                                                                 acyclic=not args.allow_cycles,
                                                                                  min_cw=args.c_merging_cw_min)
     update_assembly_points_with_merged_assembly(original_assembly_points_by_ids=original_assembly_points_by_ids,
                                                 merged_assembly_points_by_ids=merged_assembly_points_by_ids,
