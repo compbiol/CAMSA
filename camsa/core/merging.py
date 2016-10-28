@@ -7,7 +7,7 @@ from collections import defaultdict
 import blist
 import networkx
 
-from camsa.core.data_structures import MergedAssemblyGraph, inverse_orientation
+from camsa.core.data_structures import MergedScaffoldAssemblyGraph, inverse_orientation
 
 
 class MergingStrategies(enum.Enum):
@@ -55,14 +55,14 @@ def merge_progressively(assembly_points_by_sources, acyclic=True, min_cw=0.0):
         end_points[u] = v
         end_points[v] = u
 
-    assembly_edges_graph = MergedAssemblyGraph()
+    merged_scaffold_assembly_edges_graph = MergedScaffoldAssemblyGraph()
     assembly_points_by_edges = defaultdict(list)
     for ap in assembly_points_by_sources:
         for (u, v, weight) in ap.get_edges(sort=True, weight=True):
             assembly_points_by_edges[(u, v)].append(ap)
-            assembly_edges_graph.add_edge(u, v, weight=weight)
-    assembly_edges_graph.remove_edges_with_low_cw(cw_threshold=min_cw)
-    assembly_edges = assembly_edges_graph.edges(weight=True)
+            merged_scaffold_assembly_edges_graph.add_edge(u, v, weight=weight)
+    merged_scaffold_assembly_edges_graph.remove_edges_with_low_cw(cw_threshold=min_cw)
+    assembly_edges = merged_scaffold_assembly_edges_graph.edges(weight=True)
     sorted_assembly_edges = sorted(assembly_edges, key=lambda entry: entry[2])
     assembly_edges = blist.sortedlist(sorted_assembly_edges, key=lambda entry: entry[2])
 
@@ -78,8 +78,8 @@ def merge_progressively(assembly_points_by_sources, acyclic=True, min_cw=0.0):
             # updating endpoints of merged paths
             end_points[end_points[u]], end_points[end_points[v]] = end_points[v], end_points[u]
             # collecting redundant edges
-            re1 = {tuple(sorted(e)) for e in assembly_edges_graph.graph.edges(nbunch=u)}
-            re2 = {tuple(sorted(e)) for e in assembly_edges_graph.graph.edges(nbunch=v)}
+            re1 = {tuple(sorted(e)) for e in merged_scaffold_assembly_edges_graph.graph.edges(nbunch=u)}
+            re2 = {tuple(sorted(e)) for e in merged_scaffold_assembly_edges_graph.graph.edges(nbunch=v)}
             re3 = {tuple(sorted(e)) for e in get_redundant_edges_from_assembly_points(e=(u, v), points_by_edges=assembly_points_by_edges,
                                                                                       processed_points=already_processed_assembly_points)}
             redundant_edges.add(tuple(sorted((u, v))))
@@ -87,7 +87,7 @@ def merge_progressively(assembly_points_by_sources, acyclic=True, min_cw=0.0):
             redundant_edges.update(re2)
             redundant_edges.update(re3)
         for u, v in redundant_edges:
-            to_discard = (u, v, assembly_edges_graph.graph[u][v]['weight'])
+            to_discard = (u, v, merged_scaffold_assembly_edges_graph.graph[u][v]['weight'])
             assembly_edges.discard(to_discard)
     # checking that we didn't screw up :)
     for vertex in cover_graph.nodes():
@@ -110,7 +110,7 @@ def maximal_matching(assembly_points_by_sources, acyclic=True, min_cw=0.0):
     scaffold_edges = get_scaffold_edges(assembly_points=assembly_points_by_sources)
     unoriented_assembly_points = get_un_oriented_assembly_points(assembly_points=assembly_points_by_sources)
 
-    assembly_edges_graph = MergedAssemblyGraph()
+    assembly_edges_graph = MergedScaffoldAssemblyGraph()
     for ap in assembly_points_by_sources:
         for (u, v, weight) in ap.get_edges(sort=True, weight=True):
             assembly_edges_graph.add_edge(u, v, weight=weight)
@@ -133,10 +133,14 @@ def maximal_matching(assembly_points_by_sources, acyclic=True, min_cw=0.0):
         assert len(participating_edges) <= 2  # this is just a sanity check
         if len(participating_edges) == 2:
             cover_graph.remove_edge(participating_edges[0][0], participating_edges[0][1])
-    edges_to_delete = []
-    for cc in networkx.connected_component_subgraphs(G=cover_graph, copy=False):
-        if networkx.number_of_nodes(cc) == networkx.number_of_edges(cc):
-            edges_to_delete.append(min(cc.edges(data=True), key=lambda edge: edge))
+    if acyclic:
+        edges_to_delete = []
+        for cc in networkx.connected_component_subgraphs(G=cover_graph, copy=True):
+            if networkx.number_of_nodes(cc) == networkx.number_of_edges(cc):
+                assembly_edges = filter(lambda entry: "weight" in entry[2], cc.edges(data=True))
+                edges_to_delete.append(min(assembly_edges, key=lambda entry: entry[2]["weight"]))
+        for u, v, data in edges_to_delete:
+            cover_graph.remove_edge(u, v)
     return cover_graph
 
 

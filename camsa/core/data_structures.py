@@ -107,7 +107,7 @@ class AssemblyPoint(object):
         return self.seq1_or == "?" or self.seq2_or == "?"
 
 
-class MergedAssemblyGraph(object):
+class MergedScaffoldAssemblyGraph(object):
     def __init__(self):
         self.graph = networkx.Graph()
 
