@@ -883,6 +883,10 @@
         </div>
         <div class="col-lg-offset-1 col-lg-3">
             <button id="export_aps" type="button" class="btn btn-info">Export table</button>
+            <select id="export_type">
+                <option selected="selected">APs</option>
+                <option>SAG</option>
+            </select>
         </div>
     </div>
     <div class="row">
@@ -908,22 +912,47 @@
                 {% endfor %}
             };
 
+            $("#export_aps").on('click', function () {
+                if ($("#export_type").val() == "APs") {
+                    var aps = get_aps_by_ids();
+                    var result = "origin\tseq1\tseq1_or\tseq2\tseq2_or\tcw\n";
+                    aps.forEach(function (entry) {
+                        result += ap_as_string(entry) + "\n";
+                    });
+                    download_text_data(result, "plain", "data.camsa.points");
+                } else {
+                    var tmp_aps = get_aps();
+                    var tmp_nodes = get_nodes(tmp_aps);
+                    var tmp_ap_edges = get_ap_edges(tmp_aps);
+                    var tmp_seq_edges = get_seq_edges(tmp_aps);
+                    var tmp_edges = tmp_ap_edges.concat(tmp_seq_edges);
+                    var json = cytoscape({
+                        elements: {
+                            edges: tmp_edges,
+                            nodes: tmp_nodes
+                        }
+                    }).json();
+                    download_text_data(JSON.stringify(json), "json", "sag.json");
+                }
+            });
+
             function get_vertices(seq1, seq2, or1, or2) {
                 var seq1_suffix = or1 == "+" ? "h" : "t";
                 var seq2_suffix = or2 == "-" ? "h" : "t";
                 return [seq1 + seq1_suffix, seq2 + seq2_suffix];
             }
 
-            function download_aps_as_text(text) {
+            function download_text_data(text, type, download_name) {
                 var element = document.createElement('a');
-                element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-                element.setAttribute('download', 'data.txt');
-
-                element.style.display = 'none';
+                var url = URL.createObjectURL(new Blob([text], {type: "text/" + type}));
+                element.href = url;
+                element.target = "_blank";
+                element.download = download_name;
+                element.style = "display: none";
                 document.body.appendChild(element);
-
                 element.click();
                 document.body.removeChild(element);
+                URL.revokeObjectURL(url);
             }
 
             function AssemblyPoint(seq1, seq2, oor1, oor2, por1, por2, cw, self_id, source, map) {
@@ -1058,7 +1087,7 @@
                         if (!(v1 in seen || v2 in seen)) {
                             var edge = {
                                 data: {
-                                    arrow_head: "triangle",
+                                    target_arrow_head: "triangle",
                                     label: v1.slice(0, v1.length - 1),
                                     id_label: escape(v1.slice(0, v1.length - 1)),
                                     source: escape(v1),
@@ -1158,14 +1187,21 @@
                 return nodes.concat(edges);
             }
 
+            function value_or_fallback_if_none(value, fall_back){
+                if (value == "None"){
+                    return fall_back;
+                }
+                return value;
+            }
+
             function ap_as_string(ap) {
                 var result = "";
                 result += ap.source + "\t";
                 result += ap.seq1 + "\t";
-                result += ap.por1 + "\t";
+                result += value_or_fallback_if_none(ap.por1, ap.oor1) + "\t";
                 result += ap.seq2 + "\t";
-                result += ap.por2 + "\t";
-                result += ap.cw;
+                result += value_or_fallback_if_none(ap.por2, ap.oor2) + "\t";
+                result += value_or_fallback_if_none(ap.cw, "?");
                 return result;
             }
 
@@ -1180,14 +1216,7 @@
             }
                 ;
 
-                $("#export_aps").on('click', function () {
-                    var aps = get_aps_by_ids();
-                    var result = "origin\tseq1\tseq1_or\tseq2\tseq2_or\tcw\n";
-                    aps.forEach(function (entry) {
-                        result += ap_as_string(entry) + "\n";
-                    });
-                    download_aps_as_text(result);
-                });
+
                 $("#draw_graph").on('click', function () {
                     $("#graph").empty();
                     $("#graph").css('background', 'url(./libs/images/giphy.gif) no-repeat center center');
@@ -1233,7 +1262,7 @@
                                     'width': 1.5,
                                     'line-color': 'black',
                                     'target-arrow-color': 'black',
-                                    'opacity': .7
+                                    'opacity': .7,
                                 })
                                 .selector('edge[line_color]')
                                 .css({
@@ -1248,10 +1277,9 @@
                                     'text-outline-width': 1.5
 
                                 })
-                                .selector('edge[arrow_head]')
+                                .selector('edge[target_arrow_head]')
                                 .css({
-                                    'target-arrow-shape': 'data(arrow_head)'
-
+                                    'target-arrow-shape': 'triangle'
                                 })
                                 .selector('edge[map]')
                                 .css({
