@@ -211,13 +211,13 @@ if __name__ == "__main__":
     with open(original_points_path, "wt") as destination:
         camsa_io.write_assembly_points(assembly_points=original_assembly_points_by_ids.values(),
                                        destination=destination,
-                                       output_setup=args.o_initial_format)
+                                       output_setup=args.o_original_format)
 
     collapsed_points_path = os.path.join(comparative_report_dir, "collapsed.camsa.points")
     with open(collapsed_points_path, "wt") as destination:
         camsa_io.write_assembly_points(destination=destination,
                                        assembly_points=merged_assembly_points,
-                                       output_setup=args.o_conflicts_format)
+                                       output_setup=args.o_collapsed_format)
 
     template = Template(source=open(os.path.join(camsa.root_dir, "report_template.html"), "rt").read())
 
