@@ -1,8 +1,14 @@
 from setuptools import setup
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+import camsa
 
 setup(
     name='CAMSA',
-    version='1.0.0b1',
+    version=camsa.VERSION,
     author='Sergey Aganezov',
     author_email='aganezov@gwu.edu',
     description='CAMSA: a tool for Comparative Analysis and Merging of Scaffold Assemblies',
