@@ -136,7 +136,7 @@ def object_as_camsa_points(object_as_components, extra_data):
         seq1_or = camsa_orientation_from_agp(agp_or=current_element.orientation)
         seq2_or = camsa_orientation_from_agp(agp_or=next_element.orientation)
         assembly_point = AssemblyPoint(seq1=current_element.component_id, seq2=next_element.component_id,
-                                       seq1_or=seq1_or, seq2_or=seq2_or, sources=[extra_data.sources],
+                                       seq1_or=seq1_or, seq2_or=seq2_or, sources=[extra_data.origin],
                                        gap_size=gap_size, cw="?")
         result.append(assembly_point)
         current_element = next_element
@@ -165,9 +165,14 @@ if __name__ == "__main__":
     parser.add_argument("--c-logging-formatter-entry",
                         help="Format string for python logger.")
 
-    parser.add_argument("agp", type=configargparse.FileType("rt"), default=sys.stdin)
-    parser.add_argument("--sources", type=str, default=None)
-    parser.add_argument("-o", "--output", type=configargparse.FileType("wt"), default=sys.stdout)
+    parser.add_argument("agp", type=configargparse.FileType("rt"), nargs="+", default=sys.stdin,
+                        help="Input stream of AGPv2 formatted scaffold assemblies\nDEFAULT: stdin")
+    parser.add_argument("--origin", type=str, default=None,
+                        help="Identifier for the assembly, that would be specified in the \"origin\" column of CAMSA points\nDEFAULT: inferred from input file names")
+    parser.add_argument("--o-format", type=str,
+                        help="The CAMSA-out formatting for the assembly points obtained form the AGPv2 formatted scaffold assemblies")
+    parser.add_argument("-o", "--output", type=configargparse.FileType("wt"), default=sys.stdout,
+                        help="The stream where CAMSA formatted assembly points are outputted\nDEFAULT: stdout")
 
     args = parser.parse_args()
 
@@ -188,27 +193,32 @@ if __name__ == "__main__":
     objects = defaultdict(list)
     assembly_points = []
 
-    if args.sources is None:
-        logger.debug("\"sources\" were not specified explicitly for this AGP data. Inferring from the data stream")
-        args.sources = os.path.basename(str(args.agp.name))
-        logger.debug("\"sources\" has been inferred to \"{sources}\"".format(sources=args.sources))
+    if args.origin is None:
+        logger.debug("\"origin\" were not specified explicitly for this AGP data. Inferring from the data stream")
+        sources = []
+        for source in args.agp:
+            sources.append(os.path.splitext(os.path.basename(str(source.name)))[0])
+        args.origin = ".".join(sources)
+        logger.debug("\"origin\" has been inferred to \"{sources}\"".format(sources=args.origin))
+
     #######################################
     #      reading input AGP data         #
     #######################################
     logger.info("Reading input AGP formatted data")
-    for line in args.agp:
-        line = line.strip()
-        if line.startswith("#"):
-            logger.debug("Skipping comment line: {line}".format(line=line))
-            continue
-        data = line.split("\t", 8)
-        if Component.is_scaffold_component(data[4]):
-            logger.debug("Processing a non-gap data line: {line}".format(line=line))
-            component = ScaffoldComponent.from_agp_data(data=data)
-        else:
-            logger.debug("Processing a gap data line: {line}".format(line=line))
-            component = GapComponent.from_agp_data(data=data)
-        objects[component.object_id].append(component)
+    for source in args.agp:
+        for line in source:
+            line = line.strip()
+            if line.startswith("#"):
+                logger.debug("Skipping comment line: {line}".format(line=line))
+                continue
+            data = line.split("\t", 8)
+            if Component.is_scaffold_component(data[4]):
+                logger.debug("Processing a non-gap data line: {line}".format(line=line))
+                component = ScaffoldComponent.from_agp_data(data=data)
+            else:
+                logger.debug("Processing a gap data line: {line}".format(line=line))
+                component = GapComponent.from_agp_data(data=data)
+            objects[component.object_id].append(component)
 
     for object_id in objects.keys():
         logger.debug("Processing object {object_id}".format(object_id=object_id))
@@ -218,6 +228,6 @@ if __name__ == "__main__":
         assembly_points.extend(camsa_points)
 
     logger.info("Writing CAMSA formatted assembly poitns to {file}".format(file=args.output.name))
-    camsa_io.write_assembly_points(assembly_points=assembly_points, destination=args.output)
+    camsa_io.write_assembly_points(assembly_points=assembly_points, destination=args.output, output_setup=args.o_format)
     logger.info("Finished the conversion.")
     logger.info("Elapsed time: {el_time}".format(el_time=str(datetime.datetime.now() - start_time)))
