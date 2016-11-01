@@ -207,6 +207,7 @@ if __name__ == "__main__":
 
     parser.add_argument("contigs", metavar="CONTIGS", help="fasta formatted file with contigs, that served as input for scaffolding purposes")
     parser.add_argument("scaffolds", metavar="SCAFFOLDS", nargs="+", help="fasta formatted result files of contigs scaffolding")
+    parser.add_argument("--version", action="version", version=camsa.VERSION)
     parser.add_argument("-c", "--config", is_config_file=True, help="Config file overwriting some of the default settings as well as any flag starting with \"--\".")
     parser.add_argument("-o", "--output-dir", metavar="OUTPUT_DIR", dest="output_dir", default="output", help="Output directory to store temporary and final files.\nDEFAULT: ./output/")
     parser.add_argument("--tmp-dir", metavar="TMP_DIR", dest="tmp_dir", default=None, help="Directory with all intermediate (.delta | .coords) files.")

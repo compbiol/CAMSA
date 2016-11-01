@@ -24,6 +24,7 @@ if __name__ == "__main__":
         contact=camsa.CONTACT)
     full_description = "=" * 80 + "\n" + full_description + "=" * 80 + "\n"
     parser = configargparse.ArgParser(description=full_description, formatter_class=configargparse.RawTextHelpFormatter)
+    parser.add_argument("--version", action="version", version=camsa.VERSION)
     parser.add_argument("-o", "--output-file", metavar="OUTPUT", dest="output", type=configargparse.FileType("wt"), default=sys.stdout,
                         help="A file to which the CAMSA readable fragments lengths would be written. Standard extension is \".camsa.lengths\".\nDEFAULT: stdout")
     parser.add_argument("contigs", nargs="+", metavar="CONTIGS", type=configargparse.FileType("rt"), default=sys.stdin,

@@ -69,6 +69,7 @@ if __name__ == "__main__":
                                                             os.path.join(camsa.root_dir, "logging.ini")])
     parser.add_argument("-c", "--config", is_config_file=True, help="Config file overwriting some of the default settings as well as any flag starting with \"--\".")
 
+    parser.add_argument("--version", action="version", version=camsa.VERSION)
     parser.add_argument("--fasta", type=configargparse.FileType("rt"), required=True,
                         help="A stream of fasta formatted sequences of scaffolds, that participate in the scaffold assembly represented in form of CAMSA points")
     parser.add_argument("--points", type=configargparse.FileType("rt"), required=True,

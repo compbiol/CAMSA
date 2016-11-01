@@ -159,6 +159,7 @@ if __name__ == "__main__":
                                                             os.path.join(camsa.root_dir, "logging.ini")])
     parser.add_argument("-c", "--config", is_config_file=True,
                         help="Config file overwriting some of the default settings as well as any flag starting with \"--\".")
+    parser.add_argument("--version", action="version", version=camsa.VERSION)
     parser.add_argument("--c-logging-level", type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
                         help="Logging level for the converter.\nDEFAULT: {info}".format(info=logging.INFO))
