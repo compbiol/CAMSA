@@ -213,11 +213,14 @@ if __name__ == "__main__":
     parser.add_argument("--overwrite", dest="overwrite", action="store_true", help="Disregards already present \"*.delta\" as well as \"*.coords\" and runs all the stages from scratch.\nDEFAULT: False")
     parser.add_argument("--ensure-all", dest="ensure_all", default=False, type=bool, help="Flag indicating, that is any subprocess of this converter fails, than the whole operation will be canceled.\nDEFAULT: False")
 
-    parser.add_argument("--nucmer-cli-arguments", dest="nucmer_cli_arguments")
+    parser.add_argument("--nucmer-cli-arguments", dest="nucmer_cli_arguments",
+                        help="Command line argument, used when running \"nucmer\" software\nDEFAULT: -maxmatch -c 100")
 
-    parser.add_argument("--show-coords-cli-arguments", dest="show_coords_cli_arguments")
+    parser.add_argument("--show-coords-cli-arguments", dest="show_coords_cli_arguments",
+                        help="Command line argument, used when running show-coords software\nDEFAULT: -r -c -l")
 
-    parser.add_argument("--delta-filter-cli-arguments", dest="delta_filter_cli_arguments")
+    parser.add_argument("--delta-filter-cli-arguments", dest="delta_filter_cli_arguments",
+                        help="Command line argument, used when running delta-filter software\nDEFAULT: -r -q")
 
     #######################################################################################################################
     # will definitely make two options this work, once the python bug is fixed: http://bugs.python.org/issue15112
@@ -238,7 +241,7 @@ if __name__ == "__main__":
                         help="A strategy that determines on how assembly pairs from contigs on each scaffold are inferred.\n"
                              "\"mid-point-sort\" -- all contig mapping on each scaffold are sorted by their mid coordinate (start + end) / 2.\n\tSorted sequence of contigs determines n-1 assembly points.\n"
                              "\"sliding-window\" -- all pairs of adjacent extremities of non overlapping contigs will be reported as assembly points."
-                             "\nDEFAULT: sliding-window ")
+                             "\nDEFAULT: mid-point-sort ")
     parser.add_argument("--c-logging-level", type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
                         help="Logging level for the converter.\nDEFAULT: {info}".format(info=logging.INFO))
@@ -259,8 +262,8 @@ if __name__ == "__main__":
 
     args.output_dir = os.path.expanduser(args.output_dir)
     args.output_dir = os.path.abspath(args.output_dir)
-    args.tmp_dir = os.path.join(args.output_dir, "tmp") if args.tmp_dir is None else os.path.abspath(os.path.expanduser(args.tmp_dir))
-    args.logs_dir = os.path.join(args.output_dir, "logs")
+    args.tmp_dir = os.path.join(args.output_dir, "fasta2camsa") if args.tmp_dir is None else os.path.abspath(os.path.expanduser(args.tmp_dir))
+    args.logs_dir = os.path.join(args.tmp_dir, "logs")
 
     if not os.path.exists(args.output_dir):
         logger.debug("Output directory \"{directory}\" doesn't exists. Creating one.".format(directory=args.output_dir))
