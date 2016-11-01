@@ -46,15 +46,23 @@ if __name__ == "__main__":
     parser.add_argument("--c-cw-candidate", type=float,
                         help="A confidence weight value assigned to semi/un-oriented assembly points and respective candidate assembly edges,\nin case \"?\" is specified as the respective assembly point confidence weight.\nDEFAULT: 0.75")
     parser.add_argument("--c-merging-cw-min", type=float,
-                        help="A threshold for the minimum cumulative confidence weight for merged edges in MSAG.\nEdges with confidence weight below are not considered in the \"merged\" assembly construction.\nDEFAULT: 0.0")
-    parser.add_argument("--c-merging-strategy", choices=[MergingStrategies.progressive_merging.value, MergingStrategies.maximal_matching.value],
+                        help="A threshold for the minimum cumulative confidence weight for merged assembly edges in MSAG.\nEdges with confidence weight below are not considered in the \"merged\" assembly construction.\nDEFAULT: 0.0")
+    parser.add_argument("--c-merging-strategy", choices=[MergingStrategies.greedy_merging.value, MergingStrategies.maximal_matching.value],
                         default=MergingStrategies.maximal_matching.value,
                         help="A strategy to produced a merged assembly from the given ones.\nDEFAULT: maximal-matching")
     parser.add_argument("--c-merging-cycles", dest="allow_cycles", action="store_true", default=False,
-                        help="Allow cycles in the produced merged assembly.\nDEFAULT: False")
+                        help="Whether to allow cycles in the produced merged assembly.\nDEFAULT: False")
     parser.add_argument("--version", action="version", version=camsa.VERSION)
-    parser.add_argument("-o", "--output-dir",
-                        help="A directory, where CAMSA will store all of the produced output (report, assets, etc).")
+    parser.add_argument("-o", "--o-dir",
+                        help="A directory, where CAMSA will store all of the produced output (report, assets, etc).\nDEFAULT: camsa_{date}")
+    parser.add_argument("--o-merged-format", type=str,
+                        help="The CAMSA-out formatting for the merged scaffold assemblies in a form of CAMSA points.")
+    parser.add_argument("--o-subgroups-format", type=str,
+                        help="The CAMSA-out formatting for the merged scaffold assemblies in a form of CAMSA points.")
+    parser.add_argument("--o-collapsed-format", type=str,
+                        help="The CAMSA-out formatting for the collapsed assembly points and their computed conflicts.")
+    parser.add_argument("--o-original-format", type=str,
+                        help="The CAMSA-out formatting for the non-collapsed assembly points and their computed conflicts.")
     parser.add_argument("--c-logging-level", default=logging.INFO, type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
                         help="Logging level for CAMSA.\nDEFAULT: {info}".format(info=logging.INFO))
@@ -143,13 +151,13 @@ if __name__ == "__main__":
     #           output stage              #
     #######################################
     logger.info("Preparing output")
-    if args.output_dir is None:
-        args.output_dir = os.path.join(os.getcwd(), "camsa_{date}".format(
+    if args.o_dir is None:
+        args.o_dir = os.path.join(os.getcwd(), "camsa_{date}".format(
             date=datetime.datetime.now().strftime("%b_%d_%Y__%H_%M")))
         logger.debug("Output directory was not specified. Automatically generated name: \"{out_dir}\"."
-                     "".format(out_dir=args.output_dir))
+                     "".format(out_dir=args.o_dir))
 
-    args.output_dir = os.path.abspath(os.path.expanduser(args.output_dir))
+    args.output_dir = os.path.abspath(os.path.expanduser(args.o_dir))
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
@@ -182,19 +190,34 @@ if __name__ == "__main__":
     with open(merged_report_points_path, "wt") as destination:
         camsa_io.write_assembly_points(destination=destination,
                                        assembly_points=[ap for ap in merged_assembly_points if ap.participates_in_merged],
-                                       orientation_type=camsa_io.OrientationChoice.merged)
+                                       output_setup=args.o_merged_format)
 
     # "comparative" subdir of the report
     # will contain assembly points divided into subgroups based in the agreement in input assemblies
     comparative_report_dir = os.path.join(args.output_dir, "comparative")
     camsa_io.remove_dir(dir_path=comparative_report_dir)
+    subgroups_report_dir = os.path.join(comparative_report_dir, "subgroups")
+    camsa_io.remove_dir(comparative_report_dir)
     os.makedirs(comparative_report_dir)
+    os.makedirs(subgroups_report_dir)
     for group in grouped_assemblies:
-        comparative_report_group_points_path = os.path.join(comparative_report_dir, "{group_name}.camsa.points".format(group_name="__".join(group.name)))
+        comparative_report_group_points_path = os.path.join(subgroups_report_dir, "{group_name}.camsa.points".format(group_name=".".join(group.name)))
         with open(comparative_report_group_points_path, "wt") as destination:
             camsa_io.write_assembly_points(assembly_points=group.aps,
                                            destination=destination,
-                                           orientation_type=camsa_io.OrientationChoice.original)
+                                           output_setup=args.o_subgroups_format)
+
+    original_points_path = os.path.join(comparative_report_dir, "original.camsa.points")
+    with open(original_points_path, "wt") as destination:
+        camsa_io.write_assembly_points(assembly_points=original_assembly_points_by_ids.values(),
+                                       destination=destination,
+                                       output_setup=args.o_initial_format)
+
+    collapsed_points_path = os.path.join(comparative_report_dir, "collapsed.camsa.points")
+    with open(collapsed_points_path, "wt") as destination:
+        camsa_io.write_assembly_points(destination=destination,
+                                       assembly_points=merged_assembly_points,
+                                       output_setup=args.o_conflicts_format)
 
     template = Template(source=open(os.path.join(camsa.root_dir, "report_template.html"), "rt").read())
 
