@@ -69,13 +69,20 @@ if __name__ == "__main__":
                                                             os.path.join(camsa.root_dir, "logging.ini")])
     parser.add_argument("-c", "--config", is_config_file=True, help="Config file overwriting some of the default settings as well as any flag starting with \"--\".")
 
-    parser.add_argument("--fasta", type=configargparse.FileType("rt"), required=True)
-    parser.add_argument("--points", type=configargparse.FileType("rt"), required=True)
-    parser.add_argument("--allow-singletons", action="store_true", dest="allow_singletons", default=False)
-    parser.add_argument("--c-sep", type=str)
-    parser.add_argument("--c-sep-length", type=int)
-    parser.add_argument("--scaffold-name-template", type=str)
-    parser.add_argument("-o", "--output", type=configargparse.FileType("wt"), default=sys.stdout)
+    parser.add_argument("--fasta", type=configargparse.FileType("rt"), required=True,
+                        help="A stream of fasta formatted sequences of scaffolds, that participate in the scaffold assembly represented in form of CAMSA points")
+    parser.add_argument("--points", type=configargparse.FileType("rt"), required=True,
+                        help="A stream of CAMSA formatted assembly points, representing a scaffold assembly, that is converted into FASTA formatted sequences")
+    parser.add_argument("--allow-singletons", action="store_true", dest="allow_singletons", default=False,
+                        help="Whether to include scaffolds, that were not mentioned in the CAMSA formatted assembly points\nDEFAULT: False")
+    parser.add_argument("--c-sep", type=str,
+                        help="A symbol, that is used to indicate gaps between scaffolds in the translated assemblies\nDEFAULT: N")
+    parser.add_argument("--c-sep-length", type=int,
+                        help="A default length, that is used for the gap size between scaffolds in the translated assemblies. Used in case, when gap-size column has \"?\" value\nDEFAULT: 20")
+    parser.add_argument("--scaffold-name-template", type=str,
+                        help="Python string template for the scaffold ids, in the produced FASTA formatted sequences. \"cnt\" attribute can be utilized\nDEFAULT: scaffold_{cnt}")
+    parser.add_argument("-o", "--output", type=configargparse.FileType("wt"), default=sys.stdout,
+                        help="A stream to which the FASTA formatted converted sequence, representing the CAMSA formatted scaffold assembly, is output\nDEFAULT: stdout")
 
     parser.add_argument("--c-logging-level", dest="logging_level", default=logging.INFO, type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
