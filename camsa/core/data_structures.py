@@ -107,6 +107,70 @@ class AssemblyPoint(object):
         return self.seq1_or == "?" or self.seq2_or == "?"
 
 
+class APFieldOutExtractorConverter(object):
+    def __init__(self, field_name, converter_name):
+        self.field_name = field_name
+        self.converter = AP_FIELD_CONVERTERS[converter_name]
+
+    def extract_field_value_str(self, ap):
+        return self.converter.convert(getattr(ap, self.field_name))
+
+
+class APFieldConverter(object):
+    @staticmethod
+    def convert(field_value, **kwargs):
+        raise NotImplemented("Converter must be field/area specific")
+
+
+class APFieldConverterStr(APFieldConverter):
+    @staticmethod
+    def convert(field_value, **kwargs):
+        return str(field_value)
+
+
+class APFieldConverterQuestionIfNone(APFieldConverterStr):
+    @staticmethod
+    def convert(field_value, **kwargs):
+        if field_value is None:
+            field_value = "?"
+        return super(APFieldConverterQuestionIfNone, APFieldConverterQuestionIfNone).convert(field_value=field_value, **kwargs)
+
+
+class APFieldConverterBooleanToInt(APFieldConverterQuestionIfNone):
+    @staticmethod
+    def convert(field_value, **kwargs):
+        if field_value in [True, False]:
+            field_value = int(field_value)
+        return super(APFieldConverterBooleanToInt, APFieldConverterBooleanToInt).convert(field_value=field_value, **kwargs)
+
+
+IdFieldConverter = APFieldConverterQuestionIfNone
+
+
+class IterableFieldConverter(APFieldConverterQuestionIfNone):
+    @staticmethod
+    def convert(field_value, **kwargs):
+        result = []
+        treat_as_set = kwargs.get("as_set", True)
+        for value in field_value:
+            result.append(super(IterableFieldConverter, IterableFieldConverter).convert(field_value=value, **kwargs))
+        if treat_as_set:
+            result = set(result)
+        result = sorted(result)
+        treat_empty_as_zero = kwargs.get("empty_as_zero", True)
+        if treat_empty_as_zero and len(result) == 0:
+            return "0"
+        separator = kwargs.get("intra_separator", ",")
+        return separator.join(result)
+
+
+class ConflictFieldConverter(APFieldConverter):
+    @staticmethod
+    def convert(field_value):
+        conflicted_ids = [ap_id for conflict_assembly in field_value.values() for ap_id in conflict_assembly]
+        return IterableFieldConverter.convert(field_value=conflicted_ids)
+
+
 class MergedScaffoldAssemblyGraph(object):
     def __init__(self):
         self.graph = networkx.Graph()
@@ -257,3 +321,13 @@ def inverse_orientation(orientation):
     if orientation in ("+", "-"):
         return "+" if orientation == "-" else "-"
     return orientation
+
+
+AP_FIELD_CONVERTERS = {
+    "str_raw": APFieldConverterStr,
+    "str": APFieldConverterQuestionIfNone,
+    "bool": APFieldConverterBooleanToInt,
+    "conflict": ConflictFieldConverter,
+    "id": IdFieldConverter,
+    "iter": IterableFieldConverter,
+}

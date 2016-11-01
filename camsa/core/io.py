@@ -5,7 +5,7 @@ import shutil
 from collections import defaultdict
 from enum import Enum
 
-from camsa.core.data_structures import AssemblyPoint
+from camsa.core.data_structures import AssemblyPoint, APFieldOutExtractorConverter
 
 
 def get_fn_relations_for_column_names(fieldnames, aliases):
@@ -128,7 +128,17 @@ class OrientationChoice(Enum):
     merged = 1
 
 
-def write_assembly_points(assembly_points, destination, delimiter="\t", orientation_type=OrientationChoice.original):
+def get_header_and_extract_list(settings):
+    data = settings.split("|")
+    converters_setups = []
+    for entry in data:
+        converters_setups.append(entry.split(","))
+    header = [entry[0] for entry in converters_setups]
+    converters = [APFieldOutExtractorConverter(field_name=entry[1], converter_name=entry[2]) for entry in converters_setups]
+    return header, converters
+
+
+def write_assembly_points(assembly_points, destination, output_setup, delimiter="\t"):
     """ Output a collection of assembly point in a text format to the specified stream
 
     :param assembly_points: an iterable with a collection of assembly points to be written down
@@ -140,11 +150,10 @@ def write_assembly_points(assembly_points, destination, delimiter="\t", orientat
     intra_delimiter = "," if delimiter != "," else ";"
 
     writer = csv.writer(destination, delimiter=delimiter)
-    headers_list = ["origin", "seq1", "seq1_or", "seq2", "seq2_or", "gap_size", "cw"]
-    writer.writerow(headers_list)
+    header, field_processor = get_header_and_extract_list(settings=output_setup)
+    writer.writerow(header)
     for ap in assembly_points:
-        or1, or2 = (ap.seq1_or, ap.seq2_or) if orientation_type == OrientationChoice.original else (ap.seq1_par_or, ap.seq2_par_or)
-        assembly_points_entries_list = [intra_delimiter.join(sorted(set(ap.sources))), ap.seq1, or1, ap.seq2, or2, ap.gap_size, ap.cw]
+        assembly_points_entries_list = [processor.extract_field_value_str(ap) for processor in field_processor]
         writer.writerow(assembly_points_entries_list)
 
 
