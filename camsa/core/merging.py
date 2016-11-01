@@ -11,7 +11,7 @@ from camsa.core.data_structures import MergedScaffoldAssemblyGraph, inverse_orie
 
 
 class MergingStrategies(enum.Enum):
-    progressive_merging = "progressive-merging"
+    greedy_merging = "greedy"
     maximal_matching = "maximal-matching"
 
 
@@ -34,7 +34,7 @@ def get_un_oriented_assembly_points(assembly_points):
 #                                                                  #
 ####################################################################
 
-def merge_progressively(assembly_points_by_sources, acyclic=True, min_cw=0.0):
+def merge_greedily(assembly_points_by_sources, acyclic=True, min_cw=0.0):
     def get_redundant_edges_from_assembly_points(e, points_by_edges, processed_points):
         result = []
         for assembly_point in points_by_edges[e]:
@@ -156,7 +156,7 @@ def get_edges_from_matching(matching):
 
 
 strategies_bindings = {
-    MergingStrategies.progressive_merging.value: merge_progressively,
+    MergingStrategies.greedy_merging.value: merge_greedily,
     MergingStrategies.maximal_matching.value: maximal_matching
 }
 
