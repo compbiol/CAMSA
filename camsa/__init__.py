@@ -2,7 +2,7 @@
 import logging
 import os
 
-VERSION = "1.0.0b1"
+VERSION = "1.0.0"
 full_description_template = "| {names:<76} |\n| {affiliations:<76} |\n| {dummy:<76} |\n| {tool:<76} |\n| {dummy:<76} |\n| {information:<76} |\n| {contact:<76} |\n"
 CAMSA_AUTHORS = "Sergey Aganezov & Max A. Alekseyev (c)"
 AFFILIATIONS = "Computational Biology Institute, The George Washington University"
