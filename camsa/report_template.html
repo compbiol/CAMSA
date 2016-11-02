@@ -81,9 +81,9 @@
         <div class="col-lg-10 col-lg-offset-1 text-center">
             <h1>CAMSA report</h1>
         </div>
-        <div class="col-lg-1 text-right">
-            <button type="button" class="btn btn-default btn-xs">meta</button>
-        </div>
+{#        <div class="col-lg-1 text-right">#}
+{#            <button type="button" class="btn btn-default btn-xs">meta</button>#}
+{#        </div>#}
     </div>
     <div class="row" id="per_assembly_overview">
         <h3 class="text-center" id="per_assembly_overview_section">Per assembly overview</h3>
@@ -414,7 +414,7 @@
         <h3 class="text-center">Aggregated assembly points</h3>
         <p class="text-center">
             [{% for assembly in data.assemblies %}
-            <strong>{{ assembly.name }}</strong>{% if not loop.last %}; {% endif %}
+            <strong>{{ assembly.name }} </strong>({{ data.assemblies_to_ids[assembly.name] }}){% if not loop.last %}; {% endif %}
         {% endfor %}]
     </div>
     <div class="row" style="padding-bottom: 10px">
