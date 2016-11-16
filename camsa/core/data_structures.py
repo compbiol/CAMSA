@@ -205,6 +205,14 @@ class MergedScaffoldAssemblyGraph(object):
         self.graph.remove_edges_from(low_weight_edges)
 
 
+class ScaffoldAssemblyGraph(object):
+    def __init__(self):
+        self.graph = networkx.MultiGraph()
+
+    def add_edge(self, u, v, ap_id):
+        self.graph.add_edge(u=u, v=v, attr_dict={"ap_id": ap_id})
+
+
 class Assembly(object):
     def __init__(self, name, aps):
         self.name = name
