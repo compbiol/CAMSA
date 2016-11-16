@@ -74,7 +74,7 @@ class AssemblyPoint(object):
 
     def get_edges(self, weight=False, sort=True):
         result = []
-        for ap in self.get_all_all_possible_representations():
+        for ap in self.get_all_all_possible_realizations():
             head = ap.seq1 + ("h" if ap.seq1_or == "+" else "t")
             tail = ap.seq2 + ("t" if ap.seq2_or == "+" else "h")
             hv = head
@@ -87,7 +87,7 @@ class AssemblyPoint(object):
                 result.append((hv, tv))
         return result
 
-    def get_all_all_possible_representations(self):
+    def get_all_all_possible_realizations(self):
         result = []
         if self.seq1_or == "?":
             seq1_choices = ["+", "-"]
