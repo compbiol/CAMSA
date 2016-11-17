@@ -19,6 +19,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import camsa
 from camsa.core import io as camsa_io
 from camsa.core import merging
+from camsa.core.reference_analysis import analyze_and_update_assembly_points_based_on_reference
 from camsa.core.comparative_analysis import compute_and_update_assembly_points_conflicts
 from camsa.core.data_structures import Assembly, assign_ids_to_assembly_points, merge_assembly_points, assign_parents_to_children
 from camsa.core.merging import MergingStrategies, update_assembly_points_with_merged_assembly, update_gap_sizes_in_merged_assembly
@@ -107,10 +108,11 @@ if __name__ == "__main__":
     #######################################
     #       extracting reference          #
     #######################################
-    reference = None
+    reference_assembly = None
     if args.reference and args.c_ref != "":
         try:
-            reference = assembly_points_by_sources.pop(args.c_ref)
+            reference_aps = assembly_points_by_sources.pop(args.c_ref)
+            reference_assembly = Assembly(name=args.c_ref, aps=reference_aps)
         except KeyError:
             logger.critical("Supplied reference \"{c_ref}\" was not found among assembly sources [{avail_sources}]".format(c_ref=args.c_ref, avail_sources=",".join(assembly_points_by_sources.keys())))
             exit(1)
@@ -149,6 +151,12 @@ if __name__ == "__main__":
                     assembly.aps.append(ap)
             grouped_assemblies.append(assembly)
     grouped_assemblies = list(filter(lambda a: len(a.aps) > 0, sorted(grouped_assemblies, key=lambda entry: len(entry.aps), reverse=True)))
+
+    #######################################
+    #        reference   analysis         #
+    #######################################
+    # for assembly in individual_assemblies:
+    #     analyze_and_update_assembly_points_based_on_reference(assembly=assembly, ref_assembly=reference_assembly)
 
     #######################################
     #        comparative analysis         #
