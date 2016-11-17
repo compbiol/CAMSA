@@ -209,8 +209,8 @@ class ScaffoldAssemblyGraph(object):
     def __init__(self):
         self.graph = networkx.MultiGraph()
 
-    def add_edge(self, u, v, ap_id):
-        self.graph.add_edge(u=u, v=v, attr_dict={"ap_id": ap_id})
+    def add_edge(self, u, v, **kwargs):
+        self.graph.add_edge(u=u, v=v, attr_dict=kwargs)
 
 
 class Assembly(object):
