@@ -339,3 +339,11 @@ AP_FIELD_CONVERTERS = {
     "id": IdFieldConverter,
     "iter": IterableFieldConverter,
 }
+
+
+def get_scaffold_edges(assembly_points):
+    unique_scaffolds = set()
+    for ap in assembly_points:
+        unique_scaffolds.add(ap.seq1)
+        unique_scaffolds.add(ap.seq2)
+    return [(name + "t", name + "h") for name in unique_scaffolds]

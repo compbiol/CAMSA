@@ -8,19 +8,12 @@ import blist
 import networkx
 
 from camsa.core.data_structures import MergedScaffoldAssemblyGraph, inverse_orientation
+from camsa.core.data_structures import get_scaffold_edges
 
 
 class MergingStrategies(enum.Enum):
     greedy_merging = "greedy"
     maximal_matching = "maximal-matching"
-
-
-def get_scaffold_edges(assembly_points):
-    unique_scaffolds = set()
-    for ap in assembly_points:
-        unique_scaffolds.add(ap.seq1)
-        unique_scaffolds.add(ap.seq2)
-    return [(name + "t", name + "h") for name in unique_scaffolds]
 
 
 def get_un_oriented_assembly_points(assembly_points):

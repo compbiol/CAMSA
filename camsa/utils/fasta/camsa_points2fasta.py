@@ -23,7 +23,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 
 import camsa
 from camsa.core.io import read_pairs
-from camsa.core.merging import get_scaffold_edges
+from camsa.core.data_structures import get_scaffold_edges
 
 
 def get_scaffold_name_from_vertex(v):
