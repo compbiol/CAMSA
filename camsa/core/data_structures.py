@@ -14,6 +14,12 @@ class AssemblyPoint(object):
         self.seq1_or = seq1_or
         self.seq2_or = seq2_or
         self.sources = sorted(sources)
+        self.cw = cw
+        self.gap_size = gap_size
+        self.self_id = self_id
+        self.parent_id = parent_id
+        self.children_ids = children_ids if children_ids is not None else []
+        #### comparative metrics
         self.participates_in_merged = False
         self.in_conflicted = defaultdict(set)
         self.in_semi_conflicted = defaultdict(set)
@@ -21,11 +27,8 @@ class AssemblyPoint(object):
         self.out_semi_conflicted = defaultdict(set)
         self.seq1_par_or = None
         self.seq2_par_or = None
-        self.cw = cw
-        self.gap_size = gap_size
-        self.self_id = self_id
-        self.parent_id = parent_id
-        self.children_ids = children_ids if children_ids is not None else []
+        #### ref metrics
+        self.ref_metrics = RefMetrics()
 
     @property
     def orientation_as_word(self):
@@ -169,6 +172,25 @@ class ConflictFieldConverter(APFieldConverter):
     def convert(field_value):
         conflicted_ids = [ap_id for conflict_assembly in field_value.values() for ap_id in conflict_assembly]
         return IterableFieldConverter.convert(field_value=conflicted_ids)
+
+
+class RefMetrics(object):
+    def __init__(self):
+        #### correct
+        self.present = False
+        self.present_ref_ids = []
+        #### incorrect
+        # the worst error
+        self.interchromosomal = False
+        # the best error
+        self.tranlocation = False
+        self.translocation_path = []
+        # can be combined with translocation, or can be on its own
+        self.reversal = False
+        # a subtype of reversal, better than reversal. possible for semi/un-oriented assembly points only
+        self.semi_reversal = False
+        # a best available reading of the reference genome for this particular assembly point
+        self.best_ref_reading_id = None
 
 
 class MergedScaffoldAssemblyGraph(object):
