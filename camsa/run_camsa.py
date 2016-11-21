@@ -104,7 +104,8 @@ if __name__ == "__main__":
     assembly_points_by_sources = camsa_io.read_assembly_points_from_input_sources(sources=args.points,
                                                                                   default_cw_eae=args.c_cw_exact,
                                                                                   default_cw_cae=args.c_cw_candidate)
-
+    id_generator = itertools.count()
+    original_assembly_points_by_ids = {}
     #######################################
     #       extracting reference          #
     #######################################
@@ -113,16 +114,15 @@ if __name__ == "__main__":
         try:
             reference_aps = assembly_points_by_sources.pop(args.c_ref)
             reference_assembly = Assembly(name=args.c_ref, aps=reference_aps)
+            original_assembly_points_by_ids.update(assign_ids_to_assembly_points(assembly_points=reference_assembly.aps, id_prefix="ref_",
+                                                                                 id_generator=id_generator))
         except KeyError:
             logger.critical("Supplied reference \"{c_ref}\" was not found among assembly sources [{avail_sources}]".format(c_ref=args.c_ref, avail_sources=",".join(assembly_points_by_sources.keys())))
             exit(1)
 
-    id_generator = itertools.count()
-    original_assembly_points_by_ids = {}
     for assembly_points in assembly_points_by_sources.values():
         original_assembly_points_by_ids.update(assign_ids_to_assembly_points(assembly_points=assembly_points, id_prefix="or_",
                                                                              id_generator=id_generator))
-
     #######################################
     #       assembly points merging       #
     #######################################
@@ -155,8 +155,9 @@ if __name__ == "__main__":
     #######################################
     #        reference   analysis         #
     #######################################
-    # for assembly in individual_assemblies:
-    #     analyze_and_update_assembly_points_based_on_reference(assembly=assembly, ref_assembly=reference_assembly)
+    for assembly in individual_assemblies:
+        logger.info("Running reference analysis of assembly \"{assembly}\"".format(assembly=assembly.name))
+        analyze_and_update_assembly_points_based_on_reference(assembly=assembly, ref_assembly=reference_assembly)
 
     #######################################
     #        comparative analysis         #
