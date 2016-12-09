@@ -235,11 +235,12 @@ class ScaffoldAssemblyGraph(object):
         self.graph.add_edge(u=u, v=v, attr_dict=kwargs)
 
     @classmethod
-    def from_assembly_points(cls, assembly_points, reference=False):
+    def from_assembly_points(cls, assembly_points, reference=False, add_scaffold_edges=True):
         result = cls()
         scaffold_edges = get_scaffold_edges(assembly_points=assembly_points)
-        for u, v in scaffold_edges:
-            result.add_edge(u=u, v=v, edge_type="scaffold")
+        if add_scaffold_edges:
+            for u, v in scaffold_edges:
+                result.add_edge(u=u, v=v, edge_type="scaffold")
         for ap in assembly_points:
             for (u, v, weight) in ap.get_edges(sort=True, weight=True):
                 edge_type = "ref_assembly" if reference else "assembly"
