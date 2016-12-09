@@ -48,9 +48,9 @@ if __name__ == "__main__":
                         help="A confidence weight value assigned to semi/un-oriented assembly points and respective candidate assembly edges,\nin case \"?\" is specified as the respective assembly point confidence weight.\nDEFAULT: 0.75")
     # parser.add_argument("--c-comparative-disable", action="store_false", dest="comparative", default=True,
     #                     help="")
-    parser.add_argument("--c-ref-disable", action="store_false", dest="reference", default=True,
+    parser.add_argument("--ref-disable", action="store_false", dest="reference", default=True,
                         help="")
-    parser.add_argument("--c-ref", type=str, default="",
+    parser.add_argument("--ref", type=str, default="", dest="reference_name",
                         help="")
     # parser.add_argument("--c-merging-disable", action="store_false", dest="merging", default=True,
     #                     help="")
@@ -62,6 +62,8 @@ if __name__ == "__main__":
     parser.add_argument("--c-merging-cycles", dest="allow_cycles", action="store_true", default=False,
                         help="Whether to allow cycles in the produced merged assembly.\nDEFAULT: False")
     parser.add_argument("--version", action="version", version=camsa.VERSION)
+    parser.add_argument("--i-delimiter", default="\t", type=str,
+                        help="String used as a delimiter in the input files with CAMSA assemblyp points")
     parser.add_argument("-o", "--o-dir",
                         help="A directory, where CAMSA will store all of the produced output (report, assets, etc).\nDEFAULT: camsa_{date}")
     # parser.add_argument("--o-interactive-disable", action="store_false", dest="o_interactive", default=True,
@@ -103,18 +105,19 @@ if __name__ == "__main__":
     # key is the origin of assembly point; values is the list of all points from that source
     assembly_points_by_sources = camsa_io.read_assembly_points_from_input_sources(sources=args.points,
                                                                                   default_cw_eae=args.c_cw_exact,
-                                                                                  default_cw_cae=args.c_cw_candidate)
+                                                                                  default_cw_cae=args.c_cw_candidate,
+                                                                                  delimiter=args.i_delimiter)
 
     #######################################
     #       extracting reference          #
     #######################################
     reference_assembly = None
-    if args.reference and args.c_ref != "":
+    if args.reference and args.reference_name != "":
         try:
-            reference_aps = assembly_points_by_sources.pop(args.c_ref)
-            reference_assembly = Assembly(name=args.c_ref, aps=reference_aps)
+            reference_aps = assembly_points_by_sources.pop(args.reference_name)
+            reference_assembly = Assembly(name=args.reference_name, aps=reference_aps)
         except KeyError:
-            logger.critical("Supplied reference \"{c_ref}\" was not found among assembly sources [{avail_sources}]".format(c_ref=args.c_ref, avail_sources=",".join(assembly_points_by_sources.keys())))
+            logger.critical("Supplied reference \"{reference_name}\" was not found among assembly sources [{avail_sources}]".format(reference_name=args.reference_name, avail_sources=",".join(assembly_points_by_sources.keys())))
             exit(1)
 
     id_generator = itertools.count()
