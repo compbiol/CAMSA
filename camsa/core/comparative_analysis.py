@@ -4,11 +4,13 @@ import itertools
 
 import networkx
 
+from camsa.core.data_structures import ScaffoldAssemblyGraph
+
 
 class Conflicts(enum.Enum):
     non_conflicted = 0
     semi_conflicted = 1
-    conflicted = 1
+    conflicted = 2
 
 
 def construct_sag(assembly_points):
@@ -44,7 +46,7 @@ def get_conflict_type(ap1, ap2):
 def get_conflicting_edges(sag, ap_edge):
     result = []
     for vertex in ap_edge:
-        conflicting_edges = [edge for edge in sag.edges(nbunch=vertex, data=True)
+        conflicting_edges = [edge for edge in sag.graph.edges(nbunch=vertex, data=True)
                              if edges_conflict(edge1=(edge[0], edge[1]), edge2=ap_edge)]
         result.extend(conflicting_edges)
     return result
@@ -56,7 +58,7 @@ def get_conflicting_assembly_points(sag, assembly_point, assembly_points_by_ids)
         conflicting_edges = get_conflicting_edges(sag=sag, ap_edge=edge)
         ids = [data["ap_id"] for (u, v, data) in conflicting_edges]
         conflicting_assembly_points_ids.extend(ids)
-    return [assembly_points_by_ids[ap_id] for ap_id in set(conflicting_assembly_points_ids)]
+    return [assembly_points_by_ids[ap_id] for ap_id in set(conflicting_assembly_points_ids) if ap_id != assembly_point.self_id]
 
 
 def update_conflicts(ap1, ap2, in_ap1, out_ap1, in_ap2, out_ap2):
@@ -98,7 +100,8 @@ def compute_and_update_assembly_points_conflicts(assembly_points_by_ids):
     :param assembly_points_by_ids: a dictionary, where key is the assembly point id, and value is merged assembly points
     :return:
     """
-    sag = construct_sag(assembly_points=assembly_points_by_ids.values())
+    sag = ScaffoldAssemblyGraph.from_assembly_points(assembly_points=assembly_points_by_ids.values(),
+                                                     add_scaffold_edges=False)
     for ap in assembly_points_by_ids.values():
         conflicted_assembly_points = get_conflicting_assembly_points(sag=sag, assembly_point=ap,
                                                                      assembly_points_by_ids=assembly_points_by_ids)
