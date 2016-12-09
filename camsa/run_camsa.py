@@ -12,7 +12,8 @@ from collections import defaultdict
 
 import configargparse
 import six
-from jinja2 import Template
+from jinja2 import FileSystemLoader
+from jinja2.environment import Environment
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -251,8 +252,10 @@ if __name__ == "__main__":
         camsa_io.write_assembly_points(destination=destination,
                                        assembly_points=merged_assembly_points,
                                        output_setup=args.o_collapsed_format)
+    env = Environment()
+    env.loader = FileSystemLoader(camsa.root_dir)
 
-    template = Template(source=open(os.path.join(camsa.root_dir, "report_template.html"), "rt").read())
+    template = env.get_template("report_template.html")
 
     individual_assemblies.sort(key=lambda it: it.name.lower())
     assemblies_to_ids = {assembly.name: "A" + str(cnt) for cnt, assembly in enumerate(individual_assemblies, start=1)}
@@ -262,6 +265,33 @@ if __name__ == "__main__":
                                                                                                 'orange', 'pink', 'brown', 'navy', 'steelblue'])}
 
     with open(output_html_report_file_name, "wt") as dest:
+        six.print_(template.render(
+            data={
+                "assemblies": individual_assemblies,
+                "assemblies_intersections": [],
+                "assemblies_conflicts": [],
+                "graph_compiled": False,
+                "aps": merged_assembly_points,
+                "assemblies_to_ids": assemblies_to_ids,
+                "assemblies_to_colors": assemblies_to_colors,
+                "grouped_assemblies": grouped_assemblies,
+                "fragments": {
+                    "lengths": []
+                }
+            },
+            settings={
+                "cytoscape": {
+                    "draw_timeout": 300000
+                }
+            },
+            meta={
+                "camsa": {
+                    "version": camsa.VERSION
+                }
+            }), file=dest)
+    with open(output_html_report_file_name + "__new.html", "wt") as dest:
+        env.loader = FileSystemLoader(os.path.join(camsa.root_dir, "html"))
+        template = env.get_template("base_template.html")
         six.print_(template.render(
             data={
                 "assemblies": individual_assemblies,
