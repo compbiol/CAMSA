@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width-scale-device, initial-scale=1.0">
+    <meta name="author" content="Sergey Aganezov">
+    <meta name="description" content="CAMSA report">
+
+    <title>{% block title %}CAMSA report{% endblock %}</title>
+
+    <link rel="stylesheet" href="./libs/css/dataTables.bootstrap.min.css" media="screen">
+    <link rel="stylesheet" href="./libs/css/bootstrap.min.css" media="screen">
+    <link rel="stylesheet" href="./libs/css/ion.Slider.css" media="screen">
+    <link rel="stylesheet" href="./libs/css/ion.rangeSlider.skinModern.css" media="screen">
+
+
+    <script type="text/javascript" src="./libs/js/jquery-2.2.3.min.js"></script>
+    <script type="text/javascript" src="./libs/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="./libs/js/d3.min.js"></script>
+    <script type="text/javascript" src="./libs/js/venn.min.js"></script>
+    <script type="text/javascript" src="./libs/js/pdfobject.min.js"></script>
+    <script type="text/javascript" src="./libs/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="./libs/js/datatables.min.js"></script>
+    <script type="text/javascript" src="./libs/js/cytoscape.min.js"></script>
+    <script type="text/javascript" src="./libs/js/cytoscape-cose-bilkent.js"></script>
+    <script type="text/javascript" src="./libs/js/dagre.min.js"></script>
+    <script type="text/javascript" src="./libs/js/cytoscape-dagre.js"></script>
+    <script type="text/javascript" src="./libs/js/cytoscape-cxtmenu.js"></script>
+    <script type="text/javascript" src="./libs/js/highcharts.min.js"></script>
+    <script type="text/javascript" src="./libs/js/highcharts-export.js"></script>
+    <script type="text/javascript" src="./libs/js/ion.rangeSlider.min.js"></script>
+    <style>
+        html {
+            min-height: 100%;
+            position: relative;
+        }
+
+        body {
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 0;
+            /* Set the fixed height of the footer here */
+            height: 100px;
+            background-color: #f5f5f5;
+        }
+
+        .header {
+            top: 0;
+            position: absolute;
+            height: 150px;
+        }
+
+        .footer > .container {
+            padding-right: 15px;
+            padding-left: 15px;
+        }
+
+        .header .container {
+            padding-right: 15px;
+            padding-left: 15px;
+        }
+    </style>
+    <script>
+        function escape(value) {
+            return value.replace(/(:|\.|\[|\]|,)/g, "\\$1");
+        }
+    </script>
+</head>
+<body>
+<div class="container container-fluid">
+    {#  HEADER #}
+    {% include "header_template.html" %}
+
+    {#  MAIN STUFF #}
+    <div style="padding: 10px;">
+        <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation" class="active">
+                <a href="#comparative" aria-controls="comparative" role="tab" data-toggle="tab">Comparative</a>
+            </li>
+            <li role="presentation">
+                <a href="#reference" aria-controls="reference" role="tab" data-toggle="tab">Reference</a>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <div role="tabpanel" class="tab-pane active" id="comparative">
+                {% include "comparative_template.html" %}
+            </div>
+            <div role="tabpanel" class="tab-pane" id="reference">
+                {% include "reference_template.html" %}
+            </div>
+        </div>
+    </div>
+
+    {#  FOOTER #}
+    {% include "footer_template.html" %}
+</div>
+</body>
+</html>
