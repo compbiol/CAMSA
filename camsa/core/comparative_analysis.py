@@ -13,14 +13,6 @@ class Conflicts(enum.Enum):
     conflicted = 2
 
 
-def construct_sag(assembly_points):
-    result = networkx.Graph()
-    for ap in assembly_points:
-        for (u, v, weight) in ap.get_edges(weight=True):
-            result.add_edge(u=u, v=v, weight=weight, ap_id=ap.self_id)
-    return result
-
-
 def edges_conflict(edge1, edge2):
     u1, v1 = edge1
     u2, v2 = edge2
