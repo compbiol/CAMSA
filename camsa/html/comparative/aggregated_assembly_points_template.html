@@ -1,0 +1,1244 @@
+<div class="row">
+    <hr>
+    <h3 class="text-center">Aggregated assembly points</h3>
+    <p class="text-center">
+        [{% for assembly in data.assemblies %}
+        <strong>{{ assembly.name }} </strong>({{ data.assemblies_to_ids[assembly.name] }}){% if not loop.last %}; {% endif %}
+    {% endfor %}]
+</div>
+<div class="row" style="padding-bottom: 10px">
+    <div id="advanced_filtering_column" class="col-lg-6 col-lg-offset-3 text-center">
+        <a data-toggle="collapse" href="#advanced_filter_container">Advanced filter options</a>
+    </div>
+</div>
+<style>
+    .search_query_div {
+        margin: .3em;
+    }
+</style>
+<div class="row collapse" id="advanced_filter_container">
+    <div class="row" id="advanced_column_filter">
+        <div class="row" style="margin: 1em;">
+            <div class="col-lg-6 col-lg-offset-3">
+                <div class="row search_query_div">
+                    <label class="col-lg-2 text-right" for="sources_query">Sources:</label>
+                    <input type="text" class="col-lg-8" id="sources_query">
+                </div>
+                <div class="row search_query_div">
+                    <label class="text-right col-lg-2" for="seq1_query">Seq1:</label>
+                    <input type="text" class="col-lg-8" id="seq1_query"></div>
+                <div class="row search_query_div">
+                    <label class="text-right col-lg-2" for="seq2_query">Seq2:</label>
+                    <input type="text" class="col-lg-8" id="seq2_query">
+                </div>
+                <div class="row search_query_div">
+                    <label class="text-right col-lg-2" for="or1_query">Or1:</label>
+                    <input type="text" class="col-lg-8" id="or1_query">
+                </div>
+                <div class="row search_query_div">
+                    <label class="text-right col-lg-2" for="or2_query">Or2:</label>
+                    <input type="text" class="col-lg-8" id="or2_query">
+                </div>
+                <div class="row search_query_div">
+                    <label class="text-right col-lg-2" for="or_query">Or:</label>
+                    <input type="text" class="col-lg-8" id="or_query">
+                </div>
+                <div class="row search_query_div">
+                    <label class="text-right col-lg-2" for="isc_query">ISC:</label>
+                    <input type="text" class="col-lg-8" id="isc_query">
+                </div>
+                <div class="row search_query_div">
+                    <label class="text-right col-lg-2" for="ic_query">IC:</label>
+                    <input type="text" class="col-lg-8" id="ic_query">
+                </div>
+                <div class="row search_query_div">
+                    <label class="text-right col-lg-2" for="osc_query">OSC:</label>
+                    <input type="text" class="col-lg-8" id="osc_query">
+                </div>
+                <div class="row search_query_div">
+                    <label class="text-right col-lg-2" for="oc_query">OC:</label>
+                    <input type="text" class="col-lg-8" id="oc_query">
+                </div>
+                <div class="row search_query_div">
+                    <label class="text-right col-lg-2" for="map_query">MAP:</label>
+                    <input type="text" class="col-lg-8" id="map_query">
+                </div>
+                {% if data.fragments.lengths | length > 0 %}
+                    <div class="range-slider">
+                        <input type="text" id="fragments_lengths_query" value=""/>
+                    </div>
+                    <script>
+                        $("#fragments_lengths_query").ionRangeSlider({
+                            type: "double",
+                            min: 0,
+                            max: {{ data.fragments.max_length }},
+                            from: 0,
+                            to: {{ data.fragments.max_length }},
+                            grid: true
+                        });
+                    </script>
+                {% else %}
+                    <div class="row">
+                        <hr>
+                        <p>Fragment length filtration is not available, as no data regarding fragments length was provided</p>
+                        <hr>
+                    </div>
+                {% endif %}
+                <div class="row search_query_div">
+                    <div class="col-lg-offset-2 col-lg-8">
+                        <label><input id="logical_or_search" type="checkbox"> Logical <strong>`OR`</strong> per column filters</label>
+                    </div>
+                </div>
+
+                <div class="col-lg-offset-2 col-lg-2">
+                    <button id="advanced_filter_keep" class="btn btn-success">Keep</button>
+                </div>
+                <div class=" col-lg-2">
+                    <button id="advanced_filter_remove" class="btn btn-warning">Remove</button>
+                </div>
+                <div class="col-lg-offset-4 col-lg-2">
+                    <button id="revert_aps_table_button" type="button" class="btn btn-danger" style="display: none;">Remove all filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="row">
+    <table class="table table-bordered table-condensed" id="overall_aps_table" width="100%">
+        <thead>
+        <tr>
+            <th></th>
+            <th>Sources</th>
+            <th>Seq1</th>
+            <th>Seq2</th>
+            <th>OOr1</th>
+            <th>OOr2</th>
+            <th>POr1</th>
+            <th>POr2</th>
+            <th>Or1</th>
+            <th>Or2</th>
+            <th>CW</th>
+            <th>Or</th>
+            <th>ISC</th>
+            <th>IC</th>
+            <th>ISC</th>
+            <th>OC</th>
+            <th>MAP</th>
+            <th>self_id</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for ap in data.aps %}
+            <tr>
+                <td class="details-control"></td>
+                <td>[{% for source_name in ap.sources|sort %}{{ data.assemblies_to_ids[source_name] }}{% if not loop.last %}, {% endif %}{% endfor %}]</td>
+                <td>{{ ap.seq1 }}</td>
+                <td>{{ ap.seq2 }}</td>
+                <td>{{ ap.seq1_or }}</td>
+                <td>{{ ap.seq2_or }}</td>
+                <td>{{ ap.seq1_par_or }}</td>
+                <td>{{ ap.seq2_par_or }}</td>
+                <td
+                        {% if ap.seq1_par_or != ap.seq1_or and ap.seq1_par_or is not none %}
+                            class="bg-success"
+                        {% endif %}>
+                    {% if ap.seq1_par_or is not none %}
+                        {{ ap.seq1_par_or }}
+                    {% else %}
+                        {{ ap.seq1_or }}
+                    {% endif %}
+                </td>
+                <td
+                        {% if ap.seq2_par_or != ap.seq2_or and ap.seq2_par_or is not none %}
+                            class="bg-success"
+                        {% endif %}>
+                    {% if ap.seq2_par_or is not none %}
+                        {{ ap.seq2_par_or }}
+                    {% else %}
+                        {{ ap.seq2_or }}
+                    {% endif %}
+                </td>
+                <td>{{ "%0.2f" | format(ap.cw) | float }}</td>
+                <td>{{ ap.orientation_as_word }}</td>
+                <td>{% if ap.in_semi_conflicted|length > 0 %}[{% for source_name in ap.in_semi_conflicted|sort(case_sensitive=False) %}{{ data.assemblies_to_ids[source_name] }}{% if not loop.last %}, {% endif %}{% endfor %}]{% else %}0 {% endif %}</td>
+                <td>{% if ap.in_conflicted|length>0 %}[{% for source_name in ap.in_conflicted|sort(case_sensitive=False) %}{{ data.assemblies_to_ids[source_name] }}{% if not loop.last %},{% endif %}{% endfor %}]{% else %}0 {% endif %}</td>
+                <td>{% if ap.out_semi_conflicted|length>0 %}[{% for source_name in ap.out_semi_conflicted|sort(case_sensitive=False) %}{{ data.assemblies_to_ids[source_name] }}{% if not loop.last %}, {% endif %}{% endfor %}]{% else %}0{% endif %}</td>
+                <td>{% if ap.out_conflicted|length>0 %}[{% for source_name in ap.out_conflicted|sort(case_sensitive=False) %}{{ data.assemblies_to_ids[source_name] }}{% if not loop.last %}, {% endif %}{% endfor %}]{% else %}0{% endif %}</td>
+                <td>{{ 1 if ap.participates_in_merged else 0 }}</td>
+                <td>{{ ap.self_id }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+        <tr>
+            <th></th>
+            <th>Sources</th>
+            <th>Seq1</th>
+            <th>Seq2</th>
+            <th>OOr1</th>
+            <th>OOr2</th>
+            <th>POr1</th>
+            <th>POr2</th>
+            <th>Or1</th>
+            <th>Or2</th>
+            <th>CW</th>
+            <th>Or</th>
+            <th>ISC</th>
+            <th>IC</th>
+            <th>ISC</th>
+            <th>OC</th>
+            <th>MAP</th>
+            <th>self_id</th>
+        </tr>
+        </tfoot>
+    </table>
+    <script>
+        $(document).ready(function () {
+            var dataTable = $('#overall_aps_table').DataTable(
+                {
+                    "autowidth": true,
+                    "initComplete": function () {
+                        this.api().columns().every(function () {
+                            var column = this;
+                            text = this.header().innerText;
+                            if (text == "") {
+                                {# we need to skip the first column, that is empty #}
+                            }
+                            else if (["Or1", "Or2", "ISC", "IC", "OSC", "OC", "Or", "MAP", "CW"].indexOf(text) < 0) {
+                                var select = $('<input type="text" placeholder="Search" />')
+                                    .appendTo($(column.footer()).empty())
+                                    .on('keyup change', function () {
+                                        if (column.search() !== this.value) {
+                                            column
+                                                .search(this.value)
+                                                .draw();
+                                        }
+                                    });
+                            }
+                            else {
+                                var select = $('<select><option value=""></option></select>')
+                                    .appendTo($(column.footer()).empty())
+                                    .on('change', function () {
+                                        var val = $.fn.dataTable.util.escapeRegex($(this).val());
+
+                                        column
+                                            .search(val ? '^' + val + '$' : '', true, false)
+                                            .draw();
+                                    });
+
+                                column.data().unique().sort().each(function (d, j) {
+                                    select.append('<option value="' + d + '">' + d + '</option>')
+                                });
+                            }
+                        });
+                        var r = $('#overall_aps_table tfoot tr');
+                        r.find('th').each(function () {
+                            $(this).css('padding', 8);
+                        });
+                        $('#overall_aps_table thead').append(r);
+                    },
+                    "columnDefs": [
+                        {
+                            "targets": [4, 5, 6, 7, 17],
+                            "visible": false,
+                            "searchable": false
+                        },
+                        {
+                            "targets": [0],
+                            "searchable": false,
+                            "data": null,
+                            "defaultContent": '',
+                        }
+                    ]
+                }
+            );
+            window.initial_aps_data_array = dataTable.rows().data().toArray();
+
+            $("#revert_aps_table_button").on('click', function () {
+                dataTable.clear();
+                dataTable.rows.add(window.initial_aps_data_array).draw();
+                $('.filter_alert').remove();
+                $("#revert_aps_table_button").hide();
+            });
+
+            function advanced_filter(dataTable, negate) {
+                $("#revert_aps_table_button").show();
+                dataTable.rows().every(function (rowidx, row, rowLoop) {
+                    var data = this.data();
+                    var result = [];
+                    var sources_regex = $("#sources_query").val();
+                    if (sources_regex != '') {
+                        var items = new RegExp(sources_regex).test(data[0].trim().replace("\n", ""));
+                        result.push(items);
+                    }
+                    var seq1_regex = $("#seq1_query").val();
+                    if (seq1_regex != '') {
+                        var regex = new RegExp(seq1_regex);
+                        var row_entry = data[1].trim().replace("\n", "");
+                        result.push(regex.test(row_entry));
+                    }
+                    var seq2_regex = $("#seq2_query").val();
+                    if (seq2_regex != '') {
+                        result.push(new RegExp(seq2_regex).test(data[2].trim().replace("\n", "")));
+                    }
+                    var or1_regex = $("#or1_query").val();
+                    if (or1_regex != '') {
+                        result.push(new RegExp(or1_regex).test(data[7].trim().replace("\n", "")));
+                    }
+                    var or2_regex = $("#or2_query").val();
+                    if (or2_regex != '') {
+                        result.push(new RegExp(or2_regex).test(data[8].trim().replace("\n", "")));
+                    }
+                    var am_regex = $("#or_query").val();
+                    if (am_regex != '') {
+                        result.push(new RegExp(am_regex).test(data[10].trim().replace("\n", "")));
+                    }
+                    var isc_regex = $("#isc_query").val();
+                    if (isc_regex != '') {
+                        result.push(new RegExp(isc_regex).test(data[11].trim().replace("\n", "")));
+                    }
+                    var ic_regex = $("#ic_query").val();
+                    if (ic_regex != '') {
+                        result.push(new RegExp(ic_regex).test(data[12].trim().replace("\n", "")));
+                    }
+                    var osc_regex = $("#osc_query").val();
+                    if (osc_regex != '') {
+                        result.push(new RegExp(osc_regex).test(data[13].trim().replace("\n", "")));
+                    }
+                    var oc_regex = $("#oc_query").val();
+                    if (oc_regex != '') {
+                        result.push(new RegExp(oc_regex).test(data[14].trim().replace("\n", "")));
+                    }
+                    var map_regex = $("#map_query").val();
+                    if (map_regex != '') {
+                        result.push(new RegExp(map_regex).test(data[15].trim().replace("\n", "")));
+                    }
+                    var logical_or = $("#logical_or_search").is(":checked");
+                    var keep = !logical_or;
+                    result.forEach(function (element) {
+                        if (logical_or) {
+                            keep |= element;
+                        } else {
+                            keep &= element;
+                        }
+                    });
+                    if (negate) {
+                        keep = !keep;
+                    }
+                    if (!keep) {
+                        $(this.node()).addClass('to_delete');
+                    }
+                });
+                var div = document.createElement('div');
+                var alert = $(div).addClass('alert').addClass('alert-success').addClass('filter_alert').text("Filtered " + dataTable.rows('.to_delete').data().length + " out of " + dataTable.rows().data().length);
+                var row = document.createElement('div');
+                var container = $(row).addClass('row');
+                container.append(alert);
+                $("#advanced_filter_container").append(container);
+                dataTable.rows('.to_delete').remove().draw();
+            }
+
+            $("#advanced_filter_keep").on('click', function () {
+                advanced_filter(dataTable, false)
+            });
+            $("#advanced_filter_remove").on('click', function () {
+                advanced_filter(dataTable, true)
+            });
+
+            function format(d) {
+                // `d` is the original data object for the row
+                var aps = ap_from_table_data_row(d);
+                return aps[0].source;
+            }
+
+            var detailRows = [];
+            $('#overall_aps_table tbody').on('click', 'tr td.details-control', function () {
+                var tr = $(this).closest('tr');
+                var row = dataTable.row(tr);
+                var idx = $.inArray(tr.attr('id'), detailRows);
+
+                if (row.child.isShown()) {
+                    tr.removeClass('details');
+                    row.child.hide();
+
+                    // Remove from the 'open' array
+                    detailRows.splice(idx, 1);
+                }
+                else {
+                    tr.addClass('details');
+                    row.child(format(row.data())).show();
+
+                    // Add to the 'open' array
+                    if (idx === -1) {
+                        detailRows.push(tr.attr('id'));
+                    }
+                }
+            });
+
+            dataTable.on("draw", function () {
+                $.each(detailRows, function (i, id) {
+                    $("#" + id + " td.details-control").click();
+                });
+            });
+
+        });
+    </script>
+    <style>
+        th, td {
+            white-space: nowrap;
+        }
+
+        div.overall_aps_table_wrapper {
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        td.details-control {
+            background: url('./libs/images/details_open.png') no-repeat center center;
+            cursor: pointer;
+        }
+
+        tr.details td.details-control {
+            background: url('./libs/images/details_close.png') no-repeat center center;
+        }
+    </style>
+</div>
+<hr>
+<div class="row">
+    <div class="col-lg-12 text-center"><a href="#overall_aps_table_help" data-toggle="collapse">How to interpret and work with the
+        table</a></div>
+    <div class="col-lg-12 collapse" id="overall_aps_table_help">
+        <div class="row">
+            <h4 class="text-center">How to interpret column values</h4>
+            <ul>
+                <li><strong>Sources:</strong> column represents the list of assemblies, that reported a particular assembly point.
+                    Assemblies are referred to by there ids,
+                    which in turn can be found in <a href="#per_assembly_overview_section">Assemblies summary</a> table, as well as next
+                    to each assembly in the <a href="#individual_assemblies_section">Individual assemblies</a> section
+                </li>
+                <li><strong>Seq1:</strong> column corresponds to first, out of two fragments, that participate in the reported assembly
+                    point.
+                </li>
+                <li><strong>Seq2:</strong> column corresponds to second, out of two fragments, that participate in the reported assembly
+                    point
+                </li>
+                <li><strong>Or1:</strong> column corresponds to relative orientation of <strong>Seq1</strong> wrt <strong>Seq2</strong>
+                    in the reported assembly.
+                    <ol>
+                        <li><strong>+</strong> orientation corresponds to the <i>head</i> of <strong>Seq1</strong> being adjacent in the
+                            reported assembly
+                        </li>
+                        <li><strong>-</strong> orientation corresponds to the <i>tail</i> of <strong>Seq1</strong> being adjacent in the
+                            reported assembly
+                        </li>
+                    </ol>
+                </li>
+                <li><strong>Or2:</strong> column corresponds to relative orientation of <strong>Seq2</strong> wrt <strong>Seq1</strong>
+                    in the reported assembly.
+                    <ol>
+                        <li><strong>+</strong> orientation corresponds to the <i>tail</i> of <strong>Seq2</strong> being adjacent in the
+                            reported assembly
+                        </li>
+                        <li><strong>-</strong> orientation corresponds to the <i>head</i> of <strong>Seq2</strong> being adjacent in the
+                            reported assembly
+                        </li>
+                    </ol>
+                </li>
+                <li><strong>CW:</strong> confidence weight (score) for the reported assembly point. Equals to the sum of assembly points's scores,
+                    reported by each source
+                </li>
+                <li><strong>Or:</strong> a flag determining the class of the assembly point:
+                    <ol>
+                        <li><strong>O</strong>: oriented assembly point, that is for both fragments their extremities are specified</li>
+                        <li><strong>SO</strong>: semi-oriented assembly point, that is only for one out of two fragments an assembly extremity is specified</li>
+                        <li><strong>U</strong>: unoriented assembly point, that is for both fragments their extremities used for assembly are not specified</li>
+                    </ol>
+                </li>
+                <li><strong>ISC:</strong> corresponds to the list of sources, with which this assembly point is
+                    <strong>In</strong>-<strong>S</strong>emi<strong>C</strong>onflicted. This is the case, when the assembly point (by some, but not all of its realizations)
+                    is conflicted with some other assembly point (with some, but not all of later one's realizations), and they both come from same
+                    source.<br>
+                    <string>0</string>
+                    is specified if no in-semiconflicts were identified for this point.
+                </li>
+
+                <li><strong>IC:</strong> corresponds to the list of sources, with which this assembly point is
+                    <strong>I</strong>n-<strong>C</strong>onflicted. This is the case, if the assembly point (by all of its realizations),
+                    is conflicted with some other assembly point (by all of later one's realizations), and they both come from the same source. <br>
+                    <string>0</string>
+                    is specified if no in-conflicts were identified for this point.
+                </li>
+
+                <li><strong>OSC:</strong> corresponds to the list of sources, with which this assembly point is
+                    <strong>O</strong>ut-<strong>S</strong>emi<strong>C</strong>onflicted. This is the case, when the assembly point (by some, but not all of its representations)
+                    is conflicted with some other assembly point (with some, but not all of later one's realizations), and they come from the
+                    different sources.
+                    <string>0</string>
+                    is specified is no out-semiconflicts were identified for this point.
+                </li>
+
+                <li><strong>OC:</strong> corresponds to the list of sources, with which this assembly point is
+                    <strong>O</strong>ut-<strong>C</strong>onflicted. This is the case, when the assembly point (by all of its representations)
+                    is conflicted with some other assembly point (with all of later one's realizations), and they come from the
+                    different sources.
+                    <string>0</string>
+                    is specified is no out-semiconflicts were identified for this point.
+                </li>
+                <li><strong>MAP:</strong> is a flag (i.e. either <strong>0</strong> or <strong>1</strong>) corresponding to whether
+                    this assembly point participates in the reported <strong>M</strong>erged-<strong>A</strong>ssembly.
+                </li>
+            </ul>
+        </div>
+        <div class="row">
+            <h4 class="text-center">How to filter and order information in the table</h4>
+            <ul>
+                <li><strong>Built-in filters:</strong> every column has a filter in the table heading.
+                    <ol>
+                        <li>If the filter is represented an <i>input</i> field, then the <a href="https://datatables.net/reference/option/search.smart">smart</a> Datatables search is used.</li>
+                        <li>If the input is represented with a <i>dropdown</i>, then all rows with values matching the chosen value will be kept.</li>
+                        <li>There is a <i>table-wide filter</i> on the top right of the table. Again the smart search is used, but in this case it is table-wide, not column specific.</li>
+                    </ol>
+                </li>
+                <li><strong>Advanced filtering:</strong> There is a <a href="#advanced_filtering_column">panel</a> with
+                    advance filtering capabilities. Please refer to instructions in it.
+                </li>
+            </ul>
+            Built-in and advanced filters can be combined together. The only difference is that build in filters revert filtering
+            changes on-the-fly, once the filter criteria is removed, while for advanced filtering has to be manually reverted, with the "Remove all filters button".
+        </div>
+    </div>
+</div>
+<hr>
+<div class="row text-center" style="padding-bottom: 10px">
+    <div class="col-lg-3">
+        <div class="row">
+            <button id="draw_graph" type="button" class="btn btn-info">Draw SAG with table data</button>
+        </div>
+        <div class="row">
+            using <select id="graph_layout">
+            <option selected="selected">cose-bilkent</option>
+            <option>grid</option>
+            <option>dagre</option>
+        </select> layout
+        </div>
+    </div>
+    <div class="col-lg-offset-1 col-lg-4 text-center">
+        <button id="fit_graph" type="button" class="btn btn-warning">Fit</button>
+        <button id="save_graph" type="button" class="btn btn-success">Save image</button>
+    </div>
+    <div class="col-lg-offset-1 col-lg-3">
+        <button id="export_aps" type="button" class="btn btn-info">Export table</button>
+        <select id="export_type">
+            <option selected="selected">APs</option>
+            <option>SAG</option>
+        </select>
+    </div>
+</div>
+<div class="row">
+    <div id="graph" style="margin: 1em;">
+        <div class="text-center"
+             style="height:1000px; width:100%; min-height:100%; min-width: 100%; position: relative; background: url('./libs/images/empty.png') no-repeat center center;">
+            <h2 class="text-center">Filter the table and draw the first graph</h2>
+        </div>
+    </div>
+    <style>
+        #graph {
+            border-top: 1px solid black;
+            width: 100%;
+            height: 100%;
+            min-height: 800px;
+            padding-bottom: 20px;
+        }
+    </style>
+    <script>
+        var colors = {
+            {% for source, color in data.assemblies_to_colors.items() %}
+                '{{ source }}': '{{ color }}',
+            {% endfor %}
+        };
+
+        $("#export_aps").on('click', function () {
+            if ($("#export_type").val() == "APs") {
+                var aps = get_aps_by_ids();
+                var result = "origin\tseq1\tseq1_or\tseq2\tseq2_or\tcw\n";
+                aps.forEach(function (entry) {
+                    result += ap_as_string(entry) + "\n";
+                });
+                download_text_data(result, "plain", "data.camsa.points");
+            } else {
+                var tmp_aps = get_aps();
+                var tmp_nodes = get_nodes(tmp_aps);
+                var tmp_ap_edges = get_ap_edges(tmp_aps);
+                var tmp_seq_edges = get_seq_edges(tmp_aps);
+                var tmp_edges = tmp_ap_edges.concat(tmp_seq_edges);
+                var json = cytoscape({
+                    elements: {
+                        edges: tmp_edges,
+                        nodes: tmp_nodes
+                    }
+                }).json();
+                download_text_data(JSON.stringify(json), "json", "sag.json");
+            }
+        });
+
+        function get_vertices(seq1, seq2, or1, or2) {
+            var seq1_suffix = or1 == "+" ? "h" : "t";
+            var seq2_suffix = or2 == "-" ? "h" : "t";
+            return [seq1 + seq1_suffix, seq2 + seq2_suffix];
+        }
+
+        function download_text_data(text, type, download_name) {
+            var element = document.createElement('a');
+            var url = URL.createObjectURL(new Blob([text], {type: "text/" + type}));
+            element.href = url;
+            element.target = "_blank";
+            element.download = download_name;
+            element.style = "display: none";
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+            URL.revokeObjectURL(url);
+        }
+
+        function AssemblyPoint(seq1, seq2, oor1, oor2, por1, por2, cw, self_id, source, map) {
+            this.seq1 = seq1;
+            this.seq2 = seq2;
+            this.oor1 = oor1;
+            this.oor2 = oor2;
+            this.por1 = por1;
+            this.por2 = por2;
+            this.cw = cw;
+            this.self_id = self_id;
+            this.source = source;
+            this.map = map;
+
+            this.get_all_seq_vertices_pairs = function () {
+                return [[this.seq1 + "t", this.seq1 + "h"], [this.seq2 + "t", this.seq2 + "h"]];
+            };
+
+            this.get_adjacency_edges = function () {
+                var result = [];
+                var or1_variants = [];
+                var or2_variants = [];
+                if (this.oor1 == "?") {
+                    or1_variants.push("+");
+                    or1_variants.push("-");
+                }
+                else {
+                    or1_variants.push(this.oor1);
+                }
+                if (this.oor2 == "?") {
+                    or2_variants.push("+");
+                    or2_variants.push("-");
+                }
+                else {
+                    or2_variants.push(this.oor2);
+                }
+                var ap = this;
+                or1_variants.forEach(function (or1_v) {
+                    or2_variants.forEach(function (or2_v) {
+                        var vertices = get_vertices(ap.seq1, ap.seq2, or1_v, or2_v);
+                        var v1 = vertices[0];
+                        var v2 = vertices[1];
+                        var data = {
+                            id: [escape(v1), escape(v2), escape(ap.source)].join("__"),
+                            source: escape(v1),
+                            target: escape(v2),
+                            line_color: colors[ap.source]
+                        };
+
+                        if (ap.map && ap.por1 == or1_v && ap.por2 == or2_v) {
+                            data["map"] = true;
+                        }
+                        if (ap.oor1 == "?" || ap.oor2 == "?") {
+                            data["candidate"] = true
+                        }
+                        result.push({data: data});
+                    });
+                });
+                return result;
+            };
+
+
+        }
+        function ap_from_table_data_row(dr){
+                var aps = [];
+                var sources = dr[1].slice(1, -1).split(',').map(function (str) {
+                    return str.trim();
+                });
+                var seq1 = dr[2].trim();
+                var seq2 = dr[3].trim();
+                var oor1 = dr[4].trim();
+                var oor2 = dr[5].trim();
+                var por1 = dr[6].trim();
+                var por2 = dr[7].trim();
+                var cw = parseFloat(dr[10].trim());
+
+                var map = dr[Object.keys(dr).length - 1].trim() == "1";
+                var self_id = dr[Object.keys(dr).length].trim();
+                sources.forEach(function (element) {
+                    aps.push(new AssemblyPoint(seq1, seq2, oor1, oor2, por1, por2, cw, self_id, element, map))
+                });
+                return aps;
+        }
+
+        function get_aps() {
+            var aps = [];
+            var table = $('#overall_aps_table').DataTable();
+            table.rows({'filter': 'applied'}).every(function () {
+                var data = this.data();
+                var sources = data[1].slice(1, -1).split(',').map(function (str) {
+                    return str.trim();
+                });
+                var seq1 = data[2].trim();
+                var seq2 = data[3].trim();
+                var oor1 = data[4].trim();
+                var oor2 = data[5].trim();
+                var por1 = data[6].trim();
+                var por2 = data[7].trim();
+                var cw = parseFloat(data[10].trim());
+
+                var map = data[Object.keys(data).length - 1].trim() == "1";
+                var self_id = data[Object.keys(data).length].trim();
+                sources.forEach(function (element) {
+                    aps.push(new AssemblyPoint(seq1, seq2, oor1, oor2, por1, por2, cw, self_id, element, map))
+                });
+            });
+            return aps;
+        }
+
+        function get_aps_by_ids() {
+            var aps = [];
+            var table = $('#overall_aps_table').DataTable();
+            table.rows({'filter': 'applied'}).every(function () {
+                var data = this.data();
+                var self_id = data[Object.keys(data).length].trim();
+                var ap = window.merged_aps_by_id[self_id];
+                aps.push(ap);
+            });
+            return aps;
+        }
+
+        function get_nodes(aps) {
+            var result = {};
+            aps.forEach(function (ap) {
+                ap.get_all_seq_vertices_pairs().forEach(function (v_pair) {
+                    var v1 = v_pair[0];
+                    var v2 = v_pair[1];
+                    result[v1] = true;
+                    result[v2] = true;
+                });
+            });
+
+            return Object.keys(result).map(function (node_id) {
+                return {data: {id: escape(node_id)}, selectable: true};
+            });
+        }
+
+        function get_ap_edges(aps) {
+            var result = [];
+            aps.forEach(function (ap) {
+                result = result.concat(ap.get_adjacency_edges());
+            });
+            return result;
+        }
+
+        function get_seq_edges(aps) {
+            var result = [];
+            var seen = {};
+            aps.forEach(function (ap) {
+                ap.get_all_seq_vertices_pairs().forEach(function (v_pair) {
+                    var v1 = v_pair[0];
+                    var v2 = v_pair[1];
+                    if (!(v1 in seen || v2 in seen)) {
+                        var edge = {
+                            data: {
+                                target_arrow_head: "triangle",
+                                label: v1.slice(0, v1.length - 1),
+                                id_label: escape(v1.slice(0, v1.length - 1)),
+                                source: escape(v1),
+                                target: escape(v2),
+                                id: escape(v1) + "__" + escape(v2) + "__obverse"
+                            }
+                        };
+                        result.push(edge);
+                    }
+                    seen[v1] = true;
+                    seen[v2] = true;
+                });
+            });
+            return result;
+        }
+
+        function highlight_neighbours(cy, node) {
+            var neighbours = node.neighborhood().add(node);
+            neighbours.forEach(
+                function (value, index, array) {
+                    console.log(value.id());
+                }
+            );
+            cy.elements().addClass('hidden');
+            neighbours.removeClass('hidden');
+        }
+
+        function show_all_elements(cy) {
+            cy.elements().removeClass('hidden');
+        }
+
+        function delete_hidden_elements(cy) {
+            cy.$('.hidden').remove();
+        }
+
+        function hide_non_selected(cy) {
+            cy.elements().addClass('to_remove');
+            cy.$('.marked').removeClass('to_remove');
+
+        }
+
+        function mark_ele(cy, ele) {
+            cy.$(ele).addClass('marked');
+        }
+
+        function unmark_ele(cy, ele) {
+            cy.$(ele).removeClass('marked');
+        }
+
+        function get_cc_element_ids(cy, ele) {
+            var tmp_result = cy.elements().dijkstra(ele);
+            var cc_nodes = [];
+            cc_nodes.push(ele.id());
+            cy.nodes().forEach(function (node) {
+                var distance = tmp_result.distanceTo(node);
+                if (isFinite(distance)) {
+                    cc_nodes.push(node.id())
+                }
+            });
+            var result = {};
+            cc_nodes.forEach(function (node_id) {
+                console.log(node_id);
+                tmp_result.pathTo(cy.$("#" + node_id)).forEach(function (entry) {
+                    result[entry.id()] = true;
+                });
+            });
+            return Object.keys(result);
+
+        }
+
+        function get_cc_nodes(cy, ele) {
+            var cc_node_ids = [];
+
+            cy.elements().bfs({
+                roots: ele,
+                visit: function (i, depth, v, e, u) {
+                    cc_node_ids.push(v);
+                },
+                directed: false
+            });
+            return cc_node_ids;
+        }
+
+        function get_edges(cy, nodes) {
+            var result = [];
+            nodes.forEach(function (node) {
+                node.connectedEdges().forEach(function (edge) {
+                    result.push(edge);
+                });
+            });
+            return result;
+        }
+
+        function get_cc_element(cy, cc_entry) {
+            var nodes = get_cc_nodes(cy, cc_entry);
+            var edges = get_edges(cy, nodes);
+            return nodes.concat(edges);
+        }
+
+        function value_or_fallback_if_none(value, fall_back) {
+            if (value == "None") {
+                return fall_back;
+            }
+            return value;
+        }
+
+        function ap_as_string(ap) {
+            console.log(ap);
+            var result = "";
+            result += ap.source + "\t";
+            result += ap.seq1 + "\t";
+            result += value_or_fallback_if_none(ap.por1, ap.oor1) + "\t";
+            result += ap.seq2 + "\t";
+            result += value_or_fallback_if_none(ap.por2, ap.oor2) + "\t";
+            result += value_or_fallback_if_none(ap.cw, "?");
+            return result;
+        }
+
+        $(document).ready(function () {
+            window.merged_aps_by_id = {
+            {% for ap in data.aps %}
+                {{ ap.self_id }} :
+                new AssemblyPoint('{{ ap.seq1 }}', '{{ ap.seq2 }}',
+                    '{{ ap.seq1_or }}', '{{ ap.seq2_or }}', '{{ ap.seq1_par_or }}', '{{ ap.seq2_par_or }}',
+                    {{ ap.cw }}, '{{ ap.self_id }}', {{ ap.sources }}, {{ 1 if ap.participates_in_merged else 0}}),
+            {% endfor %}
+        }
+            ;
+
+
+            $("#draw_graph").on('click', function () {
+                $("#graph").empty();
+                $("#graph").css('background', 'url(./libs/images/giphy.gif) no-repeat center center');
+                var aps = get_aps();
+                var nodes = get_nodes(aps);
+                var ap_edges = get_ap_edges(aps);
+                var seq_edges = get_seq_edges(aps);
+                var edges = ap_edges.concat(seq_edges);
+                var assembly_layout = {
+                    name: $('#graph_layout').val(),
+                    ready: function () {
+                        $("#graph").css('background', '')
+                    },
+                    padding: 20,
+                    randomize: true,
+                    nodeRepulsion: 12000,
+                    idealEdgeLength: 100,
+                    edgeElasticity: .45,
+                    nestingFactor: .1,
+                    gravity: -1,
+                    numIter: 300,
+                    tile: true
+
+                };
+                var cy = cytoscape({
+                    container: $("#graph"),
+                    boxSelectionEnabled: true,
+                    autounselectify: true,
+
+                    style: cytoscape.stylesheet()
+                        .selector('node')
+                        .css({
+                            'width': 5,
+                            'height': 5
+                        })
+                        .selector('node .selected')
+                        .css({
+                            'border-width': 1,
+                            'border-color': 'black'
+                        })
+                        .selector('edge')
+                        .css({
+                            'width': 1.5,
+                            'line-color': 'black',
+                            'target-arrow-color': 'black',
+                            'opacity': .7,
+                        })
+                        .selector('edge[line_color]')
+                        .css({
+                            'line-color': 'data(line_color)'
+                        })
+                        .selector('edge[id_label]')
+                        .css({
+                            'label': 'data(label)\n',
+                            'edge-text-rotation': 'autorotate',
+                            'font-size': 5,
+                            'text-outline-color': "#ddd",
+                            'text-outline-width': 1.5
+
+                        })
+                        .selector('edge[target_arrow_head]')
+                        .css({
+                            'target-arrow-shape': 'triangle'
+                        })
+                        .selector('edge[map]')
+                        .css({
+                            'width': 4
+                        })
+                        .selector('edge[candidate]')
+                        .css({
+                            'line-style': "dashed"
+                        })
+                        .selector('.hidden')
+                        .css({
+                            'display': 'none'
+                        })
+                        .selector('.marked')
+                        .css({
+                            'opacity': 1,
+                            'border-width': 1,
+                            'border-color': 'black'
+                        }),
+
+                    elements: {
+                        nodes: nodes,
+                        edges: edges
+                    },
+
+                    layout: assembly_layout
+                });
+
+                cy.cxtmenu({
+                    menuRadius: 100,
+                    selector: 'node',
+                    commands: [{
+                        content: 'SN',
+                        select: function (ele) {
+                            ele.addClass('marked');
+                        }
+                    }, {
+                        content: 'SNd',
+                        select: function (ele) {
+                            ele.neighborhood().add(ele).addClass('marked');
+                        }
+                    }, {
+                        content: 'SCC',
+                        select: function (ele) {
+                            get_cc_element(cy, ele).forEach(function (entry) {
+                                entry.addClass('marked');
+                            });
+
+                        }
+                    }, {
+                        content: 'UsN',
+                        select: function (ele) {
+                            ele.removeClass('marked');
+                        }
+                    }, {
+                        content: 'UsNd',
+                        select: function (ele) {
+                            ele.neighborhood().add(ele).removeClass('marked');
+                        }
+                    }, {
+                        content: 'UsCC',
+                        select: function (ele) {
+                            get_cc_element(cy, ele).forEach(function (entry) {
+                                entry.removeClass('marked');
+                            });
+                        }
+                    }
+                    ],
+                    fillColor: 'rgba(0, 0, 0, 0.75)',
+                    activeFillColor: 'rgba(92, 194, 237, 0.75)',
+                    activePadding: 20,
+                    indicatorSize: 24,
+                    separatorWidth: 3,
+                    spotlightPadding: 4,
+                    minSpotlightRadius: 24,
+                    maxSpotlightRadius: 38,
+                    openMenuEvents: 'cxttapstart',
+                    itemColor: 'white',
+                    zIndex: 9999
+                });
+
+                cy.cxtmenu({
+                    menuRadius: 100,
+                    selector: 'core',
+                    commands: [{
+                        content: 'HUsE',
+                        select: function () {
+                            var marked_ids = {};
+                            cy.$('.marked').forEach(function (ele) {
+                                marked_ids[ele.id()] = true;
+                            });
+                            cy.elements().forEach(function (ele) {
+                                if (!(ele.id() in marked_ids)) {
+                                    ele.addClass('hidden');
+                                }
+
+                            });
+                        }
+                    }, {
+                        content: 'SUsE',
+                        select: function () {
+                            var marked_ids = {};
+                            cy.$('.marked').forEach(function (ele) {
+                                marked_ids[ele.id()] = true;
+                            });
+                            cy.elements().forEach(function (ele) {
+                                if (!(ele.id() in marked_ids)) {
+                                    ele.removeClass('hidden');
+                                }
+
+                            });
+                        }
+                    }, {
+                        content: 'RS',
+                        select: function () {
+                            var marked_ids = {};
+                            cy.$('.marked').forEach(function (ele) {
+                                marked_ids[ele.id()] = true;
+                            });
+                            cy.elements().forEach(function (ele) {
+                                if (ele.id() in marked_ids) {
+                                    ele.removeClass('marked')
+                                }
+                                else {
+                                    ele.addClass('marked')
+                                }
+                            });
+
+
+                        }
+                    }, {
+                        content: 'DUsE',
+                        select: function () {
+                            var marked_ids = {};
+                            cy.$('.marked').forEach(function (ele) {
+                                marked_ids[ele.id()] = true;
+                            });
+                            cy.elements().forEach(function (ele) {
+                                if (!(ele.id() in marked_ids)) {
+                                    cy.remove(ele);
+                                }
+
+                            });
+                        }
+                    }, {
+                        content: 'Redraw',
+                        select: function () {
+                            $("#graph").css('background', 'url(./libs/images/giphy.gif) no-repeat center center');
+                            var assembly_layout = {
+                                name: $('#graph_layout').val(),
+                                ready: function () {
+                                    $("#graph").css('background', '')
+                                },
+                                padding: 20,
+                                randomize: true,
+                                nodeRepulsion: 12000,
+                                idealEdgeLength: 100,
+                                edgeElasticity: .45,
+                                nestingFactor: .1,
+                                gravity: -1,
+                                numIter: 300,
+                                tile: true
+
+                            };
+                            var layout = cy.elements().makeLayout(assembly_layout);
+                            layout.on('layoutstop', function () {
+                                $("#graph").css('background', '');
+                                cy.elements().layout(layout);
+
+                            });
+                            layout.run();
+                            setTimeout(function () {
+                                layout.stop();
+                            }, {{ settings.cytoscape.draw_timeout }});
+
+                        }
+                    },
+                        {
+                            content: 'Us',
+                            select: function (ele) {
+                                cy.elements().removeClass('marked');
+                            }
+                        }
+                    ],
+                    fillColor: 'rgba(0, 0, 0, 0.75)',
+                    activeFillColor: 'rgba(92, 194, 237, 0.75)',
+                    activePadding: 20,
+                    indicatorSize: 24,
+                    separatorWidth: 3,
+                    spotlightPadding: 4,
+                    minSpotlightRadius: 24,
+                    maxSpotlightRadius: 38,
+                    openMenuEvents: 'cxttapstart',
+                    itemColor: 'white',
+                    zIndex: 9999
+                });
+                $("#fit_graph").prop('onclick', null).off('click');
+                $("#fit_graph").on('click', function () {
+                    cy.fit(50);
+                });
+                $("#overall_aps_table").on('draw', function () {
+                    cy.resize();
+                });
+                $("#save_graph").prop('onclick', null).off('click');
+                $("#save_graph").on("click", function () {
+                    var image = cy.png({
+                        full: false
+                    });
+                    var link = document.createElement('a');
+                    link.href = image;
+                    link.target = "_blank";
+                    link.download = 'graph.png';
+                    link.style = 'display: none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+            });
+        });
+    </script>
+</div>
+<hr>
+<div class="row">
+    <div class="col-lg-12 text-center"><a href="#graph_legend_and_help" data-toggle="collapse">How to interpret and work with the
+        graph</a></div>
+    <div class="col-lg-12 collapse" id="graph_legend_and_help">
+        <h2 class="text-center">Reading the graph</h2>
+        <hr>
+        <div class="row">
+            <h3 class="text-center">Coloring</h3>
+            {% for assembly in data.assemblies %}
+                <div class="row text-center" style="padding: 15px;">
+                    <strong style="border: {{ data.assemblies_to_colors[data.assemblies_to_ids[assembly.name]] }} solid 4px; padding: 5px; ">{{ data.assemblies_to_ids[assembly.name] }}</strong>
+                </div>
+            {% endfor %}
+        </div>
+        <hr>
+        <div class="row">
+            <h3 class="text-center">Edges</h3>
+            <ul>
+                <li><strong>Scaffold edge</strong>: is a directed black edge with scaffold name written on it. Represents the scaffold,
+                    participating in one or more assembly points. Direction of the edge corresponds to its relative orientation.
+                    <div class="row text-center">Example:<br><img width="200px" src="./libs/images/scaffold_edge.png"/>
+                        <hr>
+                    </div>
+                </li>
+                <li><strong>Assembly edge</strong>: colored (based on the source assembly) undirected edge corresponding to the reported assembly
+                    point.
+                    <ul>
+                        <li><strong>Candidate:</strong> all assembly edges from un/semi-oriented assembly points are shown as dashed.
+                            <div class="row text-center">Example:<br><img width="200px" src="./libs/images/candidate_edge.png"/>
+                                <hr>
+                            </div>
+                        </li>
+                        <li><strong>Exact:</strong> all assembly edges from orientedassembly points are shown as solid.
+                            <div class="row text-center">Example:<br><img width="400px" src="./libs/images/exact_edge.png"/>
+                                <hr>
+                            </div>
+                        </li>
+                    </ul>
+                    If the edge is shown in <strong>bold</strong>, it means that the assembly point (its particular realization , corresponding to the egde),
+                    participates in the produced <strong>merged assembly</strong>.
+                    <div class="row text-center">Example:<br><img width="200px" src="./libs/images/map_edge.png"/>
+                        <hr>
+                    </div>
+                    <br>
+                    Parallel assembly edges of several colors correspond to assembly points' representations, where the colors determine the list of source assemblies.
+                    <div class="row text-center">Example:<br><img width="400px" src="./libs/images/parallel_edges.png"/></div>
+                </li>
+            </ul>
+        </div>
+        <hr>
+        <div class="row">
+            <h3 class="text-center">Modifying the graph</h3>
+            <ul>
+                <li><strong>Zooming:</strong> using the scroll of the mouse, one can zoom in and out of the graph. Note that the
+                    position of the pointer determines where the zoom will be focused.
+                </li>
+                <li><strong>Moving:</strong> use the standard drag operation to move the graph</li>
+                <li><strong>Fitting:</strong> to fit the whole drawn graph in the frame, use the <i>Fit button at the top of the
+                    picture</i></li>
+            </ul>
+        </div>
+        <hr>
+        <div class="row">
+            <h3 class="text-center">Saving graph image</h3>
+            Using the <strong>Save</strong> button on the top of the graph image itself, one can save the current view of the graph as a
+            png picture.
+        </div>
+    </div>
+</div>
+<hr>

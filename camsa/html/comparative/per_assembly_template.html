@@ -1,0 +1,145 @@
+<div class="row text-center" id="individual_assemblies_section"><h3>Individual assemblies</h3></div>
+
+    {% for assembly in data.assemblies %}
+        <hr>
+        <div class="row">
+            <div class="col-lg-6 col-lg-offset-3">
+                <p class="text-center">
+                    <a href="#assembly_overview_{{ data.assemblies_to_ids[assembly.name] }}" data-toggle="collapse">
+                        <strong style="font-size: large">{{ assembly.name }}</strong> [{{ data.assemblies_to_ids[assembly.name] }}]</a>
+                </p>
+            </div>
+        </div>
+
+
+        <div id="assembly_overview_{{ data.assemblies_to_ids[assembly.name] }}" class="container collapse">
+            <div class="row">
+                <div class="col-lg-10 col-lg-offset-1">
+                    <table class="table table-bordered table-condensed"
+                           id="assembly_overview_{{ data.assemblies_to_ids[assembly.name] }}_table"
+                           width="100%">
+                        <thead>
+                        <tr>
+                            <th>Seq1</th>
+                            <th>Seq2</th>
+                            <th>Or1</th>
+                            <th>Or2</th>
+                            <th>Or</th>
+                            <th>ISC</th>
+                            <th>IC</th>
+                            <th>OSC</th>
+                            <th>OC</th>
+                            <th>Unique</th>
+                            <th>MAP</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for ap in assembly.aps %}
+                            <tr>
+                                <td>{{ ap.seq1 }}</td>
+                                <td>{{ ap.seq2 }}</td>
+                                <td
+                                        {% if ap.seq1_par_or != ap.seq1_or and ap.seq1_par_or is not none %}
+                                            class="bg-success"
+                                        {% endif %}>
+                                    {{ ap.seq1_par_or if ap.seq1_par_or is not none else ap.seq1_or }}
+                                </td>
+                                <td
+                                        {% if ap.seq2_par_or != ap.seq2_or and ap.seq2_par_or is not none %}
+                                            class="bg-success"
+                                        {% endif %}>
+                                    {{ ap.seq2_par_or if ap.seq2_par_or is not none else ap.seq2_or }}
+                                </td>
+                                <td>
+                                    {{ ap.orientation_as_word }}
+                                </td>
+                                <td>
+                                    {{ 1 if ap.is_in_semi_conflicted_for(assembly.name) else 0 }}
+                                </td>
+                                <td>
+                                    {{ 1 if ap.is_in_conflicted_for(assembly.name) else 0 }}
+                                </td>
+                                <td>
+                                    {{ 1 if ap.is_out_semi_conflicted_for(assembly.name) else 0 }}
+                                </td>
+                                <td>
+                                    {{ 1 if ap.is_out_conflicted_for(assembly.name) else 0 }}
+                                </td>
+                                <td>
+                                    {{ 1 if ap.sources|length == 1 else 0 }}
+                                </td>
+                                <td>
+                                    {{ 1 if ap.participates_in_merged else 0 }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <th>Seq1</th>
+                            <th>Seq2</th>
+                            <th>Or1</th>
+                            <th>Or2</th>
+                            <th>Or</th>
+                            <th>ISC</th>
+                            <th>IC</th>
+                            <th>OSC</th>
+                            <th>OC</th>
+                            <th>Unique</th>
+                            <th>MAP</th>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <script>
+                $(document).ready(function () {
+                    $('#assembly_overview_{{ data.assemblies_to_ids[assembly.name] }}_table').DataTable(
+                            {
+                                "autowidth": false,
+                                "initComplete": function () {
+                                    this.api().columns().every(function () {
+                                        var column = this;
+                                        text = this.header().innerText;
+                                        if (["Or1", "Or2", "ISC", "IC", "OSC", "OC", "Unique", "Or", "MAP"].indexOf(text) < 0) {
+                                            var select = $('<input type="text" placeholder="Search" />')
+                                                    .appendTo($(column.footer()).empty())
+                                                    .on('keyup change', function () {
+                                                        if (column.search() !== this.value) {
+                                                            column
+                                                                    .search(this.value)
+                                                                    .draw();
+                                                        }
+                                                    });
+                                        }
+                                        else {
+                                            var select = $('<select><option value=""></option></select>')
+                                                    .appendTo($(column.footer()).empty())
+                                                    .on('change', function () {
+                                                        var val = $.fn.dataTable.util.escapeRegex(
+                                                                $(this).val()
+                                                        );
+
+                                                        column
+                                                                .search(val ? '^' + val + '$' : '', true, false)
+                                                                .draw();
+                                                    });
+
+                                            column.data().unique().sort().each(function (d, j) {
+                                                select.append('<option value="' + d + '">' + d + '</option>')
+                                            });
+                                        }
+                                    });
+                                    var r = $('#assembly_overview_{{ data.assemblies_to_ids[assembly.name] }}_table tfoot tr');
+                                    r.find('th').each(function () {
+                                        $(this).css('padding', 8);
+                                    });
+                                    $('#assembly_overview_{{ data.assemblies_to_ids[assembly.name] }}_table thead').append(r);
+                                    $('#search_0').css('text-align', 'center');
+                                }
+                            }
+                    );
+                });
+            </script>
+        </div>
+    {% endfor %}

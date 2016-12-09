@@ -1,0 +1,85 @@
+<div class="row" id="per_assembly_overview">
+    <h3 class="text-center" id="per_assembly_overview_section">Assemblies overview</h3>
+    <table class="table table-bordered table-condensed" id="overall_assemblies_comparison_table"
+           width="100%">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th># APs</th>
+            <th>Orientations (O / SO / U)</th>
+            <th class="text-center">NC</th>
+            <th class="text-center">OC / OSC</th>
+            <th class="text-center">IC / ISC</th>
+            <th>MAP</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for assembly in data.assemblies %}
+            <tr>
+                <td>{{ data.assemblies_to_ids[assembly.name] }}</td>
+                <td>{{ assembly.name }}</td>
+                <td>{{ assembly.aps|length }}</td>
+                <td>{{ assembly.oriented_aps_cnt }} / {{ assembly.semi_oriented_aps_cnt }} / {{ assembly.unoriented_ap_cnt }}</td>
+                <td>{{ assembly.non_conflicted_cnt }}</td>
+                <td>{{ assembly.out_conflicted_cnt }} / {{ assembly.out_semi_conflicted_cnt }}</td>
+                <td>{{ assembly.in_conflicted_cnt }} / {{ assembly.in_semi_conflicted_cnt }}</td>
+                <td>{{ assembly.aps|selectattr("participates_in_merged")|list|length }} ({{ "%0.2f" | format((assembly.aps|selectattr("participates_in_merged")|list|length *  100 / assembly.aps|length) | float) }} %)
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th># APs</th>
+            <th>Orientations (O / SO / U)</th>
+            <th>NC</th>
+            <th>OC / OSC</th>
+            <th>IC / ISC</th>
+            <th>MAP</th>
+        </tr>
+        </tfoot>
+    </table>
+    <script>
+        $(document).ready(function () {
+            var table = $('#overall_assemblies_comparison_table').DataTable({
+                "initComplete": function () {
+                    this.api().columns().every(function () {
+                        var column = this;
+                        text = this.header().innerText;
+                        if (text == "Name") {
+                            $('<input type="text" placeholder="Search" />')
+                                .appendTo($(column.footer()).empty())
+                                .on('keyup change', function () {
+                                    if (column.search() !== this.value) {
+                                        column
+                                            .search(this.value)
+                                            .draw();
+                                    }
+                                });
+
+                        }
+                        else {
+                            $(column.footer()).empty()
+                        }
+                    });
+                    var r = $('#overall_assemblies_comparison_table tfoot tr');
+                    r.find('th').each(function () {
+                        $(this).css('padding', 8);
+                    });
+                    $('#overall_assemblies_comparison_table thead').append(r);
+                    $('#search_0').css('text-align', 'center');
+                },
+                "autoWidth": false
+            });
+        });
+    </script>
+    <style>
+        tfoot input {
+            padding: 3px;
+            box-sizing: border-box;
+        }
+    </style>
+</div>

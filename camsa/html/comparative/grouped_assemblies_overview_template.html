@@ -1,0 +1,94 @@
+<div class="row" id="subclass_assemblies_overview_comparison">
+        <div id="grouped_assembly_comparison_chart" style="min-width: 100%; max-width: 100%; height: 600px; margin: 0 auto"></div>
+        <script>
+            $(function () {
+                $('#grouped_assembly_comparison_chart').highcharts({
+                    chart: {
+                        type: 'bar'
+                    },
+                    title: {
+                        text: 'Grouped assemblies overview comparison'
+                    },
+                    xAxis: {
+                        categories: [
+                            {% for assembly in data.grouped_assemblies %}
+                                '{% for name in assembly.name %}{{ data.assemblies_to_ids[name] }}{% if not loop.last %},{% endif %}{% endfor %}'
+                                {% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        ],
+                        title: {
+                            text: null
+                        }
+                    },
+                    yAxis: {
+                        min: 0,
+                        title: {
+                            text: 'Assembly points count',
+                            align: 'high'
+                        },
+                        labels: {
+                            overflow: 'justify'
+                        }
+                    },
+                    tooltip: {
+                        valueSuffix: ' assembly points'
+                    },
+                    plotOptions: {
+                        bar: {
+                            dataLabels: {
+                                enabled: true
+                            }
+                        }
+                    },
+                    legend: {
+                        layout: 'vertical',
+                        align: 'right',
+                        verticalAlign: 'middle',
+                        x: -40,
+                        y: 80,
+                        floating: true,
+                        borderWidth: 1,
+                        backgroundColor: ((Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'),
+                        shadow: true
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    series: [{
+                        name: 'Total # of assembly points',
+                        data: [
+                            {% for assembly in data.grouped_assemblies %}
+                                {{ assembly.aps|length }}
+                                {% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        ]
+                    }, {
+                        name: 'Merged assembly participation',
+                        data: [
+                            {% for assembly in data.grouped_assemblies %}
+                                {{ assembly.aps|selectattr("participates_in_merged")|list|length}}
+                                {% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        ]
+                    }, {
+                        name: 'In-conflicting',
+                        data: [
+                            {% for assembly in data.grouped_assemblies %}
+                                {{ assembly.in_conflicted_cnt }}
+                                {% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        ]
+                    }, {
+                        name: 'In-semiconflicting',
+                        data: [
+                            {% for grouped_assembly in data.grouped_assemblies %}
+                                {{ grouped_assembly.in_semi_conflicted_cnt }}
+                                {% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        ]
+                    }
+                    ]
+                });
+            });
+        </script>
+    </div>
