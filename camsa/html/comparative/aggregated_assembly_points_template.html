@@ -133,7 +133,7 @@
         <tbody>
         {% for ap in data.aps %}
             <tr>
-                <td class="details-control"></td>
+                <td id="{{ ap.self_id }}"></td>
                 <td>[{% for source_name in ap.sources|sort %}{{ data.assemblies_to_ids[source_name] }}{% if not loop.last %}, {% endif %}{% endfor %}]</td>
                 <td>{{ ap.seq1 }}</td>
                 <td>{{ ap.seq2 }}</td>
@@ -251,6 +251,7 @@
                             "searchable": false,
                             "data": null,
                             "defaultContent": '',
+                            'className': 'details-control'
                         }
                     ]
                 }
@@ -260,6 +261,11 @@
             $("#revert_aps_table_button").on('click', function () {
                 dataTable.clear();
                 dataTable.rows.add(window.initial_aps_data_array).draw();
+                dataTable.rows().every(function(rowidx, row, rowLoop){
+                    var data = this.data();
+                    var map_id = data[Object.keys(data).length].trim();
+                    $(this.node()).find('td:first-child').attr('id', map_id);
+                });
                 $('.filter_alert').remove();
                 $("#revert_aps_table_button").hide();
             });
@@ -271,50 +277,50 @@
                     var result = [];
                     var sources_regex = $("#sources_query").val();
                     if (sources_regex != '') {
-                        var items = new RegExp(sources_regex).test(data[0].trim().replace("\n", ""));
+                        var items = new RegExp(sources_regex).test(data[1].trim().replace("\n", ""));
                         result.push(items);
                     }
                     var seq1_regex = $("#seq1_query").val();
                     if (seq1_regex != '') {
                         var regex = new RegExp(seq1_regex);
-                        var row_entry = data[1].trim().replace("\n", "");
+                        var row_entry = data[2].trim().replace("\n", "");
                         result.push(regex.test(row_entry));
                     }
                     var seq2_regex = $("#seq2_query").val();
                     if (seq2_regex != '') {
-                        result.push(new RegExp(seq2_regex).test(data[2].trim().replace("\n", "")));
+                        result.push(new RegExp(seq2_regex).test(data[3].trim().replace("\n", "")));
                     }
                     var or1_regex = $("#or1_query").val();
                     if (or1_regex != '') {
-                        result.push(new RegExp(or1_regex).test(data[7].trim().replace("\n", "")));
+                        result.push(new RegExp(or1_regex).test(data[4].trim().replace("\n", "")));
                     }
                     var or2_regex = $("#or2_query").val();
                     if (or2_regex != '') {
-                        result.push(new RegExp(or2_regex).test(data[8].trim().replace("\n", "")));
+                        result.push(new RegExp(or2_regex).test(data[5].trim().replace("\n", "")));
                     }
                     var am_regex = $("#or_query").val();
                     if (am_regex != '') {
-                        result.push(new RegExp(am_regex).test(data[10].trim().replace("\n", "")));
+                        result.push(new RegExp(am_regex).test(data[11].trim().replace("\n", "")));
                     }
                     var isc_regex = $("#isc_query").val();
                     if (isc_regex != '') {
-                        result.push(new RegExp(isc_regex).test(data[11].trim().replace("\n", "")));
+                        result.push(new RegExp(isc_regex).test(data[12].trim().replace("\n", "")));
                     }
                     var ic_regex = $("#ic_query").val();
                     if (ic_regex != '') {
-                        result.push(new RegExp(ic_regex).test(data[12].trim().replace("\n", "")));
+                        result.push(new RegExp(ic_regex).test(data[13].trim().replace("\n", "")));
                     }
                     var osc_regex = $("#osc_query").val();
                     if (osc_regex != '') {
-                        result.push(new RegExp(osc_regex).test(data[13].trim().replace("\n", "")));
+                        result.push(new RegExp(osc_regex).test(data[14].trim().replace("\n", "")));
                     }
                     var oc_regex = $("#oc_query").val();
                     if (oc_regex != '') {
-                        result.push(new RegExp(oc_regex).test(data[14].trim().replace("\n", "")));
+                        result.push(new RegExp(oc_regex).test(data[15].trim().replace("\n", "")));
                     }
                     var map_regex = $("#map_query").val();
                     if (map_regex != '') {
-                        result.push(new RegExp(map_regex).test(data[15].trim().replace("\n", "")));
+                        result.push(new RegExp(map_regex).test(data[16].trim().replace("\n", "")));
                     }
                     var logical_or = $("#logical_or_search").is(":checked");
                     var keep = !logical_or;
@@ -351,11 +357,12 @@
             function format(d) {
                 // `d` is the original data object for the row
                 var aps = ap_from_table_data_row(d);
-                return aps[0].source;
+                return "<span ap_id=\"" + aps[0].self_id + "\" class=\"ap_id_badge label label-default\">" + aps[0].self_id + "</span>";
             }
 
             var detailRows = [];
             $('#overall_aps_table tbody').on('click', 'tr td.details-control', function () {
+                console.log("clicked 3");
                 var tr = $(this).closest('tr');
                 var row = dataTable.row(tr);
                 var idx = $.inArray(tr.attr('id'), detailRows);
@@ -378,7 +385,13 @@
                 }
             });
 
+            $(document).on('click', '.ap_id_badge', function(){
+                console.log("clicked");
+                $("#" + $(this).attr('ap_id')).click();
+            });
+
             dataTable.on("draw", function () {
+
                 $.each(detailRows, function (i, id) {
                     $("#" + id + " td.details-control").click();
                 });
