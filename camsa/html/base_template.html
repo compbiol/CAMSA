@@ -82,6 +82,9 @@
             <li role="presentation">
                 <a href="#reference" aria-controls="reference" role="tab" data-toggle="tab">Reference</a>
             </li>
+            <li role="presentation" class="pull-right">
+                <a href="#info" aria-controls="info" role="tab" data-toggle="tab">Info</a>
+            </li>
         </ul>
 
         <div class="tab-content">
@@ -90,6 +93,9 @@
             </div>
             <div role="tabpanel" class="tab-pane" id="reference">
                 {% include "reference_template.html" %}
+            </div>
+            <div role="tabpanel" class="tab-pane" id="info">
+                {% include "info_template.html" %}
             </div>
         </div>
     </div>
