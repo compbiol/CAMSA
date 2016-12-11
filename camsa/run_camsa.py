@@ -287,7 +287,8 @@ if __name__ == "__main__":
             meta={
                 "camsa": {
                     "version": camsa.VERSION
-                }
+                },
+                "date": start_time
             }), file=dest)
     with open(output_html_report_file_name + "__new.html", "wt") as dest:
         env.loader = FileSystemLoader(os.path.join(camsa.root_dir, "html"))
@@ -314,9 +315,11 @@ if __name__ == "__main__":
             meta={
                 "camsa": {
                     "version": camsa.VERSION
-                }
+                },
+                "date": start_time
             }), file=dest)
     logger.info("CAMSA report is written to \"{output_report_file}\"".format(output_report_file=output_html_report_file_name))
     logger.info("Finished Comparative Analysis and Merging of input assemblies.")
-    logger.info("Elapsed time: {el_time}".format(el_time=str(datetime.datetime.now() - start_time)))
+    end_time = datetime.datetime.now()
+    logger.info("Elapsed time: {el_time}".format(el_time=str(end_time - start_time)))
     logger.info("Thank you for using CAMSA!")
