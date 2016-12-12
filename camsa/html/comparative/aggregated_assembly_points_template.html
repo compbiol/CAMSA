@@ -128,6 +128,7 @@
             <th>OC</th>
             <th>MAP</th>
             <th>self_id</th>
+            <th>detailed</th>
         </tr>
         </thead>
         <tbody>
@@ -169,6 +170,7 @@
                 <td>{% if ap.out_conflicted|length>0 %}[{% for source_name in ap.out_conflicted|sort(case_sensitive=False) %}{{ data.assemblies_to_ids[source_name] }}{% if not loop.last %}, {% endif %}{% endfor %}]{% else %}0{% endif %}</td>
                 <td>{{ 1 if ap.participates_in_merged else 0 }}</td>
                 <td>{{ ap.self_id }}</td>
+                <td>0</td>
             </tr>
         {% endfor %}
         </tbody>
@@ -192,6 +194,7 @@
             <th>OC</th>
             <th>MAP</th>
             <th>self_id</th>
+            <th>detailed</th>
         </tr>
         </tfoot>
     </table>
@@ -242,12 +245,14 @@
                     },
                     "columnDefs": [
                         {
-                            "targets": [4, 5, 6, 7, 17],
+                            "targets": [4, 5, 6, 7, 17, 18],
                             "visible": false,
-                            "searchable": false
+                            "searchable": false,
+                            "orderable": true
                         },
                         {
                             "targets": [0],
+                            "orderData": 18,
                             "searchable": false,
                             "data": null,
                             "defaultContent": '',
@@ -263,7 +268,7 @@
                 dataTable.rows.add(window.initial_aps_data_array).draw();
                 dataTable.rows().every(function(rowidx, row, rowLoop){
                     var data = this.data();
-                    var map_id = data[Object.keys(data).length].trim();
+                    var map_id = data[17].trim();
                     $(this.node()).find('td:first-child').attr('id', map_id);
                 });
                 $('.filter_alert').remove();
@@ -366,38 +371,82 @@
             $('#overall_aps_table tbody').on('click', 'tr td.details-control', function () {
                 var tr = $(this).closest('tr');
                 var row = dataTable.row(tr);
-                var idx = $.inArray(tr.attr('id'), detailRows);
+                var map_id = tr.find('td:first-child').attr('id');
+                var idx = $.inArray(map_id, detailRows);
+                var data = row.data();
 
                 if (row.child.isShown()) {
+                    data[18] = 0;
+                    row.data(data);
                     tr.removeClass('details');
                     row.child.hide();
-
                     // Remove from the 'open' array
                     detailRows.splice(idx, 1);
                 }
                 else {
+                    data[18] = 1;
+                    row.data(data);
+
                     tr.addClass('details');
                     row.child(format(row.data())).show();
 
                     // Add to the 'open' array
                     if (idx === -1) {
-                        detailRows.push(tr.attr('id'));
+                        detailRows.push(map_id);
                     }
                 }
+                dataTable.column(0).order('desc').draw();
             });
 
             $(document).on('click', '.ap_id_badge', function(){
-                $("#" + $(this).attr('ap_id')).click();
+                var desired_ap_id = $(this).attr('ap_id');
+                dataTable.rows().every(function(rowIdx, tableLoop, rowLoop){
+                    var data = this.data();
+                    var map_id = data[17].trim();
+                    if (desired_ap_id == map_id) {
+{#                        console.log(desired_ap_id, map_id);#}
+                        var index = $.inArray(map_id, detailRows);
+                        if (this.child.isShown()){
+                            this.child.hide();
+                            data[18] = 0;
+                            $(this.node()).removeClass('details');
+                            detailRows.splice(index, 1);
+                        }
+                        else {
+                            data[18] = 1;
+                            $(this.node()).addClass('details');
+                            this.child(format(this.data())).show();
+                            if ($.inArray(map_id, detailRows) === -1){
+                                detailRows.push(map_id);
+                            }
+                        }
+                        this.data(data);
+                    }
+                });
+                dataTable.column(0).order('desc').draw();
+
+
+
             });
 
             dataTable.on("draw", function () {
-
-                $.each(detailRows, function (i, id) {
-                    var td_cell = $("#" + id + " td.details-control");
-                    td_cell.click();
-                    var idx = $.inArray($(td_cell).closest('tr').attr('id'), detailRows);
+                dataTable.rows().every(function(rowIdx, tableLoop, rowLoop){
+                   var data = this.data();
+                   var map_id = data[17].trim();
+                   var map_id_index = $.inArray(map_id, detailRows);
+{#                   console.log(detailRows);#}
+                   if (map_id_index === -1 ){
+                       $(this.node()).removeClass('details');
+                   }
+                });
+{#                dataTable.column(0).order('desc').draw();#}
+                $.each(detailRows, function (i, map_id) {
+                    var td_cell = $("#" + map_id);
+                    var row = td_cell.closest('tr');
+                    row.addClass('details');
+                    var idx = $.inArray(map_id, detailRows);
                     if (idx === -1) {
-                        detailRows.push(ids);
+                        detailRows.push(map_id);
                     }
                 });
             });
@@ -414,7 +463,7 @@
             margin: 0 auto;
         }
 
-        td.details-control {
+        tr td.details-control {
             background: url('./libs/images/details_open.png') no-repeat center center;
             cursor: pointer;
         }
@@ -699,8 +748,8 @@
                 var por2 = dr[7].trim();
                 var cw = parseFloat(dr[10].trim());
 
-                var map = dr[Object.keys(dr).length - 1].trim() == "1";
-                var self_id = dr[Object.keys(dr).length].trim();
+                var map = dr[16].trim() == "1";
+                var self_id = dr[17].trim();
                 sources.forEach(function (element) {
                     aps.push(new AssemblyPoint(seq1, seq2, oor1, oor2, por1, por2, cw, self_id, element, map))
                 });
@@ -723,8 +772,8 @@
                 var por2 = data[7].trim();
                 var cw = parseFloat(data[10].trim());
 
-                var map = data[Object.keys(data).length - 1].trim() == "1";
-                var self_id = data[Object.keys(data).length].trim();
+                var map = data[16].trim() == "1";
+                var self_id = data[17].trim();
                 sources.forEach(function (element) {
                     aps.push(new AssemblyPoint(seq1, seq2, oor1, oor2, por1, por2, cw, self_id, element, map))
                 });
