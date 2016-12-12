@@ -357,12 +357,13 @@
             function format(d) {
                 // `d` is the original data object for the row
                 var aps = ap_from_table_data_row(d);
-                return "<span ap_id=\"" + aps[0].self_id + "\" class=\"ap_id_badge label label-default\">" + aps[0].self_id + "</span>";
+                var sources = get_sources_from_aps(aps);
+                return format_detailed_child_row(aps[0], sources, window.conflicts_by_merged_ids, window.assemblies_to_ids);
+{#                return "<span ap_id=\"" + aps[0].self_id + "\" class=\"ap_id_badge label label-default\">" + aps[0].self_id + "</span>";#}
             }
 
             var detailRows = [];
             $('#overall_aps_table tbody').on('click', 'tr td.details-control', function () {
-                console.log("clicked 3");
                 var tr = $(this).closest('tr');
                 var row = dataTable.row(tr);
                 var idx = $.inArray(tr.attr('id'), detailRows);
@@ -386,14 +387,18 @@
             });
 
             $(document).on('click', '.ap_id_badge', function(){
-                console.log("clicked");
                 $("#" + $(this).attr('ap_id')).click();
             });
 
             dataTable.on("draw", function () {
 
                 $.each(detailRows, function (i, id) {
-                    $("#" + id + " td.details-control").click();
+                    var td_cell = $("#" + id + " td.details-control");
+                    td_cell.click();
+                    var idx = $.inArray($(td_cell).closest('tr').attr('id'), detailRows);
+                    if (idx === -1) {
+                        detailRows.push(ids);
+                    }
                 });
             });
 
@@ -416,6 +421,10 @@
 
         tr.details td.details-control {
             background: url('./libs/images/details_close.png') no-repeat center center;
+        }
+
+        .ap_id_badge{
+            cursor: pointer;
         }
     </style>
 </div>
@@ -898,6 +907,19 @@
             {% endfor %}
         }
             ;
+            window.conflicts_by_merged_ids = {
+            {% for ap in data.aps %}
+                {{ ap.self_id }}:
+                {
+                    "ISC": {{ ap.in_semi_conflicted | tojson }},
+                    "IC": {{ ap.in_conflicted | tojson }},
+                    "OSC": {{ ap.out_semi_conflicted | tojson }},
+                    "OC": {{ ap.out_conflicted | tojson }}
+                },
+            {% endfor %}
+            };
+            window.assemblies_to_ids = {{ data.assemblies_to_ids | tojson }}
+
 
 
             $("#draw_graph").on('click', function () {
