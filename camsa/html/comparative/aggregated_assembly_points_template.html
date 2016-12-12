@@ -92,7 +92,7 @@
                             });
                         </script>
                         <div class="col-lg-offset-3 col-lg-5 text-right">
-                            <input  class="col-lg-5" type="checkbox" data-toggle="toggle" data-on="Both sequences" data-off="Either sequence" data-width="200">
+                            <input class="col-lg-5" type="checkbox" data-toggle="toggle" data-on="Both sequences" data-off="Either sequence" data-width="200">
                         </div>
                     {% else %}
                         <div class="row">
@@ -278,11 +278,10 @@
                             "defaultContent": '',
                             'className': 'details-control'
                         }
-                    ]
+                    ],
+                    "order": [[0, 'desc']]
                 }
-
             );
-
 
 
             window.initial_aps_data_array = dataTable.rows().data().toArray();
@@ -290,14 +289,14 @@
             $("#revert_aps_table_button").on('click', function () {
                 dataTable.clear();
                 dataTable.rows.add(window.initial_aps_data_array);
-                dataTable.rows().every(function(rowidx, row, rowLoop){
+                dataTable.rows().every(function (rowidx, row, rowLoop) {
                     var data = this.data();
                     var map_id = data[17].trim();
                     $(this.node()).find('td:first-child').attr('id', map_id);
                 });
                 $('.filter_alert').remove();
                 $("#revert_aps_table_button").hide();
-                dataTable.column(0).order('desc').draw();
+                dataTable.draw();
             });
 
             function advanced_filter(dataTable, negate) {
@@ -354,12 +353,12 @@
                     }
 
                     var ap_id_regex = $("#ap_id_query").val();
-                    if (ap_id_regex != ''){
+                    if (ap_id_regex != '') {
                         result.push(new RegExp(ap_id_regex).test(data[17].trim().replace("\n", "")));
                     }
 
                     var expanded_search = $("#expanded_search").is(":checked");
-                    if (expanded_search){
+                    if (expanded_search) {
                         result.push(data[18] === 1);
                     }
 
@@ -400,7 +399,6 @@
                 var aps = ap_from_table_data_row(d);
                 var sources = get_sources_from_aps(aps);
                 return format_detailed_child_row(aps[0], sources, window.conflicts_by_merged_ids, window.assemblies_to_ids);
-{#                return "<span ap_id=\"" + aps[0].self_id + "\" class=\"ap_id_badge label label-default\">" + aps[0].self_id + "</span>";#}
             }
 
             var detailRows = [];
@@ -431,18 +429,17 @@
                         detailRows.push(map_id);
                     }
                 }
-                dataTable.column(0).order('desc').draw();
+                dataTable.draw();
             });
 
-            $(document).on('click', '.ap_id_badge', function(){
+            $(document).on('click', '.ap_id_badge', function () {
                 var desired_ap_id = $(this).attr('ap_id');
-                dataTable.rows().every(function(rowIdx, tableLoop, rowLoop){
+                dataTable.rows().every(function (rowIdx, tableLoop, rowLoop) {
                     var data = this.data();
                     var map_id = data[17].trim();
                     if (desired_ap_id == map_id) {
-{#                        console.log(desired_ap_id, map_id);#}
                         var index = $.inArray(map_id, detailRows);
-                        if (this.child.isShown()){
+                        if (this.child.isShown()) {
                             this.child.hide();
                             data[18] = 0;
                             $(this.node()).removeClass('details');
@@ -452,45 +449,46 @@
                             data[18] = 1;
                             $(this.node()).addClass('details');
                             this.child(format(this.data())).show();
-                            if ($.inArray(map_id, detailRows) === -1){
+                            if ($.inArray(map_id, detailRows) === -1) {
                                 detailRows.push(map_id);
                             }
                         }
                         this.data(data);
                     }
                 });
-                dataTable.column(0).order('desc').draw();
-
+                dataTable.draw();
 
 
             });
 
             dataTable.on("draw", function () {
-                dataTable.rows().every(function(rowIdx, tableLoop, rowLoop){
-                   var data = this.data();
-                   var map_id = data[17].trim();
-                   var map_id_index = $.inArray(map_id, detailRows);
-{#                   console.log(detailRows);#}
-                   if (map_id_index === -1 ){
-                       $(this.node()).removeClass('details');
-                   }
+                dataTable.rows().every(function (rowIdx, tableLoop, rowLoop) {
+                    var data = this.data();
+                    var map_id = data[17].trim();
+                    var map_id_index = $.inArray(map_id, detailRows);
+                    {#                   console.log(detailRows);#}
+                    if (map_id_index === -1) {
+                        $(this.node()).removeClass('details');
+                    }
                 });
-{#                dataTable.column(0).order('desc').draw();#}
                 $.each(detailRows, function (i, map_id) {
                     var td_cell = $("#" + map_id);
                     var row = td_cell.parents('tr');
                     var dt_row = dataTable.row(row);
                     var data = dt_row.data();
-                    data[18] = 1;
-                    dt_row.data(data);
-                    if (!dt_row.child.isShown()){
-                        dt_row.child(format(data)).show();
+                    if (typeof data != 'undefined') {
+                        data[18] = 1;
+                        dt_row.data(data);
+                        if (!dt_row.child.isShown()) {
+                            dt_row.child(format(data)).show();
+                        }
+                        row.addClass('details');
+                        var idx = $.inArray(map_id, detailRows);
+                        if (idx === -1) {
+                            detailRows.push(map_id);
+                        }
                     }
-                    row.addClass('details');
-                    var idx = $.inArray(map_id, detailRows);
-                    if (idx === -1) {
-                        detailRows.push(map_id);
-                    }
+
                 });
             });
 
@@ -515,7 +513,7 @@
             background: url('./libs/images/details_close.png') no-repeat center center;
         }
 
-        .ap_id_badge{
+        .ap_id_badge {
             cursor: pointer;
         }
     </style>
@@ -778,25 +776,25 @@
 
 
         }
-        function ap_from_table_data_row(dr){
-                var aps = [];
-                var sources = dr[1].slice(1, -1).split(',').map(function (str) {
-                    return str.trim();
-                });
-                var seq1 = dr[2].trim();
-                var seq2 = dr[3].trim();
-                var oor1 = dr[4].trim();
-                var oor2 = dr[5].trim();
-                var por1 = dr[6].trim();
-                var por2 = dr[7].trim();
-                var cw = parseFloat(dr[10].trim());
+        function ap_from_table_data_row(dr) {
+            var aps = [];
+            var sources = dr[1].slice(1, -1).split(',').map(function (str) {
+                return str.trim();
+            });
+            var seq1 = dr[2].trim();
+            var seq2 = dr[3].trim();
+            var oor1 = dr[4].trim();
+            var oor2 = dr[5].trim();
+            var por1 = dr[6].trim();
+            var por2 = dr[7].trim();
+            var cw = parseFloat(dr[10].trim());
 
-                var map = dr[16].trim() == "1";
-                var self_id = dr[17].trim();
-                sources.forEach(function (element) {
-                    aps.push(new AssemblyPoint(seq1, seq2, oor1, oor2, por1, por2, cw, self_id, element, map))
-                });
-                return aps;
+            var map = dr[16].trim() == "1";
+            var self_id = dr[17].trim();
+            sources.forEach(function (element) {
+                aps.push(new AssemblyPoint(seq1, seq2, oor1, oor2, por1, por2, cw, self_id, element, map))
+            });
+            return aps;
         }
 
         function get_aps() {
@@ -1003,298 +1001,303 @@
             {% for ap in data.aps %}
                 {{ ap.self_id }}:
                 {
-                    "ISC": {{ ap.in_semi_conflicted | tojson }},
-                    "IC": {{ ap.in_conflicted | tojson }},
-                    "OSC": {{ ap.out_semi_conflicted | tojson }},
-                    "OC": {{ ap.out_conflicted | tojson }}
+                    "ISC"
+                : {{ ap.in_semi_conflicted | tojson }},
+                    "IC"
+                : {{ ap.in_conflicted | tojson }},
+                    "OSC"
+                : {{ ap.out_semi_conflicted | tojson }},
+                    "OC"
+                : {{ ap.out_conflicted | tojson }}
                 },
             {% endfor %}
-            };
+        }
+            ;
             window.assemblies_to_ids = {{ data.assemblies_to_ids | tojson }}
 
 
 
-            $("#draw_graph").on('click', function () {
-                $("#graph").empty();
-                $("#graph").css('background', 'url(./libs/images/giphy.gif) no-repeat center center');
-                var aps = get_aps();
-                var nodes = get_nodes(aps);
-                var ap_edges = get_ap_edges(aps);
-                var seq_edges = get_seq_edges(aps);
-                var edges = ap_edges.concat(seq_edges);
-                var assembly_layout = {
-                    name: $('#graph_layout').val(),
-                    ready: function () {
-                        $("#graph").css('background', '')
-                    },
-                    padding: 20,
-                    randomize: true,
-                    nodeRepulsion: 12000,
-                    idealEdgeLength: 100,
-                    edgeElasticity: .45,
-                    nestingFactor: .1,
-                    gravity: -1,
-                    numIter: 300,
-                    tile: true
+                $("#draw_graph").on('click', function () {
+                    $("#graph").empty();
+                    $("#graph").css('background', 'url(./libs/images/giphy.gif) no-repeat center center');
+                    var aps = get_aps();
+                    var nodes = get_nodes(aps);
+                    var ap_edges = get_ap_edges(aps);
+                    var seq_edges = get_seq_edges(aps);
+                    var edges = ap_edges.concat(seq_edges);
+                    var assembly_layout = {
+                        name: $('#graph_layout').val(),
+                        ready: function () {
+                            $("#graph").css('background', '')
+                        },
+                        padding: 20,
+                        randomize: true,
+                        nodeRepulsion: 12000,
+                        idealEdgeLength: 100,
+                        edgeElasticity: .45,
+                        nestingFactor: .1,
+                        gravity: -1,
+                        numIter: 300,
+                        tile: true
 
-                };
-                var cy = cytoscape({
-                    container: $("#graph"),
-                    boxSelectionEnabled: true,
-                    autounselectify: true,
+                    };
+                    var cy = cytoscape({
+                        container: $("#graph"),
+                        boxSelectionEnabled: true,
+                        autounselectify: true,
 
-                    style: cytoscape.stylesheet()
-                        .selector('node')
-                        .css({
-                            'width': 5,
-                            'height': 5
-                        })
-                        .selector('node .selected')
-                        .css({
-                            'border-width': 1,
-                            'border-color': 'black'
-                        })
-                        .selector('edge')
-                        .css({
-                            'width': 1.5,
-                            'line-color': 'black',
-                            'target-arrow-color': 'black',
-                            'opacity': .7,
-                        })
-                        .selector('edge[line_color]')
-                        .css({
-                            'line-color': 'data(line_color)'
-                        })
-                        .selector('edge[id_label]')
-                        .css({
-                            'label': 'data(label)\n',
-                            'edge-text-rotation': 'autorotate',
-                            'font-size': 5,
-                            'text-outline-color': "#ddd",
-                            'text-outline-width': 1.5
+                        style: cytoscape.stylesheet()
+                            .selector('node')
+                            .css({
+                                'width': 5,
+                                'height': 5
+                            })
+                            .selector('node .selected')
+                            .css({
+                                'border-width': 1,
+                                'border-color': 'black'
+                            })
+                            .selector('edge')
+                            .css({
+                                'width': 1.5,
+                                'line-color': 'black',
+                                'target-arrow-color': 'black',
+                                'opacity': .7,
+                            })
+                            .selector('edge[line_color]')
+                            .css({
+                                'line-color': 'data(line_color)'
+                            })
+                            .selector('edge[id_label]')
+                            .css({
+                                'label': 'data(label)\n',
+                                'edge-text-rotation': 'autorotate',
+                                'font-size': 5,
+                                'text-outline-color': "#ddd",
+                                'text-outline-width': 1.5
 
-                        })
-                        .selector('edge[target_arrow_head]')
-                        .css({
-                            'target-arrow-shape': 'triangle'
-                        })
-                        .selector('edge[map]')
-                        .css({
-                            'width': 4
-                        })
-                        .selector('edge[candidate]')
-                        .css({
-                            'line-style': "dashed"
-                        })
-                        .selector('.hidden')
-                        .css({
-                            'display': 'none'
-                        })
-                        .selector('.marked')
-                        .css({
-                            'opacity': 1,
-                            'border-width': 1,
-                            'border-color': 'black'
-                        }),
+                            })
+                            .selector('edge[target_arrow_head]')
+                            .css({
+                                'target-arrow-shape': 'triangle'
+                            })
+                            .selector('edge[map]')
+                            .css({
+                                'width': 4
+                            })
+                            .selector('edge[candidate]')
+                            .css({
+                                'line-style': "dashed"
+                            })
+                            .selector('.hidden')
+                            .css({
+                                'display': 'none'
+                            })
+                            .selector('.marked')
+                            .css({
+                                'opacity': 1,
+                                'border-width': 1,
+                                'border-color': 'black'
+                            }),
 
-                    elements: {
-                        nodes: nodes,
-                        edges: edges
-                    },
+                        elements: {
+                            nodes: nodes,
+                            edges: edges
+                        },
 
-                    layout: assembly_layout
-                });
+                        layout: assembly_layout
+                    });
 
-                cy.cxtmenu({
-                    menuRadius: 100,
-                    selector: 'node',
-                    commands: [{
-                        content: 'SN',
-                        select: function (ele) {
-                            ele.addClass('marked');
-                        }
-                    }, {
-                        content: 'SNd',
-                        select: function (ele) {
-                            ele.neighborhood().add(ele).addClass('marked');
-                        }
-                    }, {
-                        content: 'SCC',
-                        select: function (ele) {
-                            get_cc_element(cy, ele).forEach(function (entry) {
-                                entry.addClass('marked');
-                            });
-
-                        }
-                    }, {
-                        content: 'UsN',
-                        select: function (ele) {
-                            ele.removeClass('marked');
-                        }
-                    }, {
-                        content: 'UsNd',
-                        select: function (ele) {
-                            ele.neighborhood().add(ele).removeClass('marked');
-                        }
-                    }, {
-                        content: 'UsCC',
-                        select: function (ele) {
-                            get_cc_element(cy, ele).forEach(function (entry) {
-                                entry.removeClass('marked');
-                            });
-                        }
-                    }
-                    ],
-                    fillColor: 'rgba(0, 0, 0, 0.75)',
-                    activeFillColor: 'rgba(92, 194, 237, 0.75)',
-                    activePadding: 20,
-                    indicatorSize: 24,
-                    separatorWidth: 3,
-                    spotlightPadding: 4,
-                    minSpotlightRadius: 24,
-                    maxSpotlightRadius: 38,
-                    openMenuEvents: 'cxttapstart',
-                    itemColor: 'white',
-                    zIndex: 9999
-                });
-
-                cy.cxtmenu({
-                    menuRadius: 100,
-                    selector: 'core',
-                    commands: [{
-                        content: 'HUsE',
-                        select: function () {
-                            var marked_ids = {};
-                            cy.$('.marked').forEach(function (ele) {
-                                marked_ids[ele.id()] = true;
-                            });
-                            cy.elements().forEach(function (ele) {
-                                if (!(ele.id() in marked_ids)) {
-                                    ele.addClass('hidden');
-                                }
-
-                            });
-                        }
-                    }, {
-                        content: 'SUsE',
-                        select: function () {
-                            var marked_ids = {};
-                            cy.$('.marked').forEach(function (ele) {
-                                marked_ids[ele.id()] = true;
-                            });
-                            cy.elements().forEach(function (ele) {
-                                if (!(ele.id() in marked_ids)) {
-                                    ele.removeClass('hidden');
-                                }
-
-                            });
-                        }
-                    }, {
-                        content: 'RS',
-                        select: function () {
-                            var marked_ids = {};
-                            cy.$('.marked').forEach(function (ele) {
-                                marked_ids[ele.id()] = true;
-                            });
-                            cy.elements().forEach(function (ele) {
-                                if (ele.id() in marked_ids) {
-                                    ele.removeClass('marked')
-                                }
-                                else {
-                                    ele.addClass('marked')
-                                }
-                            });
-
-
-                        }
-                    }, {
-                        content: 'DUsE',
-                        select: function () {
-                            var marked_ids = {};
-                            cy.$('.marked').forEach(function (ele) {
-                                marked_ids[ele.id()] = true;
-                            });
-                            cy.elements().forEach(function (ele) {
-                                if (!(ele.id() in marked_ids)) {
-                                    cy.remove(ele);
-                                }
-
-                            });
-                        }
-                    }, {
-                        content: 'Redraw',
-                        select: function () {
-                            $("#graph").css('background', 'url(./libs/images/giphy.gif) no-repeat center center');
-                            var assembly_layout = {
-                                name: $('#graph_layout').val(),
-                                ready: function () {
-                                    $("#graph").css('background', '')
-                                },
-                                padding: 20,
-                                randomize: true,
-                                nodeRepulsion: 12000,
-                                idealEdgeLength: 100,
-                                edgeElasticity: .45,
-                                nestingFactor: .1,
-                                gravity: -1,
-                                numIter: 300,
-                                tile: true
-
-                            };
-                            var layout = cy.elements().makeLayout(assembly_layout);
-                            layout.on('layoutstop', function () {
-                                $("#graph").css('background', '');
-                                cy.elements().layout(layout);
-
-                            });
-                            layout.run();
-                            setTimeout(function () {
-                                layout.stop();
-                            }, {{ settings.cytoscape.draw_timeout }});
-
-                        }
-                    },
-                        {
-                            content: 'Us',
+                    cy.cxtmenu({
+                        menuRadius: 100,
+                        selector: 'node',
+                        commands: [{
+                            content: 'SN',
                             select: function (ele) {
-                                cy.elements().removeClass('marked');
+                                ele.addClass('marked');
+                            }
+                        }, {
+                            content: 'SNd',
+                            select: function (ele) {
+                                ele.neighborhood().add(ele).addClass('marked');
+                            }
+                        }, {
+                            content: 'SCC',
+                            select: function (ele) {
+                                get_cc_element(cy, ele).forEach(function (entry) {
+                                    entry.addClass('marked');
+                                });
+
+                            }
+                        }, {
+                            content: 'UsN',
+                            select: function (ele) {
+                                ele.removeClass('marked');
+                            }
+                        }, {
+                            content: 'UsNd',
+                            select: function (ele) {
+                                ele.neighborhood().add(ele).removeClass('marked');
+                            }
+                        }, {
+                            content: 'UsCC',
+                            select: function (ele) {
+                                get_cc_element(cy, ele).forEach(function (entry) {
+                                    entry.removeClass('marked');
+                                });
                             }
                         }
-                    ],
-                    fillColor: 'rgba(0, 0, 0, 0.75)',
-                    activeFillColor: 'rgba(92, 194, 237, 0.75)',
-                    activePadding: 20,
-                    indicatorSize: 24,
-                    separatorWidth: 3,
-                    spotlightPadding: 4,
-                    minSpotlightRadius: 24,
-                    maxSpotlightRadius: 38,
-                    openMenuEvents: 'cxttapstart',
-                    itemColor: 'white',
-                    zIndex: 9999
-                });
-                $("#fit_graph").prop('onclick', null).off('click');
-                $("#fit_graph").on('click', function () {
-                    cy.fit(50);
-                });
-                $("#overall_aps_table").on('draw', function () {
-                    cy.resize();
-                });
-                $("#save_graph").prop('onclick', null).off('click');
-                $("#save_graph").on("click", function () {
-                    var image = cy.png({
-                        full: false
+                        ],
+                        fillColor: 'rgba(0, 0, 0, 0.75)',
+                        activeFillColor: 'rgba(92, 194, 237, 0.75)',
+                        activePadding: 20,
+                        indicatorSize: 24,
+                        separatorWidth: 3,
+                        spotlightPadding: 4,
+                        minSpotlightRadius: 24,
+                        maxSpotlightRadius: 38,
+                        openMenuEvents: 'cxttapstart',
+                        itemColor: 'white',
+                        zIndex: 9999
                     });
-                    var link = document.createElement('a');
-                    link.href = image;
-                    link.target = "_blank";
-                    link.download = 'graph.png';
-                    link.style = 'display: none';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+
+                    cy.cxtmenu({
+                        menuRadius: 100,
+                        selector: 'core',
+                        commands: [{
+                            content: 'HUsE',
+                            select: function () {
+                                var marked_ids = {};
+                                cy.$('.marked').forEach(function (ele) {
+                                    marked_ids[ele.id()] = true;
+                                });
+                                cy.elements().forEach(function (ele) {
+                                    if (!(ele.id() in marked_ids)) {
+                                        ele.addClass('hidden');
+                                    }
+
+                                });
+                            }
+                        }, {
+                            content: 'SUsE',
+                            select: function () {
+                                var marked_ids = {};
+                                cy.$('.marked').forEach(function (ele) {
+                                    marked_ids[ele.id()] = true;
+                                });
+                                cy.elements().forEach(function (ele) {
+                                    if (!(ele.id() in marked_ids)) {
+                                        ele.removeClass('hidden');
+                                    }
+
+                                });
+                            }
+                        }, {
+                            content: 'RS',
+                            select: function () {
+                                var marked_ids = {};
+                                cy.$('.marked').forEach(function (ele) {
+                                    marked_ids[ele.id()] = true;
+                                });
+                                cy.elements().forEach(function (ele) {
+                                    if (ele.id() in marked_ids) {
+                                        ele.removeClass('marked')
+                                    }
+                                    else {
+                                        ele.addClass('marked')
+                                    }
+                                });
+
+
+                            }
+                        }, {
+                            content: 'DUsE',
+                            select: function () {
+                                var marked_ids = {};
+                                cy.$('.marked').forEach(function (ele) {
+                                    marked_ids[ele.id()] = true;
+                                });
+                                cy.elements().forEach(function (ele) {
+                                    if (!(ele.id() in marked_ids)) {
+                                        cy.remove(ele);
+                                    }
+
+                                });
+                            }
+                        }, {
+                            content: 'Redraw',
+                            select: function () {
+                                $("#graph").css('background', 'url(./libs/images/giphy.gif) no-repeat center center');
+                                var assembly_layout = {
+                                    name: $('#graph_layout').val(),
+                                    ready: function () {
+                                        $("#graph").css('background', '')
+                                    },
+                                    padding: 20,
+                                    randomize: true,
+                                    nodeRepulsion: 12000,
+                                    idealEdgeLength: 100,
+                                    edgeElasticity: .45,
+                                    nestingFactor: .1,
+                                    gravity: -1,
+                                    numIter: 300,
+                                    tile: true
+
+                                };
+                                var layout = cy.elements().makeLayout(assembly_layout);
+                                layout.on('layoutstop', function () {
+                                    $("#graph").css('background', '');
+                                    cy.elements().layout(layout);
+
+                                });
+                                layout.run();
+                                setTimeout(function () {
+                                    layout.stop();
+                                }, {{ settings.cytoscape.draw_timeout }});
+
+                            }
+                        },
+                            {
+                                content: 'Us',
+                                select: function (ele) {
+                                    cy.elements().removeClass('marked');
+                                }
+                            }
+                        ],
+                        fillColor: 'rgba(0, 0, 0, 0.75)',
+                        activeFillColor: 'rgba(92, 194, 237, 0.75)',
+                        activePadding: 20,
+                        indicatorSize: 24,
+                        separatorWidth: 3,
+                        spotlightPadding: 4,
+                        minSpotlightRadius: 24,
+                        maxSpotlightRadius: 38,
+                        openMenuEvents: 'cxttapstart',
+                        itemColor: 'white',
+                        zIndex: 9999
+                    });
+                    $("#fit_graph").prop('onclick', null).off('click');
+                    $("#fit_graph").on('click', function () {
+                        cy.fit(50);
+                    });
+                    $("#overall_aps_table").on('draw', function () {
+                        cy.resize();
+                    });
+                    $("#save_graph").prop('onclick', null).off('click');
+                    $("#save_graph").on("click", function () {
+                        var image = cy.png({
+                            full: false
+                        });
+                        var link = document.createElement('a');
+                        link.href = image;
+                        link.target = "_blank";
+                        link.download = 'graph.png';
+                        link.style = 'display: none';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    });
                 });
-            });
         });
     </script>
 </div>
