@@ -63,30 +63,50 @@
                     <label class="text-right col-lg-2" for="map_query">MAP:</label>
                     <input type="text" class="col-lg-8" id="map_query">
                 </div>
-                {% if data.fragments.lengths | length > 0 %}
-                    <div class="range-slider">
-                        <input type="text" id="fragments_lengths_query" value=""/>
-                    </div>
-                    <script>
-                        $("#fragments_lengths_query").ionRangeSlider({
-                            type: "double",
-                            min: 0,
-                            max: {{ data.fragments.max_length }},
-                            from: 0,
-                            to: {{ data.fragments.max_length }},
-                            grid: true
-                        });
-                    </script>
-                {% else %}
-                    <div class="row">
-                        <hr>
-                        <p>Fragment length filtration is not available, as no data regarding fragments length was provided</p>
-                        <hr>
-                    </div>
-                {% endif %}
+                <div class="row search_query_div">
+                    <label class="text-right col-lg-2" for="ap_id_query">APid:</label>
+                    <input type="text" class="col-lg-8" id="ap_id_query">
+                </div>
                 <div class="row search_query_div">
                     <div class="col-lg-offset-2 col-lg-8">
-                        <label><input id="logical_or_search" type="checkbox"> Logical <strong>`OR`</strong> per column filters</label>
+                        <label><input id="expanded_search" type="checkbox"> Expanded only</label>
+                    </div>
+                </div>
+                <hr>
+                <div class="row search_query_div">
+                    {% if data.fragments.lengths | length > 0 %}
+                        <div class="row">
+                            <div class="text-center col-lg-offset-4 col-lg-4">Sequence lengths</div>
+                        </div>
+                        <div class="range-slider">
+                            <input type="text" id="fragments_lengths_query" value=""/>
+                        </div>
+                        <script>
+                            $("#fragments_lengths_query").ionRangeSlider({
+                                type: "double",
+                                min: 0,
+                                max: {{ data.fragments.max_length }},
+                                from: 0,
+                                to: {{ data.fragments.max_length }},
+                                grid: true
+                            });
+                        </script>
+                        <div class="col-lg-offset-3 col-lg-5 text-right">
+                            <input  class="col-lg-5" type="checkbox" data-toggle="toggle" data-on="Both sequences" data-off="Either sequence" data-width="200">
+                        </div>
+                    {% else %}
+                        <div class="row">
+
+                            <p>Fragment length filtration is not available, as no data regarding fragments length was provided</p>
+
+                        </div>
+                    {% endif %}
+
+                </div>
+                <hr>
+                <div class="row search_query_div">
+                    <div class="col-lg-offset-2 col-lg-8">
+                        <label><input id="logical_or_search" type="checkbox"> Logical <strong>`OR`</strong> per search fields</label>
                     </div>
                 </div>
 
@@ -260,12 +280,16 @@
                         }
                     ]
                 }
+
             );
+
+
+
             window.initial_aps_data_array = dataTable.rows().data().toArray();
 
             $("#revert_aps_table_button").on('click', function () {
                 dataTable.clear();
-                dataTable.rows.add(window.initial_aps_data_array).draw();
+                dataTable.rows.add(window.initial_aps_data_array);
                 dataTable.rows().every(function(rowidx, row, rowLoop){
                     var data = this.data();
                     var map_id = data[17].trim();
@@ -273,6 +297,7 @@
                 });
                 $('.filter_alert').remove();
                 $("#revert_aps_table_button").hide();
+                dataTable.column(0).order('desc').draw();
             });
 
             function advanced_filter(dataTable, negate) {
@@ -327,6 +352,17 @@
                     if (map_regex != '') {
                         result.push(new RegExp(map_regex).test(data[16].trim().replace("\n", "")));
                     }
+
+                    var ap_id_regex = $("#ap_id_query").val();
+                    if (ap_id_regex != ''){
+                        result.push(new RegExp(ap_id_regex).test(data[17].trim().replace("\n", "")));
+                    }
+
+                    var expanded_search = $("#expanded_search").is(":checked");
+                    if (expanded_search){
+                        result.push(data[18] === 1);
+                    }
+
                     var logical_or = $("#logical_or_search").is(":checked");
                     var keep = !logical_or;
                     result.forEach(function (element) {
@@ -442,7 +478,14 @@
 {#                dataTable.column(0).order('desc').draw();#}
                 $.each(detailRows, function (i, map_id) {
                     var td_cell = $("#" + map_id);
-                    var row = td_cell.closest('tr');
+                    var row = td_cell.parents('tr');
+                    var dt_row = dataTable.row(row);
+                    var data = dt_row.data();
+                    data[18] = 1;
+                    dt_row.data(data);
+                    if (!dt_row.child.isShown()){
+                        dt_row.child(format(data)).show();
+                    }
                     row.addClass('details');
                     var idx = $.inArray(map_id, detailRows);
                     if (idx === -1) {
