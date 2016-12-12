@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import itertools
+import json
 from collections import defaultdict
 
 import networkx
@@ -382,3 +383,13 @@ def get_scaffold_edges(assembly_points):
         unique_scaffolds.add(ap.seq1)
         unique_scaffolds.add(ap.seq2)
     return [(name + "t", name + "h") for name in unique_scaffolds]
+
+
+def to_json(dict_collection):
+    result = {}
+    for key, values in dict_collection.items():
+        if isinstance(values, str):
+            result[key] = values
+        else:
+            result[key] = sorted(values)
+    return json.dumps(result)

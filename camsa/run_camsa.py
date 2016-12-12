@@ -22,7 +22,7 @@ from camsa.core import io as camsa_io
 from camsa.core import merging
 from camsa.core.reference_analysis import analyze_and_update_assembly_points_based_on_reference
 from camsa.core.comparative_analysis import compute_and_update_assembly_points_conflicts
-from camsa.core.data_structures import Assembly, assign_ids_to_assembly_points, merge_assembly_points, assign_parents_to_children
+from camsa.core.data_structures import Assembly, assign_ids_to_assembly_points, merge_assembly_points, assign_parents_to_children, to_json
 from camsa.core.merging import MergingStrategies, update_assembly_points_with_merged_assembly, update_gap_sizes_in_merged_assembly
 
 if __name__ == "__main__":
@@ -253,6 +253,7 @@ if __name__ == "__main__":
                                        assembly_points=merged_assembly_points,
                                        output_setup=args.o_collapsed_format)
     env = Environment()
+    env.filters['tojson'] = to_json
     env.loader = FileSystemLoader(camsa.root_dir)
 
     template = env.get_template("report_template.html")
