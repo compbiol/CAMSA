@@ -827,7 +827,7 @@
             var table = $('#overall_aps_table').DataTable();
             table.rows({'filter': 'applied'}).every(function () {
                 var data = this.data();
-                var self_id = data[Object.keys(data).length].trim();
+                var self_id = data[17].trim();
                 var ap = window.merged_aps_by_id[self_id];
                 aps.push(ap);
             });
@@ -976,7 +976,6 @@
         }
 
         function ap_as_string(ap) {
-            console.log(ap);
             var result = "";
             result += ap.source + "\t";
             result += ap.seq1 + "\t";
