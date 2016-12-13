@@ -84,15 +84,15 @@
                         <script>
                             $("#fragments_lengths_query").ionRangeSlider({
                                 type: "double",
-                                min: 0,
+                                min: {{ data.fragments.min_length }},
                                 max: {{ data.fragments.max_length }},
-                                from: 0,
+                                from: {{ data.fragments.min_length }},
                                 to: {{ data.fragments.max_length }},
                                 grid: true
                             });
                         </script>
                         <div class="col-lg-offset-3 col-lg-5 text-right">
-                            <input class="col-lg-5" type="checkbox" data-toggle="toggle" data-on="Both sequences" data-off="Either sequence" data-width="200">
+                            <input id="fragments_length_both" class="col-lg-5" type="checkbox" data-toggle="toggle" data-on="Both sequences" data-off="Either sequence" data-width="200">
                         </div>
                     {% else %}
                         <div class="row">
@@ -361,6 +361,26 @@
                     if (expanded_search) {
                         result.push(data[18] === 1);
                     }
+
+                    {% if data.fragments.lengths | length > 0 %}
+                        var slider_data = $("#fragments_lengths_query").data("ionRangeSlider");
+                        var min_length = slider_data['from'];
+                        var max_length = slider_data['to'];
+                        var seq1 = data[2].trim();
+                        var seq2 = data[3].trim();
+                        var seq1_length = window.lengths[seq1]['length'];
+                        var seq2_length = window.lengths[seq2]['length'];
+                        var both = $("#fragments_length_both").is(":checked");
+                        var lengths_result;
+                        var seq1_result = min_length <= seq1_length && seq1_length <= max_length;
+                        var seq2_result = min_length <= seq2_length && seq2_length <= max_length;
+                        if (both) {
+                            lengths_result = seq1_result && seq2_result;
+                        } else {
+                            lengths_result = seq1_result || seq2_result;
+                        }
+                        result.push(lengths_result);
+                    {% endif %}
 
                     var logical_or = $("#logical_or_search").is(":checked");
                     var keep = !logical_or;
@@ -1012,6 +1032,11 @@
             {% endfor %}
         }
             ;
+            window.lengths = {
+            {% for seq_id, seq in data.fragments.lengths.items() %}
+                {{ seq_id }} : {{ seq | tojson }},
+            {% endfor %}
+            }
             window.assemblies_to_ids = {{ data.assemblies_to_ids | tojson }}
 
 
