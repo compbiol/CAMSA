@@ -364,10 +364,10 @@
 
                     {% if data.fragments.lengths | length > 0 %}
                         var slider_data = $("#fragments_lengths_query").data("ionRangeSlider");
-                        var min_length = slider_data['from'];
-                        var max_length = slider_data['to'];
-                        var seq1 = data[2].trim();
-                        var seq2 = data[3].trim();
+                        var min_length = slider_data['old_from'];
+                        var max_length = slider_data['old_to'];
+                        var seq1 = parseInt(data[2].trim(), 10);
+                        var seq2 = parseInt(data[3].trim(), 10);
                         var seq1_length = window.lengths[seq1]['length'];
                         var seq2_length = window.lengths[seq2]['length'];
                         var both = $("#fragments_length_both").is(":checked");
