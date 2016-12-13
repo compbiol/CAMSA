@@ -317,9 +317,7 @@ class Assembly(object):
 
     @property
     def non_conflicted_cnt(self):
-        return len(self.aps) - \
-               self.in_conflicted_cnt - self.in_semi_conflicted_cnt - \
-               self.out_conflicted_cnt - self.out_semi_conflicted_cnt
+        return len([ap for ap in self.aps if ap.is_non_conflicted])
 
 
 def assign_ids_to_assembly_points(assembly_points, id_prefix="", id_generator=None):
