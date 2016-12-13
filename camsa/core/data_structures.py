@@ -385,11 +385,19 @@ def get_scaffold_edges(assembly_points):
     return [(name + "t", name + "h") for name in unique_scaffolds]
 
 
-def to_json(dict_collection):
+def to_json(value):
+    if isinstance(value, Sequence):
+        return json.dumps({"seq_id": value.name, "length": value.length})
     result = {}
-    for key, values in dict_collection.items():
+    for key, values in value.items():
         if isinstance(values, str):
             result[key] = values
         else:
             result[key] = sorted(values)
     return json.dumps(result)
+
+
+class Sequence(object):
+    def __init__(self, name, length=None):
+        self.name = name
+        self.length = length
