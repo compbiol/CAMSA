@@ -144,7 +144,7 @@
             <th>Or</th>
             <th>ISC</th>
             <th>IC</th>
-            <th>ISC</th>
+            <th>OSC</th>
             <th>OC</th>
             <th>MAP</th>
             <th>self_id</th>
@@ -210,7 +210,7 @@
             <th>Or</th>
             <th>ISC</th>
             <th>IC</th>
-            <th>ISC</th>
+            <th>OSC</th>
             <th>OC</th>
             <th>MAP</th>
             <th>self_id</th>
@@ -231,7 +231,7 @@
                                 {# we need to skip the first column, that is empty #}
                             }
                             else if (["Or1", "Or2", "ISC", "IC", "OSC", "OC", "Or", "MAP", "CW"].indexOf(text) < 0) {
-                                var select = $('<input type="text" placeholder="Search" />')
+                                var select = $('<input type="text" class="shrunk-input" placeholder="Search" />')
                                     .appendTo($(column.footer()).empty())
                                     .on('keyup change', function () {
                                         if (column.search() !== this.value) {
@@ -242,7 +242,7 @@
                                     });
                             }
                             else {
-                                var select = $('<select><option value=""></option></select>')
+                                var select = $('<select class="shrunk-input"><option value=""></option></select>')
                                     .appendTo($(column.footer()).empty())
                                     .on('change', function () {
                                         var val = $.fn.dataTable.util.escapeRegex($(this).val());
@@ -535,6 +535,9 @@
 
         .ap_id_badge {
             cursor: pointer;
+        }
+        .shrunk-input {
+            max-width: 100px;
         }
     </style>
 </div>
