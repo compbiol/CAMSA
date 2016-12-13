@@ -5,7 +5,7 @@ import shutil
 from collections import defaultdict
 from enum import Enum
 
-from camsa.core.data_structures import AssemblyPoint, APFieldOutExtractorConverter
+from camsa.core.data_structures import AssemblyPoint, APFieldOutExtractorConverter, Sequence
 
 
 def get_fn_relations_for_column_names(fieldnames, aliases):
@@ -115,11 +115,11 @@ def read_lengths(source, delimiter="\t", destination=None):
         destination = {}
     reader = csv.DictReader(source, delimiter=delimiter)
     fieldnames = reader.fieldnames
-    fn_relations = get_fn_relations_for_column_names(fieldnames=fieldnames, aliases=PAIRS_COLUMN_ALIASES)
+    fn_relations = get_fn_relations_for_column_names(fieldnames=fieldnames, aliases=LENGTHS_COLUMN_ALIASES)
     for row in filter(lambda entry: not entry[fieldnames[0]].startswith("#"), reader):
-        seq_id = row(fn_relations["seq_id"])
-        seq_length = row(fn_relations["seq_length"])
-        destination[seq_id] = seq_length
+        seq_id = row[fn_relations["seq_id"]]
+        seq_length = int(float(row[fn_relations["seq_length"]]))
+        destination[seq_id] = Sequence(name=seq_id, length=seq_length)
     return destination
 
 
