@@ -34,6 +34,8 @@ if __name__ == "__main__":
                         help="Logging level for the converter.\nDEFAULT: {info}".format(info=logging.INFO))
     parser.add_argument("--c-logging-formatter-entry",
                         help="Format string for python logger.")
+    parser.add_argument("--o-delimiter", type=str, default="\t",
+                        help="A single character string, used as a delimiter in the output (t)/(c)sv file.\nDEFAULT: \\t")
     args = parser.parse_args()
     start_time = datetime.datetime.now()
 
@@ -55,7 +57,7 @@ if __name__ == "__main__":
             entries[record.id] = len(record.seq)
             cnt += 1
         logger.info("Processed {cnt} fasta records".format(cnt=cnt))
-    writer = csv.writer(args.output)
+    writer = csv.writer(args.output, delimiter=args.o_delimiter)
     logger.info("Writing the CAMSA lengths output")
     writer.writerow(["seq_id", "seq_length"])
     for key in sorted(entries.keys()):
