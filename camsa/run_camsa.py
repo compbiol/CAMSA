@@ -22,7 +22,7 @@ from camsa.core import io as camsa_io
 from camsa.core import merging
 from camsa.core.reference_analysis import analyze_and_update_assembly_points_based_on_reference
 from camsa.core.comparative_analysis import compute_and_update_assembly_points_conflicts
-from camsa.core.data_structures import Assembly, assign_ids_to_assembly_points, merge_assembly_points, assign_parents_to_children, to_json
+from camsa.core.data_structures import Assembly, assign_ids_to_assembly_points, merge_assembly_points, assign_parents_to_children, to_json, Sequence
 from camsa.core.merging import MergingStrategies, update_assembly_points_with_merged_assembly, update_gap_sizes_in_merged_assembly
 
 if __name__ == "__main__":
@@ -41,6 +41,12 @@ if __name__ == "__main__":
                                                             os.path.join(camsa.root_dir, "logging.ini")])
     parser.add_argument("points", nargs="+",
                         help="A list of input files, representing a standard CAMSA format for assembly points.")
+    parser.add_argument("--lengths", default=None,
+                        help="A file with information about lengths for all sequences, involved in input assembly points")
+    parser.add_argument("--lengths-delimiter", type=str, default="\t",
+                        help="A delimiter character for the file containing information about lengths of the observed sequences.\nDEFAULT: \\t")
+    parser.add_argument("--lengths-ensure-all", action="store_true", dest="lengths_ensure", default=False,
+                        help="Ensures, that either all, or non of the sequences participating in assembly points have lengths assigned to them.\nDEFAULT: False")
     parser.add_argument("-c", "--config", is_config_file=True,
                         help="Config file path with settings for CAMSA to run with.\nOverwrites the default CAMSA configuration file.\nValues in config file can be overwritten by command line arguments.")
     parser.add_argument("--c-cw-exact", type=float,
@@ -104,10 +110,34 @@ if __name__ == "__main__":
     logger.info("Processing input")
 
     # key is the origin of assembly point; values is the list of all points from that source
+    logger.info("Reading assembly points")
     assembly_points_by_sources = camsa_io.read_assembly_points_from_input_sources(sources=args.points,
                                                                                   default_cw_eae=args.c_cw_exact,
                                                                                   default_cw_cae=args.c_cw_candidate,
                                                                                   delimiter=args.i_delimiter)
+    lengths = {}
+    if args.lengths is not None:
+        logger.info("Reading sequences' lengths")
+        with open(args.lengths, "rt") as source:
+            lengths = camsa_io.read_lengths(source=source, delimiter=args.lengths_delimiter, destination=lengths)
+    if len(lengths) > 0:
+        sequences_ids_from_assembly_points = set()
+        for source, aps in assembly_points_by_sources.items():
+            for ap in aps:
+                sequences_ids_from_assembly_points.add(ap.seq1)
+                sequences_ids_from_assembly_points.add(ap.seq2)
+        sequences_ids_from_lengths = set(lengths.keys())
+        difference = sequences_ids_from_assembly_points - sequences_ids_from_lengths
+        if len(difference) > 0:
+            logger.warning("Some sequences, that participate in assembly points do not have lengths associated with them,"
+                           "while others do.")
+            logger.warning("Problematic sequences: {seqs}".format(seqs=",".join(sorted(difference))))
+            if args.lengths_ensure:
+                logger.error("A flag \"--lengths-ensure-all\" was set, so the program terminates")
+            else:
+                logger.warning("Assigning lengths of -1 to all problematic sequences")
+                for seq_id in difference:
+                    lengths[seq_id] = Sequence(name=seq_id, length=-1)
 
     #######################################
     #       extracting reference          #
@@ -305,7 +335,9 @@ if __name__ == "__main__":
                 "assemblies_to_colors": assemblies_to_colors,
                 "grouped_assemblies": grouped_assemblies,
                 "fragments": {
-                    "lengths": []
+                    "lengths": lengths,
+                    'max_length': max([seq.length for seq in lengths.values()]) if len(lengths) > 0 else -1,
+                    'min_length': min([seq.length for seq in lengths.values()]) if len(lengths) > 0 else -1,
                 }
             },
             settings={
