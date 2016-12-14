@@ -3,14 +3,14 @@
  */
 
 function format_detailed_child_row(ap, sources, conflicts, assemblies_to_ids) {
-    var table = '<table class="table tabled-bordered" cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">';
+    var table = '<table class="table table-condensed" cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">';
     table += '<thead><tr>';
-    table += '<th class="text-center">Id</th>';
+    table += '<th class="text-center col-lg-1">Id</th>';
     // table += '<th>Sources</th>';
-    table += '<th class="text-center">ISC</th>';
-    table += '<th class="text-center">IC</th>';
-    table += '<th class="text-center">OSC</th>';
-    table += '<th class="text-center">OC</th>';
+    table += '<th class="text-center col-lg-2">ISC</th>';
+    table += '<th class="text-center col-lg-3">IC</th>';
+    table += '<th class="text-center col-lg-3">OSC</th>';
+    table += '<th class="text-center col-lg-3">OC</th>';
     table += '</tr></thead>';
     table += '<tbody>';
 
@@ -58,7 +58,7 @@ function format_conflicting(conflicts, assemblies_to_ids) {
             $.each(conflicts[key], function (i, a_conflict) {
                 result += format_id(a_conflict) + ' ';
             });
-            result += '<hr>';
+            result += '<hr style="margin: 5px;">';
         }
     }
     return result;
