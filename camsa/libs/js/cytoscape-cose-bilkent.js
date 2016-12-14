@@ -165,8 +165,8 @@ CoSELayout.prototype.classicLayout = function () {
   this.initSpringEmbedder();
   this.runSpringEmbedder();
 
-  console.log("Classic CoSE layout finished after " +
-          this.totalIterations + " iterations");
+  // console.log("Classic CoSE layout finished after " +
+  //         this.totalIterations + " iterations");
 
   return true;
 };
@@ -3218,7 +3218,7 @@ Layout.prototype.runLayout = function ()
       var endTime = new Date().getTime();
       var excTime = endTime - startTime;
 
-      console.log("Total execution time: " + excTime + " miliseconds.");
+      // console.log("Total execution time: " + excTime + " miliseconds.");
     }
   }
 
