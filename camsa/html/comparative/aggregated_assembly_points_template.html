@@ -654,9 +654,9 @@
         </div>
         <div class="row">
             using <select id="graph_layout">
-            <option selected="selected">cose-bilkent</option>
+            <option selected="selected">dagre</option>
+            <option>cose-bilkent</option>
             <option>grid</option>
-            <option>dagre</option>
         </select> layout
         </div>
     </div>
@@ -1259,24 +1259,27 @@
                                     name: $('#graph_layout').val(),
                                     ready: function () {
                                         $("#graph").css('background', '')
-                                    },
-                                    padding: 20,
-                                    randomize: true,
-                                    nodeRepulsion: 12000,
-                                    idealEdgeLength: 100,
-                                    edgeElasticity: .45,
-                                    nestingFactor: .1,
-                                    gravity: -1,
-                                    numIter: 300,
-                                    tile: true
+                                    }
+
 
                                 };
+                                if (assembly_layout.name == "cose-bilkent"){
+                                    assembly_layout.padding = 20;
+                                    assembly_layout.randomize = true;
+                                    assembly_layout.nodeRepulsion = 12000;
+                                    assembly_layout.idealEdgeLength = 100;
+                                    assembly_layout.edgeElasticity = .45;
+                                    assembly_layout.nestingFactor = .1;
+                                    assembly_layout.gravity = -1;
+                                    assembly_layout.numIter = 300;
+                                    assembly_layout.tile = true;
+                                }
                                 var layout = cy.elements().makeLayout(assembly_layout);
-                                layout.on('layoutstop', function () {
-                                    $("#graph").css('background', '');
-                                    cy.elements().layout(layout);
-
-                                });
+{#                                layout.on('layoutstop', function () {#}
+{#                                    $("#graph").css('background', '');#}
+{#                                    cy.elements().layout(layout);#}
+{##}
+{#                                });#}
                                 layout.run();
                                 setTimeout(function () {
                                     layout.stop();
