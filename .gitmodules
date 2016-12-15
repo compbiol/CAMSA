@@ -1,0 +1,3 @@
+[submodule "camsa/external_libs/Ragout"]
+	path = camsa/external_libs/Ragout
+	url = git@github.com:fenderglass/Ragout.git
