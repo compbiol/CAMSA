@@ -449,7 +449,7 @@
                         detailRows.push(map_id);
                     }
                 }
-                dataTable.draw();
+                dataTable.draw(false);
             });
 
             $(document).on('click', '.ap_id_badge', function () {
@@ -476,7 +476,7 @@
                         this.data(data);
                     }
                 });
-                dataTable.draw();
+                dataTable.draw(false);
 
 
             });
