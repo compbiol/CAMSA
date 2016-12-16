@@ -423,7 +423,7 @@
 
             var detailRows = [];
             $('#overall_aps_table tbody').on('click', 'tr td.details-control', function () {
-                var tr = $(this).closest('tr');
+                var tr = $(this).clos est('tr');
                 var row = dataTable.row(tr);
                 var map_id = tr.find('td:first-child').attr('id');
                 var idx = $.inArray(map_id, detailRows);
