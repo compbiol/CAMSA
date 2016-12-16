@@ -95,13 +95,25 @@ if __name__ == "__main__":
     #######################################
     #           logging setup             #
     #######################################
+    if args.o_dir is None:
+        args.o_dir = os.path.join(os.getcwd(), "camsa_{date}".format(
+            date=datetime.datetime.now().strftime("%b_%d_%Y__%H_%M")))
+
+    args.output_dir = os.path.abspath(os.path.expanduser(args.o_dir))
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
     logger = logging.getLogger("CAMSA.main")
     ch = logging.StreamHandler()
     logger.setLevel(args.c_logging_level)
     logger.addHandler(ch)
+    fh = logging.FileHandler(os.path.join(args.output_dir, "camsa.log"), "wt")
+    fh.setLevel(logging.DEBUG)
+    logger.addHandler(fh)
     logger.info(full_description)
     logger.info(parser.format_values())
     ch.setFormatter(logging.Formatter(args.c_logging_formatter_entry))
+    fh.setFormatter(logging.Formatter(args.c_logging_formatter_entry))
     logger.info("Starting the analysis")
 
     #######################################
@@ -215,15 +227,6 @@ if __name__ == "__main__":
     #           output stage              #
     #######################################
     logger.info("Preparing output")
-    if args.o_dir is None:
-        args.o_dir = os.path.join(os.getcwd(), "camsa_{date}".format(
-            date=datetime.datetime.now().strftime("%b_%d_%Y__%H_%M")))
-        logger.debug("Output directory was not specified. Automatically generated name: \"{out_dir}\"."
-                     "".format(out_dir=args.o_dir))
-
-    args.output_dir = os.path.abspath(os.path.expanduser(args.o_dir))
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
 
     # copying assets required for the HTML report
     libs_report_dir = os.path.join(args.output_dir, "libs")
