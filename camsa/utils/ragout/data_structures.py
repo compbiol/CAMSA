@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from camsa.core.data_structures import Sequence
 
 
 class Block(object):
@@ -8,6 +9,12 @@ class Block(object):
         self.end = end
         self.strand = strand
         self.parent_seq = parent_seq
+
+
+class RagoutSequence(Sequence):
+    def __init__(self, name, ragout_id, length=None):
+        super(RagoutSequence, self).__init__(name=name, length=length)
+        self.ragout_id = ragout_id
 
 
 def parse_ragout_block_entry(entry_as_a_string, sequences_by_ids=None):
