@@ -1,10 +1,23 @@
 # -*- coding: utf-8 -*-
+import os
 import re
 
-from utils.ragout.data_structures import RagoutSequence, Block
+import sys
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+
+from camsa.utils.ragout.data_structures import RagoutSequence, Block
 
 block_id_pattern = re.compile("Block #(?P<block_id>\d+)")
 ENTRIES_SEPARATOR = "--------------------------------------------------------------------------------"
+
+
+def read_from_file(path, silent_fail=False, delimiter="\t"):
+    with open(path, "rt") as source:
+        whole_text = source.read()
+        sequences_by_ids, blocks = parse_ragout_coords(ragout_coords_as_a_string=whole_text, delimiter=delimiter, silent_fail=silent_fail)
+        return sequences_by_ids, blocks
 
 
 def parse_ragout_coords(ragout_coords_as_a_string, delimiter="\t", silent_fail=False):
@@ -46,7 +59,7 @@ def parse_ragout_seq_part(entry_as_a_string, delimiter="\t", silent_fail=False):
                                      seq_id_column=columns_indexes["seq_id_column"],
                                      seq_length_column=columns_indexes["seq_length_column"],
                                      seq_description_column=columns_indexes["seq_description_column"], delimiter=delimiter)
-        result_sequences[seq.name] = seq
+        result_sequences[seq.ragout_id] = seq
     return result_sequences
 
 
