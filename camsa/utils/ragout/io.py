@@ -3,6 +3,7 @@ import os
 import re
 
 import sys
+from collections import defaultdict
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
@@ -16,8 +17,8 @@ ENTRIES_SEPARATOR = "-----------------------------------------------------------
 def read_from_file(path, silent_fail=False, delimiter="\t"):
     with open(path, "rt") as source:
         whole_text = source.read()
-        sequences_by_ids, blocks = parse_ragout_coords(ragout_coords_as_a_string=whole_text, delimiter=delimiter, silent_fail=silent_fail)
-        return sequences_by_ids, blocks
+        sequences_by_ids, blocks_by_ids = parse_ragout_coords(ragout_coords_as_a_string=whole_text, delimiter=delimiter, silent_fail=silent_fail)
+        return sequences_by_ids, blocks_by_ids
 
 
 def parse_ragout_coords(ragout_coords_as_a_string, delimiter="\t", silent_fail=False):
@@ -29,7 +30,10 @@ def parse_ragout_coords(ragout_coords_as_a_string, delimiter="\t", silent_fail=F
     for block_string in blocks:
         current_blocks = parse_ragout_block_entry(entry_as_a_string=block_string, sequences_by_ids=sequences_by_ids, silent_fail=silent_fail, delimiter=delimiter)
         all_blocks.extend(current_blocks)
-    return sequences_by_ids, all_blocks
+    blocks_by_ids = defaultdict(list)
+    for block in all_blocks:
+        blocks_by_ids[block.name].append(block)
+    return sequences_by_ids, blocks_by_ids
 
 
 def get_seq_headers_columns_indexes(headers_string, delimiter, silent_fail=False):
