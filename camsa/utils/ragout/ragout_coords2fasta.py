@@ -71,7 +71,7 @@ if __name__ == "__main__":
     all_filtered_genomes = get_all_genomes_from_blocks(blocks_as_ids=blocks_by_ids)
     if args.ref_genome == "":
         logger.info("Reference genome was not specified")
-        args.ref_genome = all_filtered_genomes.pop()
+        args.ref_genome = sorted(all_filtered_genomes)[0]
         logger.info("Setting reference genome to {ref_genome}".format(ref_genome=args.ref_genome))
     else:
         if args.ref_genome not in all_filtered_genomes:
