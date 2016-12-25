@@ -21,4 +21,8 @@ class RagoutSequence(Sequence):
     def genome_name(self):
         return self.name.split(".")[0]
 
+    @property
+    def seq_name(self):
+        return self.name.split(".", 1)[1]
+
 
