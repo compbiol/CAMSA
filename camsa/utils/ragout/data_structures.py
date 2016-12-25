@@ -17,4 +17,8 @@ class RagoutSequence(Sequence):
         super(RagoutSequence, self).__init__(name=name, length=length)
         self.ragout_id = ragout_id
 
+    @property
+    def genome_name(self):
+        return self.name.split(".")[0]
+
 
