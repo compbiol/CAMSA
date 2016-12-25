@@ -26,3 +26,13 @@ def filter_indels(blocks_by_ids, all_genomes_as_set=None):
         genomes_set = {block.parent_seq.genome_name for block in blocks}
         if len(all_genomes_as_set) != len(genomes_set):
             del blocks_by_ids[block_id]
+
+
+def filter_blocks_by_good_genomes(blocks_by_ids, good_genomes):
+    for block_id in list(blocks_by_ids.list()):
+        blocks = blocks_by_ids[block_id]
+        new_blocks = [block for block in blocks if block.parent_seq.genome_name in good_genomes]
+        if len(new_blocks) == 0:
+            del blocks_by_ids[block_id]
+        else:
+            blocks_by_ids[block_id] = new_blocks
