@@ -35,7 +35,7 @@ if __name__ == "__main__":
     parser.add_argument("--filter_duplications", type=bool, action="store_true", dest="filter_duplications", default=False)
     parser.add_argument("--good-genomes", type=str, default="", help="A coma separated list of genome names, to be processed and conversed.\nDEFAULT: \"\" (i.e., all genomes are good)")
     parser.add_argument("--bad-genomes", type=str, default="", help="A coma separated list of genome names, to be excluded from processing and conversion.\nDEFAULT: \"\" (i.e., no genomes are bad)")
-    parser.add_argument("--silent-block-skip", action="store_true", default=False, dest="silent_block_skip", type=bool)
+    parser.add_argument("--sbs", action="store_true", default=False, dest="silent_block_skip", type=bool)
     # parser.add_argument("fasta", nargs="+")
     parser.add_argument("--c-logging-level", dest="logging_level", default=logging.INFO, type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
@@ -78,3 +78,20 @@ if __name__ == "__main__":
             logger.critical("Reference genome {ref_genome} was not present in all filtered genome {filtered_genomes}"
                             "".format(ref_genome=args.ref_genome, filtered_genomes=",".join(all_filtered_genomes)))
             exit(1)
+    blocks_to_convert = []
+    for block_id in sorted(blocks_by_ids.keys()):
+        blocks = blocks_by_ids[block_id]
+        blocks_by_ref_genome = [block for block in blocks if block.parent_seq.genome_name == args.ref_genome]
+        if len(blocks_by_ref_genome) == 0:
+            if not args.silent_block_skip:
+                logger.critical("For blocks with id {block_id} not a single instance was present in the reference genome {ref_genome}. Flag \"--sbs\" was not set, and this event is thus critical."
+                                "".format(block_id=block_id, ref_genome=args.ref_genome))
+            else:
+                logger.warning("For blocks with id {block_id} not a single instance was present in the reference genome \"{ref_genome}\". Flag \"--sbs\" was set, thus silently ignoring this case."
+                               "".format(block_id=block_id, ref_genome=args.ref_genome))
+        if len(blocks_by_ref_genome) > 1:
+            logger.warning("More than a single block with id {block_id} was found in the reference genome \"{ref_genome}\". Randomly choosing one such block (shall not be a problem, as they must be merely identical)"
+                           "".format(block_id=block_id, ref_genome=args.ref_genome))
+        block = blocks_by_ref_genome[0]
+        blocks_to_convert.append(block)
+
