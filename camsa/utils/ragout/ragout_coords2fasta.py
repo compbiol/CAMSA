@@ -3,8 +3,12 @@ import datetime
 import logging
 import os
 import sys
+from collections import defaultdict
 
 import configargparse
+from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 
 from utils.ragout.shared import filter_blocks_by_good_genomes, filter_blocks_by_bad_genomes, get_all_genomes_from_blocks
 
@@ -36,7 +40,8 @@ if __name__ == "__main__":
     parser.add_argument("--good-genomes", type=str, default="", help="A coma separated list of genome names, to be processed and conversed.\nDEFAULT: \"\" (i.e., all genomes are good)")
     parser.add_argument("--bad-genomes", type=str, default="", help="A coma separated list of genome names, to be excluded from processing and conversion.\nDEFAULT: \"\" (i.e., no genomes are bad)")
     parser.add_argument("--sbs", action="store_true", default=False, dest="silent_block_skip", type=bool)
-    # parser.add_argument("fasta", nargs="+")
+    parser.add_argument("fasta", nargs="+")
+    parser.add_argument("-o", "--output", type=configargparse.FileType("wt"), default=sys.stdout)
     parser.add_argument("--c-logging-level", dest="logging_level", default=logging.INFO, type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
                         help="Logging level for the converter.\nDEFAULT: {info}".format(info=logging.INFO))
@@ -95,3 +100,26 @@ if __name__ == "__main__":
         block = blocks_by_ref_genome[0]
         blocks_to_convert.append(block)
 
+    blocks_by_seq_ids = defaultdict(list)
+    for block in blocks_to_convert:
+        blocks_by_seq_ids[block.parent_seq.seq_name].append(block)
+
+    for f in args.fasta:
+        logger.info("Processing fasta file: \"{file_name}\"".format(file_name=f))
+        cnt = 0
+        for record in SeqIO.parse(f, "fasta"):
+            seq_id = record.id
+            if seq_id not in blocks_by_ids:
+                continue
+            current_blocks = blocks_by_ids[seq_id]
+            for block in current_blocks:
+                if block.strand == "+":
+                    out_seq = record.seq[block.start: block.end]
+                else:
+                    out_seq = record.seq[block.start: block.end].reverse_complement()
+                out_record = SeqRecord(seq=out_seq, id=block.name, description="")
+                SeqIO.write(sequences=out_record, handle=args.output, format="fasta")
+
+    logger.info("All done!")
+    end_time = datetime.datetime.now()
+    logger.info("Elapsed time: {el_time}".format(el_time=str(end_time - start_time)))
