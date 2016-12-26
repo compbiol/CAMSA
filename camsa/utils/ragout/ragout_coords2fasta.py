@@ -93,6 +93,7 @@ if __name__ == "__main__":
             else:
                 logger.warning("For blocks with id {block_id} not a single instance was present in the reference genome \"{ref_genome}\". Flag \"--sbs\" was set, thus silently ignoring this case."
                                "".format(block_id=block_id, ref_genome=args.ref_genome))
+                continue
         if len(blocks_by_ref_genome) > 1:
             logger.warning("More than a single block with id {block_id} was found in the reference genome \"{ref_genome}\". Randomly choosing one such block (shall not be a problem, as they must be merely identical)"
                            "".format(block_id=block_id, ref_genome=args.ref_genome))
