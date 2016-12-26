@@ -8,7 +8,6 @@ from collections import defaultdict
 
 import configargparse
 from Bio import SeqIO
-from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -24,7 +23,7 @@ if __name__ == "__main__":
         names=camsa.CAMSA_AUTHORS,
         affiliations=camsa.AFFILIATIONS,
         dummy=" ",
-        tool="Converting CAMSA formatted scaffolding results into FASTA files.",
+        tool="Converting Ragout formatted blocks into FASTA format.",
         information="For more information refer to {docs}".format(docs=camsa.CAMSA_DOCS_URL),
         contact=camsa.CONTACT)
     full_description = "=" * 80 + "\n" + full_description + "=" * 80 + "\n"
@@ -42,7 +41,7 @@ if __name__ == "__main__":
     parser.add_argument("--sbs", action="store_true", default=False, dest="silent_block_skip")
     parser.add_argument("fasta", nargs="+")
     parser.add_argument("-o", "--output", type=configargparse.FileType("wt"), default=sys.stdout)
-    parser.add_argument("--c-logging-level", dest="logging_level", default=logging.INFO, type=int,
+    parser.add_argument("--c-logging-level", dest="c_logging_level", default=logging.INFO, type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
                         help="Logging level for the converter.\nDEFAULT: {info}".format(info=logging.INFO))
     parser.add_argument("--c-logging-formatter-entry",
@@ -64,13 +63,13 @@ if __name__ == "__main__":
     sequences_by_ids, blocks_by_ids = ragout_io.read_from_file(path=args.ragout_coords, silent_fail=False, delimiter="\t")
     all_genomes = get_all_genomes_from_blocks(blocks_as_ids=blocks_by_ids)
     if args.good_genomes != "":
-        good_genomes = set(args.good_genomes.split(","))
-        filter_blocks_by_good_genomes(blocks_by_ids=blocks_by_ids, good_genomes=good_genomes)
+        args.good_genomes = set(args.good_genomes.split(","))
+        filter_blocks_by_good_genomes(blocks_by_ids=blocks_by_ids, good_genomes=args.good_genomes)
     if args.bad_genomes != "":
-        bad_genomes = set(args.bad_genomes.split(","))
-        filter_blocks_by_bad_genomes(blocks_by_ids=blocks_by_ids, bad_genomes=bad_genomes)
+        args.bad_genomes = set(args.bad_genomes.split(","))
+        filter_blocks_by_bad_genomes(blocks_by_ids=blocks_by_ids, bad_genomes=args.bad_genomes)
     if args.filter_indels:
-        filter_indels(blocks_by_ids=blocks_by_ids, all_genomes_as_set=all_genomes)
+        filter_indels(blocks_by_ids=blocks_by_ids, all_genomes_as_set=(all_genomes if len(args.good_genomes) == 0 else args.good_genomes) - args.bad_genomes)
     if args.filter_duplications:
         filter_duplications(blocks_by_ids=blocks_by_ids)
     all_filtered_genomes = get_all_genomes_from_blocks(blocks_as_ids=blocks_by_ids)
@@ -109,15 +108,15 @@ if __name__ == "__main__":
         cnt = 0
         for record in SeqIO.parse(f, "fasta"):
             seq_id = record.id
-            if seq_id not in blocks_by_ids:
+            if seq_id not in blocks_by_seq_ids:
                 continue
-            current_blocks = blocks_by_ids[seq_id]
+            current_blocks = blocks_by_seq_ids[seq_id]
             for block in current_blocks:
                 if block.strand == "+":
                     out_seq = record.seq[block.start: block.end]
                 else:
                     out_seq = record.seq[block.start: block.end].reverse_complement()
-                out_record = SeqRecord(seq=out_seq, id=block.name, description="")
+                out_record = SeqRecord(seq=out_seq, id=str(block.name), description="")
                 SeqIO.write(sequences=out_record, handle=args.output, format="fasta")
 
     logger.info("All done!")
