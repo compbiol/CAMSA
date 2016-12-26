@@ -72,8 +72,9 @@ if __name__ == "__main__":
     all_filtered_genomes = get_all_genomes_from_blocks(blocks_as_ids=blocks_by_ids)
 
     genomes = defaultdict(lambda: defaultdict(list))
-    for block in blocks_by_ids.values():
-        genomes[block.parent_seq.genome_name][block.parent_seq.seq_name].append(block)
+    for block_list in blocks_by_ids.values():
+        for block in block_list:
+            genomes[block.parent_seq.genome_name][block.parent_seq.name].append(block)
 
     fragment_cov = {}
     if args.fragment_stats:
@@ -93,6 +94,17 @@ if __name__ == "__main__":
                 total_genome_length += seq.length
                 total_blocks_length += sum(block.length for block in genomes[genome_name][seq_id])
             genome_cov[genome_name] = total_blocks_length * 100.0 / total_genome_length
+
+    if args.genome_stats:
+        for genome_name in sorted(genomes.keys()):
+            print("For genome \"{genome_name}\" {cov:.2f}% of its length is covered by filtered blocks".format(genome_name=genome_name, cov=genome_cov[genome_name]), file=args.output)
+        print("-"*80, file=args.output)
+    if args.fragment_stats:
+        for genome_name in sorted(genomes.keys()):
+            print("-"*80, file=args.output)
+            print("Detailed coverage stats for fragments in genome \"{genome_name}\"".format(genome_name=genome_name), file=args.output)
+            for seq_id in sorted(genomes[genome_name].keys()):
+                print("For fragment \"{fragment_name}\" {cov:.2f} of its length is covered by filtered blocks".format(fragment_name=sequences_by_ids[seq_id].fragment_name, cov=fragment_cov[seq_id]))
 
     logger.info("All done!")
     end_time = datetime.datetime.now()
