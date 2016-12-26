@@ -5,7 +5,7 @@ import datetime
 import logging
 import os
 import sys
-
+from collections import defaultdict
 import configargparse
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -32,6 +32,8 @@ if __name__ == "__main__":
     parser.add_argument("--version", action="version", version=camsa.VERSION)
     parser.add_argument("ragout_coords", type=str, help="A path to ragout coords file")
     parser.add_argument("--filter-indels", action="store_true", dest="filter_indels", default=False)
+    parser.add_argument("--no-fragment-stats", action="store_false", dest="fragment_stats", default=True)
+    parser.add_argument("--no-genome-stats", action="store_false", dest="genome_stats", default=True)
     parser.add_argument("--filter-duplications", action="store_true", dest="filter_duplications", default=False)
     parser.add_argument("--good-genomes", type=str, default="", help="A coma separated list of genome names, to be processed and conversed.\nDEFAULT: \"\" (i.e., all genomes are good)")
     parser.add_argument("--bad-genomes", type=str, default="", help="A coma separated list of genome names, to be excluded from processing and conversion.\nDEFAULT: \"\" (i.e., no genomes are bad)")
@@ -68,6 +70,18 @@ if __name__ == "__main__":
     if args.filter_duplications:
         filter_duplications(blocks_by_ids=blocks_by_ids)
     all_filtered_genomes = get_all_genomes_from_blocks(blocks_as_ids=blocks_by_ids)
+
+    genomes = defaultdict(lambda: defaultdict(list))
+    for block in blocks_by_ids.values():
+        genomes[block.parent_seq.genome_name][block.parent_seq.seq_name].append(block)
+
+    fragment_cov = {}
+    if args.fragment_stats:
+        for genome_name in genomes.keys():
+            for seq_id in genomes[genome_name]:
+                seq = sequences_by_ids[seq_id]
+                cumulative_blocks_length = sum(block.length for block in genomes[genome_name][seq_id])
+                fragment_cov[seq_id] = cumulative_blocks_length * 100.0 / seq.length
 
     logger.info("All done!")
     end_time = datetime.datetime.now()
