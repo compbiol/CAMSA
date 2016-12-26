@@ -48,11 +48,12 @@ class CoordsParser(object):
     length and coverage of the query entry is anticipated to be in the second and third columns from the end, respectively
     """
 
-    def __init__(self, source, skip_lines=3, has_header=True, lower_frag_cover=90.0):
+    def __init__(self, source, skip_lines=3, has_header=True, lower_frag_cover=90.0, collapse_consecutive=True):
         self.source = source
         self.skip_lines = skip_lines
         self.has_header = has_header
         self.lower_frag_cover = lower_frag_cover
+        self.collapse_consecutive = collapse_consecutive
 
     def parse_data(self):
         result = defaultdict(list)
@@ -62,11 +63,35 @@ class CoordsParser(object):
             elif cnt in [self.skip_lines, self.skip_lines + 1] and self.has_header:
                 continue
             coords_entry = self.from_string(string=entry)
-            if coords_entry.fragment_coverage < self.lower_frag_cover:
-                continue
+            # if coords_entry.fragment_coverage < self.lower_frag_cover:
+            #     continue
             result[coords_entry.scaffold_name].append(coords_entry)
         for name in result.keys():
             result[name] = sorted(result[name], key=lambda coord_entry: coords_entry.mid_coordinate)
+        if self.collapse_consecutive:
+            for name in list(result.keys()):
+                entries = result[name]
+                new_entries = []
+                current_entry = entries[0]
+                for entry in entries[1:]:
+                    if entry.fragment_name == current_entry.fragment_name \
+                            and entry.fragment_orientation == current_entry.fragment_orientation:
+                        current_entry.fragment_coverage += entry.fragment_coverage
+                        if entry.fragment_orientation == "+":
+                            current_entry.scaffold_end = entry.scaffold_end
+                        else:
+                            current_entry.scaffold_start = entry.scaffold_start
+                    else:
+                        new_entries.append(current_entry)
+                        current_entry = entry
+                result[name] = new_entries
+        for name in list(result.keys()):
+            entries = result[name]
+            new_entries = []
+            for entry in entries:
+                if entry.fragment_coverage >= self.lower_frag_cover:
+                    new_entries.append(entry)
+            result[name] = new_entries
         return result
 
     @staticmethod
@@ -175,11 +200,13 @@ def get_assembly_points_from_aligned_contigs(coords_entries, strategy):
 
 
 def filter_fully_covered_contigs(contigs):
-    start_entries = [(contig.scaffold_start, contig, "start") for contig in contigs]
-    end_entries = [(contig.scaffold_end, contig, "end") for contig in contigs]
+    start_entries = [(contig.scaffold_start, contig, "start") if contig.fragment_orientation == "+" else (contig.scaffold_end, contig, "start") for contig in contigs]
+    end_entries = [(contig.scaffold_end, contig, "end") if contig.fragment_orientation == "-" else (contig.scaffold_start, contig, "end") for contig in contigs]
     entries = sorted(start_entries + end_entries, key=lambda it: it[0])
     result_chain = []
     processing = deque()
+    if "3600" in {contig.fragment_name for contig in contigs}:
+        a = 5
     for entry in entries:
         if entry[2] == "start":
             processing.append(entry[1])
@@ -236,6 +263,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--c-cov-threshold", default=90.0, type=float, dest="c_cov_threshold",
                         help="lower coverage bound with respect to each aligned contig. All contigs with coverage less than the threshold are omitted.\nDEAFULT: 90.0")
+    parser.add_argument("--c-no-collapse-cons-alignments", default=True, action="store_false", dest="collapse_consecutive_alignments")
     parser.add_argument("--c-keep-fully-covered-contigs", action="store_true", default=False,
                         help="Whether to keep contigs, that are mapped some other contigs, or not.\nDEFAULT: False")
     parser.add_argument("--c-coords-pairs-strategy", choices=["mid-point-sort", "sliding-window", "all"], default="mid-point-sort", dest="coords_to_pairs_strategy",
@@ -349,7 +377,7 @@ if __name__ == "__main__":
             continue
         with open(coords_file, "rt") as source:
             logger.info("Parsing \"{coords_file}\".".format(coords_file=coords_file))
-            parser = CoordsParser(source=source, lower_frag_cover=args.c_cov_threshold)
+            parser = CoordsParser(source=source, lower_frag_cover=args.c_cov_threshold, collapse_consecutive=args.collapse_consecutive_alignments)
             chains = parser.parse_data()
 
             result_file = os.path.join(args.output_dir, prefix + ".camsa.points")
