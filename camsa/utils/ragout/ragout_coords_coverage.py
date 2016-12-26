@@ -83,6 +83,17 @@ if __name__ == "__main__":
                 cumulative_blocks_length = sum(block.length for block in genomes[genome_name][seq_id])
                 fragment_cov[seq_id] = cumulative_blocks_length * 100.0 / seq.length
 
+    genome_cov = {}
+    if args.genome_stats:
+        for genome_name in genomes.keys():
+            total_genome_length = 0
+            total_blocks_length = 0
+            for seq_id in genomes[genome_name]:
+                seq = sequences_by_ids[seq_id]
+                total_genome_length += seq.length
+                total_blocks_length += sum(block.length for block in genomes[genome_name][seq_id])
+            genome_cov[genome_name] = total_blocks_length * 100.0 / total_genome_length
+
     logger.info("All done!")
     end_time = datetime.datetime.now()
     logger.info("Elapsed time: {el_time}".format(el_time=str(end_time - start_time)))
