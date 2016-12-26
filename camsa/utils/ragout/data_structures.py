@@ -11,6 +11,10 @@ class Block(object):
         self.strand = strand
         self.parent_seq = parent_seq
 
+    @property
+    def length(self):
+        return self.end - self.start
+
 
 class RagoutSequence(Sequence):
     def __init__(self, name, ragout_id, length=None):
