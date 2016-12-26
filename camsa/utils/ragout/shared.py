@@ -41,7 +41,7 @@ def filter_blocks_by_good_genomes(blocks_by_ids, good_genomes):
 def filter_blocks_by_bad_genomes(blocks_by_ids, bad_genomes):
     for block_id in list(blocks_by_ids.keys()):
         blocks = blocks_by_ids[block_id]
-        new_blocks = [blocks for block in blocks if block.parent_seq.genome_name not in bad_genomes]
+        new_blocks = [block for block in blocks if block.parent_seq.genome_name not in bad_genomes]
         if len(new_blocks) == 0:
             del blocks_by_ids[block_id]
         else:
