@@ -1342,7 +1342,7 @@
             <h3 class="text-center">Coloring</h3>
             {% for assembly in data.assemblies %}
                 <div class="row text-center" style="padding: 15px;">
-                    <strong style="border: {{ data.assemblies_to_colors[data.assemblies_to_ids[assembly.name]] }} solid 4px; padding: 5px; ">{{ data.assemblies_to_ids[assembly.name] }}</strong>
+                    <strong style="border: {{ data.assemblies_to_colors[data.assemblies_to_ids[assembly.name]] }} solid 4px; padding: 5px; ">{{ data.assemblies_to_ids[assembly.name] }} ({{ assembly.name }})</strong>
                 </div>
             {% endfor %}
         </div>
