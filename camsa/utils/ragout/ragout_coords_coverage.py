@@ -104,7 +104,7 @@ if __name__ == "__main__":
             print("-"*80, file=args.output)
             print("Detailed coverage stats for fragments in genome \"{genome_name}\"".format(genome_name=genome_name), file=args.output)
             for seq_id in sorted(genomes[genome_name].keys()):
-                print("For fragment \"{fragment_name}\" {cov:.2f} of its length is covered by filtered blocks".format(fragment_name=sequences_by_ids[seq_id].seq_name, cov=fragment_cov[seq_id]))
+                print("For fragment \"{fragment_name}\" {cov:.2f}% of its length is covered by filtered blocks".format(fragment_name=sequences_by_ids[seq_id].seq_name, cov=fragment_cov[seq_id]))
 
     logger.info("All done!")
     end_time = datetime.datetime.now()
