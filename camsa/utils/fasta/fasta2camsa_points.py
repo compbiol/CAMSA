@@ -84,6 +84,7 @@ class CoordsParser(object):
                     else:
                         new_entries.append(current_entry)
                         current_entry = entry
+                new_entries.append(current_entry)
                 result[name] = new_entries
         for name in list(result.keys()):
             entries = result[name]
