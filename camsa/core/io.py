@@ -39,6 +39,19 @@ PAIRS_COLUMN_ALIASES = {
 }
 
 
+def extract_nullable_value(field, row, fn_relations, default="?"):
+    return row.get(fn_relations[field], default)
+
+
+def extract_nullable_numerical_value(field, row, fn_relations, default="?"):
+    value = extract_nullable_value(field=field, row=row, fn_relations=fn_relations, default=default)
+    try:
+        value = float(value)
+    except ValueError:
+        value = default
+    return value
+
+
 def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, default_cw_cae=0.9):
     """
 
@@ -50,13 +63,6 @@ def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, defau
     :return: destination data structure, that can be viewed as a default dict of list of APs, where key is the source of the AP
     """
 
-    def extract_nullable_numerical_value(field, row, fn_relations):
-        value = row.get(fn_relations[field], "?")
-        try:
-            value = float(value)
-        except ValueError:
-            value = "?"
-        return value
 
     if destination is None:
         destination = defaultdict(list)
@@ -155,6 +161,33 @@ def write_assembly_points(assembly_points, destination, output_setup, delimiter=
     for ap in assembly_points:
         assembly_points_entries_list = [processor.extract_field_value_str(ap) for processor in field_processor]
         writer.writerow(assembly_points_entries_list)
+
+
+def write_seqi(sequences, destination, output_setup, delimiter="\t"):
+    writer = csv.writer(destination, delimiter=delimiter)
+    header, field_processor = get_header_and_extract_list(settings=output_setup)
+    writer.writerow(header)
+    for seq in sequences:
+        seq_entries_list = [processor.extract_field_value_str(seq) for processor in field_processor]
+        writer.writerow(seq_entries_list)
+
+
+def read_seqi_from_input_sources(source, delimiter="\t", destination=None):
+    if destination is None:
+        destination = {}
+    reader = csv.DictReader(source, delimiter=delimiter)
+    fieldnames = reader.fieldnames
+    fn_relations = get_fn_relations_for_column_names(fieldnames=fieldnames, aliases=LENGTHS_COLUMN_ALIASES)
+    for row in filter(lambda entry: not entry[fieldnames[0]].startswith("#"), reader):
+        seq_id = row[fn_relations["seq_id"]]
+        length = extract_nullable_numerical_value(field="length", row=row, fn_relations=fn_relations, default=None)
+        parent_seq_id = extract_nullable_value(field="parent_seq_id", row=row, fn_relations=fn_relations, default=None)
+        start = extract_nullable_numerical_value(field="start", row=row, fn_relations=fn_relations, default=None)
+        end = extract_nullable_numerical_value(field="end", row=row, fn_relations=fn_relations, default=None)
+        strand = extract_nullable_numerical_value(field="strand", row=row, fn_relations=fn_relations, default=None)
+        seq = Sequence(name=seq_id, length=length, parent_seq_id=parent_seq_id, start=start, end=end, strand=strand)
+        destination[seq.name] = seq
+    return destination
 
 
 def remove_dir(dir_path):
