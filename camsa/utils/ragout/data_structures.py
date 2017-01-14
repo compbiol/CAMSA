@@ -15,6 +15,10 @@ class Block(object):
     def length(self):
         return self.end - self.start
 
+    @property
+    def annotation_name(self):
+        return ".".join([self.parent_seq.genome_name, self.parent_seq.seq_name, self.name, str(self.start) + "-" + str(self.end), self.length])
+
 
 class RagoutSequence(Sequence):
     def __init__(self, name, ragout_id, length=None):

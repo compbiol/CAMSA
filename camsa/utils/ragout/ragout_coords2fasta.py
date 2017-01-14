@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--version", action="version", version=camsa.VERSION)
     parser.add_argument("ragout_coords", type=str, help="A path to ragout coords file")
-    parser.add_argument("--ref-genome", type=str, default="")
+    parser.add_argument("--ref-genomes", type=str, default="")
     parser.add_argument("--filter-indels", action="store_true", dest="filter_indels", default=False)
     parser.add_argument("--filter-duplications", action="store_true", dest="filter_duplications", default=False)
     parser.add_argument("--good-genomes", type=str, default="", help="A coma separated list of genome names, to be processed and conversed.\nDEFAULT: \"\" (i.e., all genomes are good)")
@@ -73,20 +73,22 @@ if __name__ == "__main__":
     if args.filter_duplications:
         filter_duplications(blocks_by_ids=blocks_by_ids)
     all_filtered_genomes = get_all_genomes_from_blocks(blocks_as_ids=blocks_by_ids)
-    if args.ref_genome == "":
-        logger.info("Reference genome was not specified")
-        args.ref_genome = sorted(all_filtered_genomes)[0]
-        logger.info("Setting reference genome to {ref_genome}".format(ref_genome=args.ref_genome))
+    if args.ref_genomes == "":
+        logger.info("Reference genomes were not specified")
+        args.ref_genomes = sorted(all_filtered_genomes)
+        logger.info("Setting reference genomes to {ref_genome}".format(ref_genome=args.ref_genome))
     else:
-        if args.ref_genome not in all_filtered_genomes:
-            logger.critical("Reference genome {ref_genome} was not present in all filtered genome {filtered_genomes}"
-                            "".format(ref_genome=args.ref_genome, filtered_genomes=",".join(all_filtered_genomes)))
-            exit(1)
-    blocks_to_convert = []
+        args.ref_genomes = args.ref_genomes.split(".")
+        for genome in args.ref_genomes:
+            if genome not in all_filtered_genomes:
+                logger.critical("Reference genome {ref_genome} was not present in all filtered genome {filtered_genomes}"
+                                "".format(ref_genome=args.ref_genome, filtered_genomes=",".join(all_filtered_genomes)))
+                exit(1)
+    blocks_to_convert_by_ids = []
     for block_id in sorted(blocks_by_ids.keys()):
         blocks = blocks_by_ids[block_id]
-        blocks_by_ref_genome = [block for block in blocks if block.parent_seq.genome_name == args.ref_genome]
-        if len(blocks_by_ref_genome) == 0:
+        blocks_by_ref_genomes = [block for block in blocks if block.parent_seq.genome_name in args.ref_genomes]
+        if len(blocks_by_ref_genomes) == 0:
             if not args.silent_block_skip:
                 logger.critical("For blocks with id {block_id} not a single instance was present in the reference genome {ref_genome}. Flag \"--sbs\" was not set, and this event is thus critical."
                                 "".format(block_id=block_id, ref_genome=args.ref_genome))
@@ -94,11 +96,15 @@ if __name__ == "__main__":
                 logger.warning("For blocks with id {block_id} not a single instance was present in the reference genome \"{ref_genome}\". Flag \"--sbs\" was set, thus silently ignoring this case."
                                "".format(block_id=block_id, ref_genome=args.ref_genome))
                 continue
-        if len(blocks_by_ref_genome) > 1:
-            logger.warning("More than a single block with id {block_id} was found in the reference genome \"{ref_genome}\". Randomly choosing one such block (shall not be a problem, as they must be merely identical)"
+        if len(blocks_by_ref_genomes) > 1:
+            logger.warning("More than a single block with id {bl ock_id} was found in the reference genome \"{ref_genome}\". Randomly choosing one such block (shall not be a problem, as they must be merely identical)"
                            "".format(block_id=block_id, ref_genome=args.ref_genome))
-        block = blocks_by_ref_genome[0]
-        blocks_to_convert.append(block)
+        blocks = []
+        for ref_genome in args.ref_genomes:
+            for block in blocks_by_ref_genomes:
+                if block.parent_seq_genome_name == ref_genome:
+                    blocks.append(block)
+        blocks_to_convert_by_ids[blocks[0].name] = blocks
 
     blocks_by_seq_ids = defaultdict(list)
     for block in blocks_to_convert:
