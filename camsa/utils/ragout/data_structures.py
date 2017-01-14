@@ -17,7 +17,13 @@ class Block(object):
 
     @property
     def annotation_name(self):
-        return ".".join([self.parent_seq.genome_name, self.parent_seq.seq_name, self.name, str(self.start) + "-" + str(self.end), self.length])
+        return ".".join([str(self.parent_seq.genome_name), str(self.parent_seq.seq_name), str(self.name), str(self.start) + "-" + str(self.end), str(self.length)])
+
+    def __str__(self):
+        return self.annotation_name
+
+    def __repr__(self):
+        return str(self)
 
 
 class RagoutSequence(Sequence):

@@ -78,13 +78,13 @@ if __name__ == "__main__":
         args.ref_genomes = sorted(all_filtered_genomes)
         logger.info("Setting reference genomes to {ref_genome}".format(ref_genome=args.ref_genome))
     else:
-        args.ref_genomes = args.ref_genomes.split(".")
+        args.ref_genomes = args.ref_genomes.split(",")
         for genome in args.ref_genomes:
             if genome not in all_filtered_genomes:
                 logger.critical("Reference genome {ref_genome} was not present in all filtered genome {filtered_genomes}"
                                 "".format(ref_genome=args.ref_genome, filtered_genomes=",".join(all_filtered_genomes)))
                 exit(1)
-    blocks_to_convert_by_ids = []
+    blocks_to_convert = []
     for block_id in sorted(blocks_by_ids.keys()):
         blocks = blocks_by_ids[block_id]
         blocks_by_ref_genomes = [block for block in blocks if block.parent_seq.genome_name in args.ref_genomes]
@@ -96,20 +96,22 @@ if __name__ == "__main__":
                 logger.warning("For blocks with id {block_id} not a single instance was present in the reference genome \"{ref_genome}\". Flag \"--sbs\" was set, thus silently ignoring this case."
                                "".format(block_id=block_id, ref_genome=args.ref_genome))
                 continue
-        if len(blocks_by_ref_genomes) > 1:
-            logger.warning("More than a single block with id {bl ock_id} was found in the reference genome \"{ref_genome}\". Randomly choosing one such block (shall not be a problem, as they must be merely identical)"
-                           "".format(block_id=block_id, ref_genome=args.ref_genome))
+        # if len(blocks_by_ref_genomes) > 1:
+        #     logger.warning("More than a single block with id {block_id} was found in the reference genome \"{ref_genome}\". Randomly choosing one such block (shall not be a problem, as they must be merely identical)"
+        #                    "".format(block_id=block_id, ref_genome=args.ref_genome))
         blocks = []
         for ref_genome in args.ref_genomes:
             for block in blocks_by_ref_genomes:
-                if block.parent_seq_genome_name == ref_genome:
+                if block.parent_seq.genome_name == ref_genome:
                     blocks.append(block)
-        blocks_to_convert_by_ids[blocks[0].name] = blocks
+        block = blocks[0]
+        blocks_to_convert.append(block)
 
     blocks_by_seq_ids = defaultdict(list)
     for block in blocks_to_convert:
         blocks_by_seq_ids[block.parent_seq.seq_name].append(block)
 
+    processed = set()
     for f in args.fasta:
         logger.info("Processing fasta file: \"{file_name}\"".format(file_name=f))
         cnt = 0
@@ -118,13 +120,15 @@ if __name__ == "__main__":
             if seq_id not in blocks_by_seq_ids:
                 continue
             current_blocks = blocks_by_seq_ids[seq_id]
+            current_blocks = [block for block in current_blocks if block.name not in processed]
             for block in current_blocks:
                 if block.strand == "+":
                     out_seq = record.seq[block.start: block.end]
                 else:
                     out_seq = record.seq[block.start: block.end].reverse_complement()
-                out_record = SeqRecord(seq=out_seq, id=str(block.name), description="")
+                out_record = SeqRecord(seq=out_seq, id=str(block.name), description=block.annotation_name)
                 SeqIO.write(sequences=out_record, handle=args.output, format="fasta")
+                processed.add(block.name)
 
     logger.info("All done!")
     end_time = datetime.datetime.now()
