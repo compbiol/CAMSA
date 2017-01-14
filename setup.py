@@ -24,7 +24,7 @@ setup(
     scripts=["camsa/run_camsa.py",
              "camsa/utils/ragout/ragout_coords2fasta.py", "camsa/utils/ragout/ragout_coords_coverage.py",
              "camsa/utils/grimm/grimm2camsa_points.py",
-             "camsa/utils/fasta/fasta2camsa_points.py", "camsa/utils/fasta/fasta2camsa_lengths.py", "camsa/utils/fasta/camsa_points2fasta.py",
+             "camsa/utils/fasta/fasta2camsa_points.py", "camsa/utils/fasta/fasta2camsa_seqi.py", "camsa/utils/fasta/camsa_points2fasta.py",
              "camsa/utils/agp/agp2camsa_points.py"],
     classifiers=[
         'Development Status :: 4 - Beta',
