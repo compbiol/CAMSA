@@ -4,12 +4,13 @@ from camsa.core.data_structures import Sequence
 
 
 class Block(object):
-    def __init__(self, name, start, end, strand, parent_seq=None):
+    def __init__(self, name, start, end, strand, parent_seq=None, annotation=None):
         self.name = name
         self.start = start
         self.end = end
         self.strand = strand
         self.parent_seq = parent_seq
+        self._annotation = annotation
 
     @property
     def length(self):
@@ -17,7 +18,9 @@ class Block(object):
 
     @property
     def annotation_name(self):
-        return ".".join([str(self.parent_seq.genome_name), str(self.parent_seq.seq_name), str(self.name), str(self.start) + "-" + str(self.end), str(self.length)])
+        if self._annotation is None:
+            return ".".join([str(self.parent_seq.genome_name), str(self.parent_seq.seq_name), str(self.name), str(self.start) + "-" + str(self.end), str(self.length)])
+        return self._annotation
 
     def __str__(self):
         return self.annotation_name
