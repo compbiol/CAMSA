@@ -1,0 +1,4 @@
+seq_id	parent_seq_id	start	end
+a	f1	3	7
+b	f1	11	15
+c	f1	19	23
