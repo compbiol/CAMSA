@@ -53,7 +53,7 @@ script:
   # B_antracis_Mslice fasta files used in nucmer documentation as an example
   - fasta2camsa_points.py camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta camsa/examples/utils/fasta/data/B_anthracis_Mslice.fasta --output-dir camsa/examples/utils/fasta/output
   - mkdir camsa/examples/utils/agp/output
-  - fasta2camsa_lengths.py camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta -o camsa/examples/utils/fasta/output/B_anthracis_contigs.camsa.lengths
+  - fasta2camsa_seqi.py camsa/examples/utils/fasta/data/B_anthracis_contigs.fasta -o camsa/examples/utils/fasta/output/B_anthracis_contigs.camsa.seqi
   - run_camsa.py camsa/examples/utils/fasta/output/B_anthracis_Mslice.camsa.points -o camsa/examples/B_antracis_Mslice
 
   # AGPv2.0 conversion test section
