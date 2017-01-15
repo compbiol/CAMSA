@@ -396,13 +396,14 @@ def to_json(value):
 
 
 class Sequence(object):
-    def __init__(self, name, length=None, parent_seq_id=None, start=None, end=None, strand=None):
+    def __init__(self, name, length=None, parent_seq_id=None, start=None, end=None, strand=None, annotation=None):
         self.name = name
         self._length = length
         self.parent_seq_id = parent_seq_id
         self.start = start
         self.end = end
         self.strand = strand
+        self.annotation = annotation
 
     @property
     def length(self):
