@@ -22,7 +22,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
 import camsa
-from camsa.core.io import read_pairs
+from camsa.core.io import read_pairs, read_seqi_from_input_sources
 from camsa.core.data_structures import get_scaffold_edges
 
 
@@ -74,6 +74,11 @@ if __name__ == "__main__":
                         help="A stream of fasta formatted sequences of scaffolds, that participate in the scaffold assembly represented in form of CAMSA points")
     parser.add_argument("--points", type=configargparse.FileType("rt"), required=True,
                         help="A stream of CAMSA formatted assembly points, representing a scaffold assembly, that is converted into FASTA formatted sequences")
+    parser.add_argument("--seqi", default="", type=str)
+    parser.add_argument("--seqi-delimiter", default="\t", type=str)
+    parser.add_argument("--fill-gaps", default=None)
+    parser.add_argument("--gap-diff-threshold-per", default=10.0, type=float)
+    parser.add_argument("--gap-diff-threshold-bp", default=1000, type=float)
     parser.add_argument("--allow-singletons", action="store_true", dest="allow_singletons", default=False,
                         help="Whether to include scaffolds, that were not mentioned in the CAMSA formatted assembly points\nDEFAULT: False")
     parser.add_argument("--c-sep", type=str,
@@ -168,6 +173,11 @@ if __name__ == "__main__":
     for record in SeqIO.parse(args.fasta, "fasta"):
         frag_fasta_by_id[record.id] = record
         s_cnt += 1
+    sequences_by_ids = {}
+    if args.seqi != "":
+        with open(args.seqi, "rt") as source:
+            read_seqi_from_input_sources(source=source, delimiter=args.seqi_delimiter, destination=sequences_by_ids)
+
     logger.debug("Processed {cnt} records from fasta file \"{file_name}\"".format(cnt=s_cnt, file_name=args.fasta))
     logger.info("Total number of contig/scaffold sequences is {seq_cnt}".format(seq_cnt=len(frag_fasta_by_id)))
 
