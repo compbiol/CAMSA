@@ -61,11 +61,12 @@ if __name__ == "__main__":
         logger.info("Processing file: \"{file_name}\"".format(file_name=f))
         cnt = 0
         for record in SeqIO.parse(f, "fasta"):
-            seq = Sequence(name=record.id, parent_seq_id=record.id, start=0, end=len(record.seq), strand="+")
+            seq = Sequence(name=record.id, parent_seq_id=record.id, start=0, end=len(record.seq), strand="+", annotation=record.description)
             entries[record.id] = seq
             cnt += 1
         logger.info("Processed {cnt} fasta records".format(cnt=cnt))
-    write_seqi(sequences=entries.values(), destination=args.output, output_setup=args.o_format, delimiter=args.o_delimiter)
+    sequences = sorted(entries.values(), key=lambda seq: seq.name)
+    write_seqi(sequences=sequences, destination=args.output, output_setup=args.o_format, delimiter=args.o_delimiter)
     logger.info("All done!")
     end_time = datetime.datetime.now()
     logger.info("Elapsed time: {el_time}".format(el_time=str(end_time - start_time)))
