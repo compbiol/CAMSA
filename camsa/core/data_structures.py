@@ -397,7 +397,7 @@ def to_json(value):
 
 
 class Sequence(object):
-    def __init__(self, name, length=None, parent_seq_id=None, start=None, end=None, strand=None, annotation=None):
+    def __init__(self, name, length=None, parent_seq_id=None, start=None, end=None, strand="+", annotation=None):
         self.name = name
         self._length = length
         self._parent_seq_id = parent_seq_id
@@ -424,10 +424,10 @@ class Sequence(object):
     def start(self):
         if self._start is None:
             return 0
-        return self._start
+        return int(self._start)
 
     @property
     def end(self):
         if self._end is None:
             return sys.maxsize
-        return self._end
+        return int(self._end)
