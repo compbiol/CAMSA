@@ -185,7 +185,8 @@ def read_seqi_from_input_sources(source, delimiter="\t", destination=None):
         start = extract_nullable_numerical_value(field="start", row=row, fn_relations=fn_relations, default=None)
         end = extract_nullable_numerical_value(field="end", row=row, fn_relations=fn_relations, default=None)
         strand = extract_nullable_numerical_value(field="strand", row=row, fn_relations=fn_relations, default=None)
-        seq = Sequence(name=seq_id, length=length, parent_seq_id=parent_seq_id, start=start, end=end, strand=strand)
+        annotation = extract_nullable_numerical_value(field="annotation", row=row, fn_relations=fn_relations, default=None)
+        seq = Sequence(name=seq_id, length=length, parent_seq_id=parent_seq_id, start=start, end=end, strand=strand, annotation=annotation)
         destination[seq.name] = seq
     return destination
 
