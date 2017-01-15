@@ -40,6 +40,8 @@ PAIRS_COLUMN_ALIASES = {
 
 
 def extract_nullable_value(field, row, fn_relations, default="?"):
+    if field not in fn_relations:
+        return default
     return row.get(fn_relations[field], default)
 
 
@@ -47,7 +49,7 @@ def extract_nullable_numerical_value(field, row, fn_relations, default="?"):
     value = extract_nullable_value(field=field, row=row, fn_relations=fn_relations, default=default)
     try:
         value = float(value)
-    except ValueError:
+    except (ValueError, TypeError):
         value = default
     return value
 
@@ -184,7 +186,7 @@ def read_seqi_from_input_sources(source, delimiter="\t", destination=None):
         parent_seq_id = extract_nullable_value(field="parent_seq_id", row=row, fn_relations=fn_relations, default=None)
         start = extract_nullable_numerical_value(field="start", row=row, fn_relations=fn_relations, default=None)
         end = extract_nullable_numerical_value(field="end", row=row, fn_relations=fn_relations, default=None)
-        strand = extract_nullable_numerical_value(field="strand", row=row, fn_relations=fn_relations, default=None)
+        strand = extract_nullable_numerical_value(field="strand", row=row, fn_relations=fn_relations, default="+")
         annotation = extract_nullable_numerical_value(field="annotation", row=row, fn_relations=fn_relations, default=None)
         seq = Sequence(name=seq_id, length=length, parent_seq_id=parent_seq_id, start=start, end=end, strand=strand, annotation=annotation)
         destination[seq.name] = seq
