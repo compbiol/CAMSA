@@ -34,6 +34,8 @@ if __name__ == "__main__":
     parser.add_argument("--version", action="version", version=camsa.VERSION)
     parser.add_argument("ragout_coords", type=str, help="A path to ragout coords file")
     parser.add_argument("--ref-genomes", type=str, default="")
+    parser.add_argument("--ann-genomes", type=str, default="")
+    parser.add_argument("--ann-delimiter", type=str, default=";")
     parser.add_argument("--filter-indels", action="store_true", dest="filter_indels", default=False)
     parser.add_argument("--filter-duplications", action="store_true", dest="filter_duplications", default=False)
     parser.add_argument("--good-genomes", type=str, default="", help="A coma separated list of genome names, to be processed and conversed.\nDEFAULT: \"\" (i.e., all genomes are good)")
@@ -82,7 +84,16 @@ if __name__ == "__main__":
         for genome in args.ref_genomes:
             if genome not in all_filtered_genomes:
                 logger.critical("Reference genome {ref_genome} was not present in all filtered genome {filtered_genomes}"
-                                "".format(ref_genome=args.ref_genome, filtered_genomes=",".join(all_filtered_genomes)))
+                                "".format(ref_genome=args.genome, filtered_genomes=",".join(all_filtered_genomes)))
+                exit(1)
+    if args.ann_genomes == "":
+        args.ann_genomes = args.ref_genomes
+    else:
+        args.ann_genomes = args.ann_genomes.split(",")
+        for genome in args.ann_genomes:
+            if genome not in args.ref_genomes:
+                logger.critical("Annotation genomes {ann_genome} was not present in reference genomes {ref_genomes}"
+                                "".format(ann_genome=args.genome, ref_genomes=",".join(all_filtered_genomes)))
                 exit(1)
     blocks_to_convert = []
     for block_id in sorted(blocks_by_ids.keys()):
@@ -104,7 +115,14 @@ if __name__ == "__main__":
             for block in blocks_by_ref_genomes:
                 if block.parent_seq.genome_name == ref_genome:
                     blocks.append(block)
+        annotations = []
+        for ann_genome in args.ann_genomes:
+            for block in blocks_by_ref_genomes:
+                if block.parent_seq.genome_name == ann_genome:
+                    annotations.append(block.annotation_name)
         block = blocks[0]
+        if len(annotations) != 0:
+            block._annotation = args.ann_delimiter.join(annotations)
         blocks_to_convert.append(block)
 
     blocks_by_seq_ids = defaultdict(list)
