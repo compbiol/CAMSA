@@ -87,6 +87,7 @@ if __name__ == "__main__":
     parser.add_argument("--fill-gaps", action="store_true")
     parser.add_argument("--extend-ends", action="store_true")
     parser.add_argument("--fill-gaps-unknown", action="store_true")
+    parser.add_argument("--gap-by-ends-add", action="store_true")
     parser.add_argument("--gap-diff-threshold-per", default=10.0, type=float)
     parser.add_argument("--gap-diff-threshold-bp", default=1000, type=float)
     parser.add_argument("--allow-singletons", action="store_true", dest="allow_singletons", default=False,
@@ -238,6 +239,7 @@ if __name__ == "__main__":
 
             current += seq1
 
+            filled_gap = False
             if args.fill_gaps:
                 if meta_seq1.parent_seq_id == meta_seq2.parent_seq_id:
                     if meta_seq1.end < meta_seq2.start and f1_or == meta_seq1.strand and f2_or == meta_seq2.strand:
@@ -251,13 +253,58 @@ if __name__ == "__main__":
                     if ap_gap_size == "?":
                         if args.fill_gaps_unknown:
                             current += gap
+                            filled_gap = gap_length > 0
                     else:
                         diff = abs(ap_gap_size - gap_length)
                         if diff * 100.0 / ap_gap_size < args.gap_diff_threshold_per:
                             current += gap
+                            filled_gap = gap_length > 0
                         elif diff < args.gap_diff_threshold_bp:
                             current += gap
-            else:
+                            filled_gap = gap_length > 0
+                else:
+                    f1_extension = Seq("")
+                    f1_is_flanking = False
+                    if meta_seq1.name == meta_seqs_by_parent_ids[meta_seq1.parent_seq_id][0].name \
+                            and meta_seq1.strand != f1_or and meta_seq1.start > 0:
+                        f1_extension = frag_fasta_by_id[meta_seq1.parent_seq_id][:meta_seq1.start].seq.reverse_complement()
+                        f1_is_flanking = True
+                    if meta_seq1.name == meta_seqs_by_parent_ids[meta_seq1.parent_seq_id][-1].name \
+                            and meta_seq1.strand == f1_or:
+                        f1_extension = frag_fasta_by_id[meta_seq1.parent_seq_id][meta_seq1.end:].seq
+                        f1_is_flanking = True
+                    f2_extension = Seq("")
+                    f2_is_flanking = False
+                    if meta_seq2.name == meta_seqs_by_parent_ids[meta_seq2.parent_seq_id][0].name \
+                            and meta_seq2.strand == f2_or and meta_seq2.start > 0:
+                        f2_extension = frag_fasta_by_id[meta_seq2.parent_seq_id].seq[:meta_seq2.start]
+                        f2_is_flanking = True
+                    if meta_seq2.name == meta_seqs_by_parent_ids[meta_seq2.parent_seq_id][-1].name \
+                            and meta_seq2.strand != f2_or:
+                        f2_extension = frag_fasta_by_id[meta_seq2.parent_seq_id].seq[meta_seq2.end:].reverse_complement()
+                        f2_is_flanking = True
+
+                    if f1_is_flanking and f2_is_flanking:
+                        cumulative_length = len(f1_extension) + len(f2_extension)
+                        ap_gap_size = gap_size if isinstance(gap_size, numbers.Number) else "?"
+                        if ap_gap_size == "?":
+                            if args.fill_gaps_unknown:
+                                current += f1_extension + f2_extension
+                                filled_gap = cumulative_length > 0
+                        else:
+                            if cumulative_length < ap_gap_size:
+                                if args.gap_by_ends_add:
+                                    remaining_length = ap_gap_size - cumulative_length
+                                    current += f1_extension + Seq(args.c_sep*int(remaining_length)) + f2_extension
+                                else:
+                                    diff = abs(ap_gap_size - cumulative_length)
+                                    if diff * 100.0 / ap_gap_size < args.gap_diff_threshold_per:
+                                        current += f1_extension + f2_extension
+                                        filled_gap = cumulative_length > 0
+                                    elif diff < args.gap_diff_threshold_bp:
+                                        current += f1_extension + f2_extension
+                                        filled_gap = cumulative_length > 0
+            if not filled_gap:
                 gap_length = gap_size if isinstance(gap_size, numbers.Number) else args.c_sep_length
                 if gap_length <= 0:
                     gap_length = args.c_sep_length
