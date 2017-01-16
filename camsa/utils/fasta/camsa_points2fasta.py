@@ -178,25 +178,31 @@ if __name__ == "__main__":
     fragments = [get_sequence_of_fragments_from_path(path=p, assembly_points_by_edges=assembly_points_by_edges) for p in paths]
     logger.info("Total number of {scaffold_cnt} scaffolds was obtained from observed assembly points".format(scaffold_cnt=len(fragments)))
 
-    logger.info("Reading fasta of contigs/scaffolds involved in the assembly points")
+    logger.info("Reading fasta of contigs/scaffolds from {file}".format(file=args.fasta))
     frag_fasta_by_id = {}
     s_cnt = 0
     for record in SeqIO.parse(args.fasta, "fasta"):
         frag_fasta_by_id[record.id] = record
         s_cnt += 1
+    logger.debug("Obtained {s_cnt} fasta fragments".format(s_cnt=s_cnt))
+
     sequences_by_ids = {}
     if args.seqi != "":
+        logger.debug("Obtaining \"meta\"-sequence info for the fragments, that can be involved in the assembly points, from {file}".format(file=args.seqi))
         with open(args.seqi, "rt") as source:
             read_seqi_from_input_sources(source=source, delimiter=args.seqi_delimiter, destination=sequences_by_ids)
+        logger.debug("Obtained {ms_cnt} meta-sequences records".format(ms_cnt=len(sequences_by_ids)))
 
     participating_sequences_by_ids = {}
     # for every fragment name that is not present as meta-sequence info a dumb one is created
     for fragment_aps in fragments:
         for f1, f1_or, f2, f2_or, gap_size in fragment_aps:
             if f1 not in sequences_by_ids:
+                logger.debug("Fragment {f1} didn't have a meta-sequence information for it. Creating a dummy one.".format(f1=f1))
                 sequences_by_ids[f1] = Sequence(name=f1)
             if f2 not in sequences_by_ids:
                 sequences_by_ids[f2] = Sequence(name=f2)
+                logger.debug("Fragment {f2} didn't have a meta-sequence information for it. Creating a dummy one.".format(f2=f2))
             participating_sequences_by_ids[f1] = sequences_by_ids[f1]
             participating_sequences_by_ids[f2] = sequences_by_ids[f2]
 
@@ -207,16 +213,17 @@ if __name__ == "__main__":
     for parent_seq_id in list(meta_seqs_by_parent_ids.keys()):
         meta_seqs_by_parent_ids[parent_seq_id] = sorted(meta_seqs_by_parent_ids[parent_seq_id], key=lambda seq: (seq.start, seq.end))
 
-    logger.debug("Processed {cnt} records from fasta file \"{file_name}\"".format(cnt=s_cnt, file_name=args.fasta))
-    logger.info("Total number of contig/scaffold sequences is {seq_cnt}".format(seq_cnt=len(frag_fasta_by_id)))
+    logger.info("Total number of fasta sequences is {seq_cnt}".format(seq_cnt=len(frag_fasta_by_id)))
 
     for sequence in participating_sequences_by_ids.values():
         if sequence.parent_seq_id not in frag_fasta_by_id:
-            logging.critical("Fragment {sequence} (parent for {block_name}) is not present in supplied fasta file. Exiting.".format(sequence=sequence.parent_seq_id, block_name=sequence.name))
+            logger.critical("Fragment {sequence} (parent for {block_name}) is not present in supplied fasta file. Exiting.".format(sequence=sequence.parent_seq_id, block_name=sequence.name))
             exit(1)
 
     used_fragments = set()
     logger.info("Outputting new scaffolds. Data is written to {file_name}".format(file_name=args.output))
+    filled_gaps_cnt = 0
+    extended_ends_cnt = 0
     for s_cnt, fragment_aps in enumerate(fragments):
         current = Seq("")
         for f_cnt, (f1, f1_or, f2, f2_or, gap_size) in enumerate(fragment_aps):
@@ -228,20 +235,27 @@ if __name__ == "__main__":
             seq1 = seq1 if f1_or == "+" else seq1.reverse_complement()
 
             if f_cnt == 0 and args.extend_ends:
+                logger.debug("Trying to extend the end for the new scaffold, based on fragment {f1} (parent seq: {parent_seq})".format(f1=meta_seq1.name, parent_seq=meta_seq1.parent_seq_id))
                 if meta_seq1.name == meta_seqs_by_parent_ids[meta_seq1.parent_seq_id][0].name \
                         and meta_seq1.strand == f1_or and meta_seq1.start > 0:
                     extension = frag_fasta_by_id[meta_seq1.parent_seq_id][:meta_seq1.start].seq
+                    logger.debug("Extended the end for the new scaffold, based on fragment {f1} with {ext_length} additional nucleotides".format(f1=meta_seq1.name, ext_length=len(extension)))
                     current += extension
+                    extended_ends_cnt += 1
                 if meta_seq1.name == meta_seqs_by_parent_ids[meta_seq1.parent_seq_id][-1].name \
                         and meta_seq1.strand != f1_or:
                     extension = frag_fasta_by_id[meta_seq1.parent_seq_id][meta_seq1.end:].seq.reverse_complement()
                     current += extension
+                    extended_ends_cnt += 1
+                    logger.debug("Extended the end for the new scaffold, based on fragment {f1} with {ext_length} additional nucleotides".format(f1=meta_seq1.name, ext_length=len(extension)))
 
             current += seq1
 
             filled_gap = False
             if args.fill_gaps:
+                logger.debug("Trying to fill the gap in the new scaffold between fragments {f1} and {f2}".format(f1=meta_seq1.name, f2=meta_seq2.name))
                 if meta_seq1.parent_seq_id == meta_seq2.parent_seq_id:
+                    logger.debug("Fragments {f1} and {f2} are located in the same parent sequence {p_seq}".format(f1=meta_seq1.name, f2=meta_seq2.name, p_seq=meta_seq1.parent_seq_id))
                     if meta_seq1.end < meta_seq2.start and f1_or == meta_seq1.strand and f2_or == meta_seq2.strand:
                         gap = frag_fasta_by_id[meta_seq1.parent_seq_id][meta_seq1.end:meta_seq2.start].seq
                     elif meta_seq2.end < meta_seq1.start and f1_or == reverse_or(orientaiton=meta_seq1.strand) and f2_or == reverse_or(orientaiton=meta_seq2.strand):
@@ -249,20 +263,51 @@ if __name__ == "__main__":
                     else:
                         gap = Seq("")
                     gap_length = len(gap)
+                    logger.debug("Obtained gap filling length is {g_fill_length}".format(g_fill_length=gap_length))
                     ap_gap_size = gap_size if isinstance(gap_size, numbers.Number) else "?"
+                    if ap_gap_size == 0:
+                        ap_gap_size = 1.0 / sys.maxsize
                     if ap_gap_size == "?":
                         if args.fill_gaps_unknown:
                             current += gap
                             filled_gap = gap_length > 0
+                            if filled_gap:
+                                filled_gaps_cnt += 1
+                                logger.debug("Assembly point gap size is unknown (not-a-number) and flag --fill-gaps-unknown was set. Filling the gap with obtained sequence of length {length}.".format(length=gap_length))
+                            else:
+                                logger.debug("Assembly point gap size is unknown (not-a-number) and flag --fill-gaps-unknown was set. Obtained gap filling sequence has length 0, gap will be filled with unknown sequence.")
+                        else:
+                            logger.debug("Assembly point gap size is unknown (not-a-number) and flag --fill-gaps-unknown was not set. Gap will be filled with unknown sequence.")
                     else:
+                        attempted = False
                         diff = abs(ap_gap_size - gap_length)
                         if diff * 100.0 / ap_gap_size < args.gap_diff_threshold_per:
+                            attempted = True
                             current += gap
                             filled_gap = gap_length > 0
+                            if filled_gap:
+                                logger.debug("Assembly point gap size ({ap_gap_size}) differs with obtained filling sequence (length {gap_length}) by no more than {per_diff}%. Filling the gap with obtained sequence."
+                                             "".format(ap_gap_size=ap_gap_size, per_diff=args.gap_diff_threshold_per, gap_length=gap_length))
+                                filled_gaps_cnt += 1
+                            else:
+                                logger.debug("Assembly point gap size ({ap_gap_size}) differs with obtained filling sequence (length {gap_length}) by no more than {per_diff}%. Obtained gap filling sequence has length 0, gap will be filled with unknown sequence."
+                                             "".format(ap_gap_size=ap_gap_size, per_diff=args.gap_diff_threshold_per, gap_length=gap_length))
                         elif diff < args.gap_diff_threshold_bp:
+                            attempted = True
                             current += gap
                             filled_gap = gap_length > 0
+                            if filled_gap:
+                                logger.debug("Assembly point gap size ({ap_gap_size}) differs with obtained filling sequence (length {gap_length}) by no more than {bp_diff}bp. Filling the gap with obtained sequence."
+                                             "".format(ap_gap_size=ap_gap_size, gap_length=gap_length, bp_diff=args.gap_diff_threshold_bp))
+                                filled_gaps_cnt += 1
+                            else:
+                                logger.debug("Assembly point gap size ({ap_gap_size}) differs with obtained filling sequence (length {gap_length}) by no more than {bp_diff}bp. Obtained gap filling sequence has length 0, gap will be filled with unknown sequence."
+                                             "".format(ap_gap_size=ap_gap_size, gap_length=gap_length, bp_diff=args.gap_diff_threshold_bp))
+                        if not attempted:
+                            logger.debug("Assembly point gap size ({ap_gap_size}) with obtained filling sequence (length {gap_length}) by more than {per_diff}% and by more than {bp_diff}bp. Gap will be filled with unknown sequence."
+                                         "".format(ap_gap_size=ap_gap_size, gap_length=gap_length, per_diff=args.gap_diff_threshold_per, bp_diff=args.gap_diff_threshold_bp))
                 else:
+                    logger.debug("Fragments {f1} and {f2} are located in the different parent sequences ({p_seq1} and {p_seq2} respectively)".format(f1=meta_seq1.name, f2=meta_seq2.name, p_seq1=meta_seq1.parent_seq_id, p_seq2=meta_seq2.parent_seq_id))
                     f1_extension = Seq("")
                     f1_is_flanking = False
                     if meta_seq1.name == meta_seqs_by_parent_ids[meta_seq1.parent_seq_id][0].name \
@@ -270,9 +315,10 @@ if __name__ == "__main__":
                         f1_extension = frag_fasta_by_id[meta_seq1.parent_seq_id][:meta_seq1.start].seq.reverse_complement()
                         f1_is_flanking = True
                     if meta_seq1.name == meta_seqs_by_parent_ids[meta_seq1.parent_seq_id][-1].name \
-                            and meta_seq1.strand == f1_or:
+                            and meta_seq1.strand == f1_or and len(frag_fasta_by_id[meta_seq1.parent_seq_id]) >= meta_seq1.end:
                         f1_extension = frag_fasta_by_id[meta_seq1.parent_seq_id][meta_seq1.end:].seq
                         f1_is_flanking = True
+                    logger.debug("Sequence {f1} is {part} flanking on its parent sequence {p_seq}".format(f1=meta_seq1.name, part="" if f1_is_flanking else "not", p_seq=meta_seq1.parent_seq_id))
                     f2_extension = Seq("")
                     f2_is_flanking = False
                     if meta_seq2.name == meta_seqs_by_parent_ids[meta_seq2.parent_seq_id][0].name \
@@ -280,30 +326,65 @@ if __name__ == "__main__":
                         f2_extension = frag_fasta_by_id[meta_seq2.parent_seq_id].seq[:meta_seq2.start]
                         f2_is_flanking = True
                     if meta_seq2.name == meta_seqs_by_parent_ids[meta_seq2.parent_seq_id][-1].name \
-                            and meta_seq2.strand != f2_or:
+                            and meta_seq2.strand != f2_or and len(frag_fasta_by_id[meta_seq2.parent_seq_id]) >= meta_seq2.end:
                         f2_extension = frag_fasta_by_id[meta_seq2.parent_seq_id].seq[meta_seq2.end:].reverse_complement()
                         f2_is_flanking = True
+                    logger.debug("Sequence {f2} is {part} flanking on its parent sequence {p_seq}".format(f2=meta_seq1.name, part="" if f2_is_flanking else "not", p_seq=meta_seq2.parent_seq_id))
 
                     if f1_is_flanking and f2_is_flanking:
                         cumulative_length = len(f1_extension) + len(f2_extension)
+                        logger.debug("Obtained gap filling length is {g_fill_length}".format(g_fill_length=cumulative_length))
                         ap_gap_size = gap_size if isinstance(gap_size, numbers.Number) else "?"
+                        if ap_gap_size == 0:
+                            ap_gap_size = 1.0 / sys.maxsize
                         if ap_gap_size == "?":
                             if args.fill_gaps_unknown:
                                 current += f1_extension + f2_extension
                                 filled_gap = cumulative_length > 0
-                        else:
-                            if cumulative_length < ap_gap_size:
-                                if args.gap_by_ends_add:
-                                    remaining_length = ap_gap_size - cumulative_length
-                                    current += f1_extension + Seq(args.c_sep*int(remaining_length)) + f2_extension
+                                if filled_gap:
+                                    logger.debug("Assembly point gap size is unknown (not-a-number) and flag --fill-gaps-unknown was set. Filling the gap with obtained sequence of length {length}.".format(length=cumulative_length))
+                                    filled_gaps_cnt += 1
                                 else:
-                                    diff = abs(ap_gap_size - cumulative_length)
-                                    if diff * 100.0 / ap_gap_size < args.gap_diff_threshold_per:
-                                        current += f1_extension + f2_extension
-                                        filled_gap = cumulative_length > 0
-                                    elif diff < args.gap_diff_threshold_bp:
-                                        current += f1_extension + f2_extension
-                                        filled_gap = cumulative_length > 0
+                                    logger.debug("Assembly point gap size is unknown (not-a-number) and flag --fill-gaps-unknown was set. Obtained gap filling sequence has length 0, gap will be filled with unknown sequence.")
+                            else:
+                                logger.debug("Assembly point gap size is unknown (not-a-number) and flag --fill-gaps-unknown was not set. Gap will be filled with unknown sequence.")
+                        else:
+                            attempted = False
+                            if cumulative_length < ap_gap_size and args.gap_by_ends_add:
+                                attempted = True
+                                logger.debug("Cumulative length of two extremities for gap filling ({cum_length}) is less than assembly point gap size ({ap_gap_size})".format(cum_length=cumulative_length, ap_gap_size=ap_gap_size))
+                                remaining_length = ap_gap_size - cumulative_length
+                                logger.debug("Flag --gap-by-ends-add was specified. Adding a {remaining} of {sub} in between two extremities to amount for the assembly point gap size.".format(remaining=remaining_length, sub=args.c_sep))
+                                current += f1_extension + Seq(args.c_sep * int(remaining_length)) + f2_extension
+                            else:
+                                diff = abs(ap_gap_size - cumulative_length)
+                                if diff * 100.0 / ap_gap_size < args.gap_diff_threshold_per:
+                                    attempted = True
+                                    current += f1_extension + f2_extension
+                                    filled_gap = cumulative_length > 0
+                                    if filled_gap:
+                                        logger.debug("Assembly point gap size ({ap_gap_size}) differs with obtained filling sequence (length {gap_length}) by no more than {per_diff}%. Filling the gap with obtained sequence."
+                                                     "".format(ap_gap_size=ap_gap_size, per_diff=args.gap_diff_threshold_per, gap_length=cumulative_length))
+                                        filled_gaps_cnt += 1
+                                    else:
+                                        logger.debug("Assembly point gap size ({ap_gap_size}) differs with obtained filling sequence (length {gap_length}) by no more than {per_diff}%. Obtained gap filling sequence has length 0, gap will be filled with unknown sequence."
+                                                     "".format(ap_gap_size=ap_gap_size, per_diff=args.gap_diff_threshold_per, gap_length=cumulative_length))
+                                elif diff < args.gap_diff_threshold_bp:
+                                    attempted = True
+                                    current += f1_extension + f2_extension
+                                    filled_gap = cumulative_length > 0
+                                    if filled_gap:
+                                        logger.debug("Assembly point gap size ({ap_gap_size}) differs with obtained filling sequence (length {gap_length}) by no more than {bp_diff}bp. Filling the gap with obtained sequence."
+                                                     "".format(ap_gap_size=ap_gap_size, gap_length=cumulative_length, bp_diff=args.gap_diff_threshold_bp))
+                                        filled_gaps_cnt += 1
+                                    else:
+                                        logger.debug("Assembly point gap size ({ap_gap_size}) differs with obtained filling sequence (length {gap_length}) by no more than {bp_diff}bp. Obtained gap filling sequence has length 0, gap will be filled with unknown sequence."
+                                                     "".format(ap_gap_size=ap_gap_size, gap_length=cumulative_length, bp_diff=args.gap_diff_threshold_bp))
+                            if not attempted:
+                                logger.debug("Assembly point gap size ({ap_gap_size}) with obtained filling sequence (length {gap_length}) by more than {per_diff}% and by more than {bp_diff}bp. Gap will be filled with unknown sequence."
+                                             "".format(ap_gap_size=ap_gap_size, gap_length=cumulative_length, per_diff=args.gap_diff_threshold_per, bp_diff=args.gap_diff_threshold_bp))
+                    else:
+                        logger.debug("At least one of the sequences is not flanking on its parent sequence. No gap filling based on parent sequences extremities. Gap will be filled with unknown sequence.")
             if not filled_gap:
                 gap_length = gap_size if isinstance(gap_size, numbers.Number) else args.c_sep_length
                 if gap_length <= 0:
@@ -315,23 +396,31 @@ if __name__ == "__main__":
             used_fragments.add(meta_seq2.parent_seq_id)
 
             if f_cnt == len(fragment_aps) - 1:
+
                 seq2 = frag_fasta_by_id[meta_seq2.parent_seq_id].seq[meta_seq2.start:meta_seq2.end]
                 seq2 = seq2 if meta_seq2.strand == "+" else seq2.reverse_complement()
                 seq2 = seq2 if f2_or == "+" else seq2.reverse_complement()
                 current += seq2
                 if args.extend_ends:
+                    logger.debug("Trying to extend the end for the new scaffold, based on fragment {f2} (parent seq: {parent_seq}).".format(f2=meta_seq2.name, parent_seq=meta_seq2.parent_seq_id))
                     if meta_seq2.name == meta_seqs_by_parent_ids[meta_seq2.parent_seq_id][0].name \
                             and meta_seq2.strand != f2_or and meta_seq2.start > 0:
                         extension = frag_fasta_by_id[meta_seq2.parent_seq_id].seq[:meta_seq2.start].reverse_complement()
                         current += extension
+                        logger.debug("Extended the end for the new scaffold, based on fragment {f2} with {ext_length} additional nucleotides".format(f2=meta_seq2.name, ext_length=len(extension)))
+                        extended_ends_cnt += 1
                     if meta_seq2.name == meta_seqs_by_parent_ids[meta_seq2.parent_seq_id][-1].name \
                             and meta_seq2.strand == f2_or:
                         extension = frag_fasta_by_id[meta_seq2.parent_seq_id].seq[meta_seq2.end:]
                         current += extension
+                        logger.debug("Extended the end for the new scaffold, based on fragment {f2} with {ext_length} additional nucleotides".format(f2=meta_seq2.name, ext_length=len(extension)))
+                        extended_ends_cnt += 1
 
         name = args.scaffold_name_template.format(cnt=s_cnt)
         seq_record = SeqRecord(seq=current, id=name, description="")
         SeqIO.write(sequences=seq_record, handle=args.output, format="fasta")
+    logger.info("Filled {gap_fill_cnt} gaps.".format(gap_fill_cnt=filled_gaps_cnt))
+    logger.info("Extended {end_ext_cnt} extremities.".format(end_ext_cnt=extended_ends_cnt))
     if args.allow_singletons:
         logger.info("Adding singleton fragments, that did not participate in any assembly points to the resulting assmebly")
         for f_id, fragment in frag_fasta_by_id.items():
@@ -339,4 +428,3 @@ if __name__ == "__main__":
                 SeqIO.write(sequences=fragment, handle=args.output, format="fasta")
     logger.info("All done!")
     logger.info("Elapsed time: {el_time}".format(el_time=str(datetime.datetime.now() - start_time)))
-
