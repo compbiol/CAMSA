@@ -403,9 +403,9 @@ class Sequence(object):
         self._parent_seq_id = parent_seq_id
         self._start = start
         self._end = end
-        self.seq_group_id = seq_group_id
+        self._seq_group_id = seq_group_id
         self.strand = strand
-        self.annotation = annotation
+        self._annotation = annotation
 
     @property
     def length(self):
@@ -432,3 +432,11 @@ class Sequence(object):
         if self._end is None:
             return sys.maxsize
         return int(self._end)
+
+    @property
+    def seq_group_id(self):
+        return str(self._seq_group_id)
+
+    @property
+    def annotation(self):
+        return str(self._annotation)
