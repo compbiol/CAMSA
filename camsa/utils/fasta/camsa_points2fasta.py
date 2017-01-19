@@ -199,12 +199,17 @@ if __name__ == "__main__":
         for f1, f1_or, f2, f2_or, gap_size in fragment_aps:
             if f1 not in sequences_by_ids:
                 logger.debug("Fragment {f1} didn't have a meta-sequence information for it. Creating a dummy one.".format(f1=f1))
-                sequences_by_ids[f1] = Sequence(name=f1)
+                sequences_by_ids[f1].append(Sequence(name=f1))
             if f2 not in sequences_by_ids:
-                sequences_by_ids[f2] = Sequence(name=f2)
+                sequences_by_ids[f2].append(Sequence(name=f2))
                 logger.debug("Fragment {f2} didn't have a meta-sequence information for it. Creating a dummy one.".format(f2=f2))
             participating_sequences_by_ids[f1] = sequences_by_ids[f1]
             participating_sequences_by_ids[f2] = sequences_by_ids[f2]
+
+    for seq_id in list(participating_sequences_by_ids.keys()):
+        attributed_sequences = [seq for seq in participating_sequences_by_ids[seq_id] if seq.parent_seq_id != "None"]
+        non_attributed_sequences = [seq for seq in participating_sequences_by_ids[seq_id] if seq.parent_seq_id == "None"]
+        participating_sequences_by_ids[seq_id] = sorted(attributed_sequences, key=lambda seq: seq.seq_group_id) + non_attributed_sequences
 
     meta_seqs_by_parent_ids = defaultdict(list)
     for seq in participating_sequences_by_ids.values():
