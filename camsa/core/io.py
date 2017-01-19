@@ -176,7 +176,7 @@ def write_seqi(sequences, destination, output_setup, delimiter="\t"):
 
 def read_seqi_from_input_sources(source, delimiter="\t", destination=None):
     if destination is None:
-        destination = {}
+        destination = defaultdict(list)
     reader = csv.DictReader(source, delimiter=delimiter)
     fieldnames = reader.fieldnames
     fn_relations = get_fn_relations_for_column_names(fieldnames=fieldnames, aliases=LENGTHS_COLUMN_ALIASES)
@@ -190,7 +190,7 @@ def read_seqi_from_input_sources(source, delimiter="\t", destination=None):
         annotation = extract_nullable_numerical_value(field="annotation", row=row, fn_relations=fn_relations, default=None)
         seq_group_id = extract_nullable_value(field="seq_group_id", row=row, fn_relations=fn_relations, default=None)
         seq = Sequence(name=seq_id, length=length, parent_seq_id=parent_seq_id, start=start, end=end, strand=strand, annotation=annotation, seq_group_id=seq_group_id)
-        destination[seq.name] = seq
+        destination[seq.name].append(seq)
     return destination
 
 
