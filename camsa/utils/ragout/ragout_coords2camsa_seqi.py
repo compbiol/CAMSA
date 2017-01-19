@@ -126,7 +126,7 @@ if __name__ == "__main__":
                     annotations.append(block.annotation_name)
         annotation = args.ann_delimiter.join(annotations)
         block = blocks[0]
-        sequences.append(Sequence(name=block.name, parent_seq_id=block.parent_seq.seq_name, start=block.start, end=block.end, strand=block.strand, annotation=annotation))
+        sequences.append(Sequence(name=block.name, parent_seq_id=block.parent_seq.seq_name, start=block.start, end=block.end, strand=block.strand, annotation=annotation, seq_group_id=block.parent_seq.genome_name))
 
     write_seqi(sequences=sequences, destination=args.output, output_setup=args.o_format, delimiter=args.o_delimiter)
     logger.info("All done!")

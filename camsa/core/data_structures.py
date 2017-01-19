@@ -397,12 +397,13 @@ def to_json(value):
 
 
 class Sequence(object):
-    def __init__(self, name, length=None, parent_seq_id=None, start=None, end=None, strand="+", annotation=None):
+    def __init__(self, name, length=None, parent_seq_id=None, start=None, end=None, strand="+", annotation=None, seq_group_id=None):
         self.name = name
         self._length = length
         self._parent_seq_id = parent_seq_id
         self._start = start
         self._end = end
+        self.seq_group_id = seq_group_id
         self.strand = strand
         self.annotation = annotation
 

@@ -58,10 +58,14 @@ if __name__ == "__main__":
 
     entries = {}
     for f in args.contigs:
+        try:
+            seq_group_id = os.path.splitext(os.path.basename(f.name))[0]
+        except (ValueError, TypeError, AttributeError):
+            seq_group_id = None
         logger.info("Processing file: \"{file_name}\"".format(file_name=f))
         cnt = 0
         for record in SeqIO.parse(f, "fasta"):
-            seq = Sequence(name=record.id, parent_seq_id=record.id, start=0, end=len(record.seq), strand="+", annotation=record.description)
+            seq = Sequence(name=record.id, parent_seq_id=record.id, start=0, end=len(record.seq), strand="+", annotation=record.description, seq_group_id=seq_group_id)
             entries[record.id] = seq
             cnt += 1
         logger.info("Processed {cnt} fasta records".format(cnt=cnt))
