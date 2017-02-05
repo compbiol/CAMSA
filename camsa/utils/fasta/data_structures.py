@@ -12,9 +12,9 @@ class GapFilling(object):
 
     def compute_score(self, gap_size, error_per, error_bp):
         if gap_size == "?":
-            return len(self.seq)
+            self.score = len(self.seq)
         else:
-            return abs(gap_size - len(self.seq))
+            self.score = abs(gap_size - len(self.seq))
 
 
 class IntraGapFilling(GapFilling):
