@@ -206,6 +206,8 @@ if __name__ == "__main__":
             participating_sequences_by_ids[f1] = sequences_by_ids[f1]
             participating_sequences_by_ids[f2] = sequences_by_ids[f2]
 
+    # sorting participating sequences into "batches" denoted by seq_group_id field, with a default "None" value to it
+    #   initial order of sequences within each batch is preserved w.r.t. the way it is listed in the *.seqi file
     for seq_id in list(participating_sequences_by_ids.keys()):
         attributed_sequences = [seq for seq in participating_sequences_by_ids[seq_id] if seq.parent_seq_id != "None"]
         non_attributed_sequences = [seq for seq in participating_sequences_by_ids[seq_id] if seq.parent_seq_id == "None"]
