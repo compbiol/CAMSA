@@ -217,6 +217,7 @@ if __name__ == "__main__":
     for seq in participating_sequences_by_ids.values():
         meta_seqs_by_parent_ids[seq.parent_seq_id].append(seq)
 
+    # for each parent sequence id all its "child" members are sorted with respect to their location on the parent sequence
     for parent_seq_id in list(meta_seqs_by_parent_ids.keys()):
         meta_seqs_by_parent_ids[parent_seq_id] = sorted(meta_seqs_by_parent_ids[parent_seq_id], key=lambda seq: (seq.start, seq.end))
 
