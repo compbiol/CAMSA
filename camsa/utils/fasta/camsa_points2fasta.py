@@ -12,11 +12,14 @@ from collections import defaultdict
 
 import Bio
 import configargparse
+import itertools
 import networkx
 from Bio import SeqIO
 from Bio.Alphabet import generic_dna
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+
+
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
@@ -24,6 +27,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 import camsa
 from camsa.core.io import read_pairs, read_seqi_from_input_sources
 from camsa.core.data_structures import get_scaffold_edges, Sequence
+from camsa.utils.fasta.data_structures import IntraGapFilling, FlankingGapFilling
 
 
 def get_scaffold_name_from_vertex(v):
@@ -84,42 +88,63 @@ def get_meta_flanking_by_meta_seq_name(meta_seq_name, orientation, meta_sequence
     meta_sequences = meta_sequences_by_name[meta_seq_name]
     result = []
     for meta_sequence in meta_sequences:
-        if meta_sequence.name == meta_sequences_by_parent_ids[meta_sequence.parent_seq_id][0].name and meta_sequence.start > 0:
-            if extension_type == "before" and meta_sequence.strand == orientation:
-                extension_meta_seq = Sequence(name="extension",
-                                              parent_seq_id=meta_sequence.parent_seq_id,
-                                              start=0,
-                                              end=meta_sequence.start,
-                                              strand="+",
-                                              seq_group_id=meta_sequence.seq_group_id)
+        flanking_meta_seq = get_meta_flanking_by_meta_seq(meta_sequence=meta_sequence, extension_type=extension_type, fasta_by_ids=fasta_by_ids, meta_sequences_by_parent_ids=meta_sequences_by_parent_ids, orientation=orientation)
+        if flanking_meta_seq is not None:
+            result.append(flanking_meta_seq)
+    return result
 
-                result.append(extension_meta_seq)
-            elif extension_type == "after" and meta_sequence.strand != orientation:
-                extension_meta_seq = Sequence(name="extension",
-                                              parent_seq_id=meta_sequence.parent_seq_id,
-                                              start=0,
-                                              end=meta_sequence.start,
-                                              strand="-",
-                                              seq_group_id=meta_sequence.seq_group_id)
 
-                result.append(extension_meta_seq)
-        elif meta_sequence.name == meta_seqs_by_parent_ids[meta_sequence.parent_seq_id][-1].name and meta_sequence.end < len(fasta_by_ids[meta_sequence.parent_seq_id]):
-            if extension_type == "before" and meta_sequence.strand != orientation:
-                extension_meta_seq = Sequence(name="extension",
-                                              parent_seq_id=meta_sequence.parent_seq_id,
-                                              start=meta_sequence.end,
-                                              end=len(fasta_by_ids[meta_sequence.parent_seq_id]),
-                                              strand="-",
-                                              seq_group_id=meta_sequence.seq_group_id)
-                result.append(extension_meta_seq)
-            elif extension_type == "after" and meta_sequence.strand == orientation:
-                extension_meta_seq = Sequence(name="extension",
-                                              parent_seq_id=meta_sequence.parent_seq_id,
-                                              start=meta_sequence.end,
-                                              end=len(fasta_by_ids[meta_sequence.parent_seq_id]),
-                                              strand="+",
-                                              seq_group_id=meta_sequence.seq_group_id)
-                result.append(extension_meta_seq)
+def get_meta_flanking_by_meta_seq(extension_type, fasta_by_ids, meta_sequence, meta_sequences_by_parent_ids, orientation):
+    if meta_sequence.name == meta_sequences_by_parent_ids[meta_sequence.parent_seq_id][0].name and meta_sequence.start > 0:
+        if extension_type == "before" and meta_sequence.strand == orientation:
+            extension_meta_seq = Sequence(name="extension",
+                                          parent_seq_id=meta_sequence.parent_seq_id,
+                                          start=0,
+                                          end=meta_sequence.start,
+                                          strand="+",
+                                          seq_group_id=meta_sequence.seq_group_id)
+
+            return extension_meta_seq
+        elif extension_type == "after" and meta_sequence.strand != orientation:
+            extension_meta_seq = Sequence(name="extension",
+                                          parent_seq_id=meta_sequence.parent_seq_id,
+                                          start=0,
+                                          end=meta_sequence.start,
+                                          strand="-",
+                                          seq_group_id=meta_sequence.seq_group_id)
+
+            return extension_meta_seq
+    elif meta_sequence.name == meta_seqs_by_parent_ids[meta_sequence.parent_seq_id][-1].name and meta_sequence.end < len(fasta_by_ids[meta_sequence.parent_seq_id]):
+        if extension_type == "before" and meta_sequence.strand != orientation:
+            extension_meta_seq = Sequence(name="extension",
+                                          parent_seq_id=meta_sequence.parent_seq_id,
+                                          start=meta_sequence.end,
+                                          end=len(fasta_by_ids[meta_sequence.parent_seq_id]),
+                                          strand="-",
+                                          seq_group_id=meta_sequence.seq_group_id)
+            return extension_meta_seq
+        elif extension_type == "after" and meta_sequence.strand == orientation:
+            extension_meta_seq = Sequence(name="extension",
+                                          parent_seq_id=meta_sequence.parent_seq_id,
+                                          start=meta_sequence.end,
+                                          end=len(fasta_by_ids[meta_sequence.parent_seq_id]),
+                                          strand="+",
+                                          seq_group_id=meta_sequence.seq_group_id)
+            return extension_meta_seq
+
+
+def collinearity(meta_seq1, meta_seq2, orientation1, orientation2):
+   if meta_seq1.strand == orientation1 and meta_seq2.strand == orientation2 and meta_seq1.end < meta_seq2.start:
+       return 1
+   elif meta_seq1.strand == reverse_or(orientaiton=orientation1) and meta_seq2.strand == reverse_or(orientaiton=orientation2) and meta_seq2.end < meta_seq1.start:
+       return -1
+   return 0
+
+
+def get_dummy_gap_filling(gap_size, sep, default_gap_size):
+    if gap_size == "?":
+        gap_size = default_gap_size
+    result = Seq(sep * int(gap_size))
     return result
 
 
@@ -318,6 +343,87 @@ if __name__ == "__main__":
                     logger.debug("Were unable to extend new scaffold based on the fragment {f1}, which appears to be the first in the \"chain\"".format(f1=f1))
 
             current += seq1
+            filled_gap = False
+            if args.fill_gaps:
+                ap_gap_size = gap_size if isinstance(gap_size, numbers.Number) else "?"
+                if ap_gap_size == "?" and not args.fill_gaps_unknown:
+                    gap_filling = get_dummy_gap_filling(gap_size=ap_gap_size, sep=args.c_sep, default_gap_size=args.c_sep_length)
+                    current += gap_filling
+                    continue
+                logger.debug("Trying to fill the gap for the new scaffold between fragments {f1} and {f2}".format(f1=f1, f2=f2))
+                seq1_by_batches = defaultdict(list)
+                seq1_batches_names = []
+                for seq in participating_sequences_by_ids[f1]:
+                    seq1_by_batches[seq.seq_group_id].append(seq)
+                    if seq.seq_group_id not in seq1_batches_names:
+                        seq1_batches_names.append(seq.seq_group_id)
+                seq2_by_batches = defaultdict(list)
+                seq2_batches_names = []
+                for seq in participating_sequences_by_ids[f2]:
+                    seq2_by_batches[seq.seq_group_id].append(seq)
+                    if seq.seq_group_id not in seq2_batches_names:
+                        seq2_batches_names.append(seq.seq_group_id)
+                common_batches = [seq_group_id for seq_group_id in seq1_batches_names if seq_group_id in seq2_batches_names]
+                logger.debug("{batches_cnt} sequence groups were identified where both {f1} and {f2} have sequence information".format(batches_cnt=len(common_batches), f1=f1, f2=f2))
+
+                for seq_group_id in common_batches:
+                    logger.debug("Trying to fill the gap using sequence group {seq_group_id}".format(seq_group_id=seq_group_id))
+                    meta_seq1s = seq1_by_batches[seq_group_id]
+                    meta_seq2s = seq2_by_batches[seq_group_id]
+                    possible_fillings = []
+                    for meta_seq1, meta_seq2 in itertools.product(meta_seq1s, meta_seq2s):
+                        # case when both sequences reported in the assembly point have flanking sequences on their parent fragments
+                        meta_seq1_flanking = get_meta_flanking_by_meta_seq(extension_type="after", fasta_by_ids=frag_fasta_by_id, meta_sequence=meta_seq1, meta_sequences_by_parent_ids=meta_seqs_by_parent_ids, orientation=f1_or)
+                        meta_seq2_flanking = get_meta_flanking_by_meta_seq(extension_type="before", fasta_by_ids=frag_fasta_by_id, meta_sequence=meta_seq2, meta_sequences_by_parent_ids=meta_seqs_by_parent_ids, orientation=f2_or)
+                        if meta_seq1_flanking is None or meta_seq2_flanking is None:
+                            pass
+                        else:
+                            start_seq = get_fasta_for_meta_seq(meta_seq=meta_seq1_flanking, orientation="+", fasta_by_ids=frag_fasta_by_id)
+                            end_seq = get_fasta_for_meta_seq(meta_seq=meta_seq2_flanking, orientation="+", fasta_by_ids=frag_fasta_by_id)
+                            gap_filling = FlankingGapFilling(seq1=start_seq, seq2=end_seq, seq=None)
+                            possible_fillings.append(gap_filling)
+
+                        # case when two sequences reported in the assembly point are on the same parent assembly and are co-oriented w.r.t. relative orientation reported in the assembly point
+                        if meta_seq1.parent_seq_id == meta_seq2.parent_seq_id:
+                            formation = collinearity(meta_seq1=meta_seq1, meta_seq2=meta_seq2, orientation1=f1_or, orientation2=f2_or)
+                            if formation == 0:
+                                continue
+                            if formation == 1:
+                                meta_seq_filling = Sequence(name="filling", parent_seq_id=meta_seq1.parent_seq_id, start=meta_seq1.end, end=meta_seq2.start, strand="+", seq_group_id=seq_group_id)
+                            else:
+                                meta_seq_filling = Sequence(name="filling", parent_seq_id=meta_seq1.parent_seq_id, start=meta_seq2.end, end=meta_seq1.start, strand="-", seq_group_id=seq_group_id)
+                            filling_seq = get_fasta_for_meta_seq(meta_seq=meta_seq_filling, orientation="+", fasta_by_ids=frag_fasta_by_id)
+                            gap_filling = IntraGapFilling(seq=filling_seq)
+                            possible_fillings.append(gap_filling)
+                    if len(possible_fillings) == 0:
+                        logger.debug("Failed to fill the gap using sequence group {seq_group_id}".format(seq_group_id=seq_group_id))
+                    else:
+                        suitable_gap_fillings = []
+                        for gap_filling in possible_fillings:
+                            if isinstance(gap_filling, IntraGapFilling) and gap_filling.suitable_to_fill_the_gap(gap_size=ap_gap_size, error_per=args.gap_diff_threshold_per, error_bp=args.gap_diff_threshold_bp):
+                                gap_filling.compute_score(gap_size=ap_gap_size, error_per=args.gap_diff_threshold_per, error_bp=args.gap_diff_threshold_bp)
+                                suitable_gap_fillings.append(gap_filling)
+                            elif isinstance(gap_filling, FlankingGapFilling) and gap_filling.suitable_to_fill_the_gap(gap_size=ap_gap_size, error_per=args.gap_diff_threshold_per, error_bp=args.gap_diff_threshold_bp, fill_remainder=args.gap_by_ends_add):
+                                gap_filling.prepare_seq(gap_size=ap_gap_size, error_per=args.gap_diff_threshold_per, error_bp=args.gap_diff_threshold_bp, fill_remainder=args.gap_by_ends_add, sep=args.c_sep)
+                                gap_filling.compute_score(gap_size=ap_gap_size, error_per=args.gap_diff_threshold_per, error_bp=args.gap_diff_threshold_bp)
+                                suitable_gap_fillings.append(gap_filling)
+                        if len(suitable_gap_fillings) == 0:
+                            logger.debug("Failed to fill the gap using sequence group {seq_group_id}".format(seq_group_id=seq_group_id))
+                        else:
+                            logger.debug("Filled the gap between fragments {f1} and {f2} using sequence group {seq_group_id}".format(f1=f1, f2=f2, seq_group_id=seq_group_id))
+                            gap_filling = sorted(suitable_gap_fillings, key=lambda entry: entry.score)[0]
+                            current += gap_filling.seq
+                            filled_gap = True
+                            filled_gaps_cnt += 1
+                    if filled_gap:
+                        break
+                # is only triggered if the gap was NOT successfully filled with a non "N" sequence
+                else:
+                    gap_filling = get_dummy_gap_filling(gap_size=ap_gap_size, sep=args.c_sep, default_gap_size=args.c_sep_length)
+                    current += gap_filling
+
+
+
 
             # filled_gap = False
             # if args.fill_gaps:
