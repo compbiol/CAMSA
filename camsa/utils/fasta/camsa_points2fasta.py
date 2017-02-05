@@ -411,7 +411,7 @@ if __name__ == "__main__":
                             logger.debug("Failed to fill the gap using sequence group {seq_group_id}".format(seq_group_id=seq_group_id))
                         else:
                             logger.debug("Filled the gap between fragments {f1} and {f2} using sequence group {seq_group_id}".format(f1=f1, f2=f2, seq_group_id=seq_group_id))
-                            gap_filling = sorted(suitable_gap_fillings, key=lambda entry: entry.score)[0]
+                            gap_filling = sorted(suitable_gap_fillings, key=lambda entry: entry.score)[-1]
                             current += gap_filling.seq
                             filled_gap = True
                             filled_gaps_cnt += 1

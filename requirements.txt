@@ -6,3 +6,4 @@ enum34
 blist
 ConfigArgParse
 bg
+hypothesis
