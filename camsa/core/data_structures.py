@@ -397,7 +397,7 @@ def to_json(value):
 
 
 class Sequence(object):
-    def __init__(self, name, length=None, parent_seq_id=None, start=None, end=None, strand="+", annotation=None, seq_group_id=None):
+    def __init__(self, name, length=None, parent_seq_id=None, start=None, end=None, strand="+", annotation=None, seq_group_id="Default"):
         self.name = name
         self._length = length
         self._parent_seq_id = parent_seq_id
