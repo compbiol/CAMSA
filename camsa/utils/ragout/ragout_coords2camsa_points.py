@@ -8,7 +8,6 @@ from collections import defaultdict
 
 import configargparse
 
-
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
@@ -23,16 +22,17 @@ from camsa.utils.ragout.shared import filter_blocks_by_good_genomes, filter_bloc
 def get_assembly_points(seq_of_blocks):
     result = []
     for l_block, r_block in zip(seq_of_blocks[:-1], seq_of_blocks[1:]):
-        ap = AssemblyPoint(seq1=l_block.name, seq2=r_block.name, seq1_or=l_block.strand, seq2_or=r_block.strand, sources={l_block.parent_seq.genome_name, r_block.parent_seq.genome_name}, gap_size=r_block.start-l_block.end)
+        ap = AssemblyPoint(seq1=l_block.name, seq2=r_block.name, seq1_or=l_block.strand, seq2_or=r_block.strand, sources={l_block.parent_seq.genome_name, r_block.parent_seq.genome_name}, gap_size=r_block.start - l_block.end)
         result.append(ap)
     return result
+
 
 if __name__ == "__main__":
     full_description = camsa.full_description_template.format(
         names=camsa.CAMSA_AUTHORS,
         affiliations=camsa.AFFILIATIONS,
         dummy=" ",
-        tool="Converting Ragout formatted blocks into FASTA format.",
+        tool="Converting Ragout formatted blocks into CAMSA assembly points.",
         information="For more information refer to {docs}".format(docs=camsa.CAMSA_DOCS_URL),
         contact=camsa.CONTACT)
     full_description = "=" * 80 + "\n" + full_description + "=" * 80 + "\n"
@@ -43,13 +43,14 @@ if __name__ == "__main__":
 
     parser.add_argument("--version", action="version", version=camsa.VERSION)
     parser.add_argument("ragout_coords", type=str, help="A path to ragout coords file")
-    parser.add_argument("--ref-genome", type=str, required=True)
     parser.add_argument("--filter-indels", action="store_true", dest="filter_indels", default=False)
-    parser.add_argument("--filter-duplications", action="store_true", dest="filter_duplications", default=False)
+    parser.add_argument("--no-filter-indels", action="store_false", dest="filter_indels", default=False)
+    parser.add_argument("--filter-duplications", action="store_true", dest="filter_duplications", default=True)
+    parser.add_argument("--no-filter-duplications", action="store_false", dest="filter_duplications", default=True)
     parser.add_argument("--good-genomes", type=str, default="", help="A coma separated list of genome names, to be processed and conversed.\nDEFAULT: \"\" (i.e., all genomes are good)")
-    parser.add_argument("--bad-genomes", type=str, default="", help="A coma separated list of genome names, to be excluded from processing and conversion.\nDEFAULT: \"\" (i.e., no genomes are bad)")
-    parser.add_argument("--sbs", action="store_true", default=False, dest="silent_block_skip")
+    parser.add_argument("--bad-genomes", type=str, default="Anc0", help="A coma separated list of genome names, to be excluded from processing and conversion.\nDEFAULT: \"\" (i.e., no genomes are bad)")
     parser.add_argument("-o", "--output", type=configargparse.FileType("wt"), default=sys.stdout)
+    parser.add_argument("--o-genomes", type=str, dest="output_genomes", default="", help="")
     parser.add_argument("--o-format", type=str, help="")
     parser.add_argument("--o-delimiter", default="\t", type=str, help="")
     parser.add_argument("--c-logging-level", dest="c_logging_level", default=logging.INFO, type=int,
@@ -84,41 +85,34 @@ if __name__ == "__main__":
     if args.filter_duplications:
         filter_duplications(blocks_by_ids=blocks_by_ids)
     all_filtered_genomes = get_all_genomes_from_blocks(blocks_as_ids=blocks_by_ids)
-    if args.ref_genome not in all_filtered_genomes:
-        logger.critical("Reference genome {ref_genome} was not present in all filtered genome {filtered_genomes}"
-                        "".format(ref_genome=args.ref_genome, filtered_genomes=",".join(all_filtered_genomes)))
+    if args.output_genomes == "":
+        output_genomes = sorted(all_filtered_genomes)
+    else:
+        output_genomes = args.output_genomes.split(",")
+    for genome in output_genomes:
+        if genome not in all_filtered_genomes:
+            logger.critical("Genome {genome_name} specified with the --o-genomes flag was not present in all filtered genome {filtered_genomes}"
+                            "".format(genome_name=genome, filtered_genomes=",".join(all_filtered_genomes)))
         exit(1)
     blocks_to_convert = []
-    for block_id in sorted(blocks_by_ids.keys()):
-        blocks = blocks_by_ids[block_id]
-        blocks_by_ref_genome = [block for block in blocks if block.parent_seq.genome_name == args.ref_genome]
-        if len(blocks_by_ref_genome) == 0:
-            if not args.silent_block_skip:
-                logger.critical("For blocks with id {block_id} not a single instance was present in the reference genome {ref_genome}. Flag \"--sbs\" was not set, and this event is thus critical."
-                                "".format(block_id=block_id, ref_genome=args.ref_genome))
-                exit(1)
-            else:
-                logger.warning("For blocks with id {block_id} not a single instance was present in the reference genome \"{ref_genome}\". Flag \"--sbs\" was set, thus silently ignoring this case."
-                               "".format(block_id=block_id, ref_genome=args.ref_genome))
-                continue
-        if len(blocks_by_ref_genome) > 1:
-            logger.warning("More than a single block with id {block_id} was found in the reference genome \"{ref_genome}\"."
-                           "".format(block_id=block_id, ref_genome=args.ref_genome))
-        blocks_to_convert.extend(blocks_by_ref_genome)
-
-    blocks_by_seq_ids = defaultdict(list)
-    for block in blocks_to_convert:
-        blocks_by_seq_ids[block.parent_seq.seq_name].append(block)
-
-    for seq_id in list(blocks_by_seq_ids.keys()):
-        blocks_by_seq_ids[seq_id] = sorted(blocks_by_seq_ids[seq_id], key=lambda block: (block.start, block.end))
-
     aps = []
-    for seq_id in list(blocks_by_seq_ids.keys()):
-        seq_of_blocks = blocks_by_seq_ids[seq_id]
-        seq_aps = get_assembly_points(seq_of_blocks=seq_of_blocks)
-        aps.extend(seq_aps)
+    for genome in output_genomes:
+        for block_id in sorted(blocks_by_ids.keys()):
+            blocks = blocks_by_ids[block_id]
+            blocks_by_genome = [block for block in blocks if block.parent_seq.genome_name == genome]
+            blocks_to_convert.extend(blocks_by_genome)
+
+        blocks_by_seq_ids = defaultdict(list)
+        for block in blocks_to_convert:
+            blocks_by_seq_ids[block.parent_seq.seq_name].append(block)
+
+        for seq_id in list(blocks_by_seq_ids.keys()):
+            blocks_by_seq_ids[seq_id] = sorted(blocks_by_seq_ids[seq_id], key=lambda block: (block.start, block.end))
+
+        for seq_id in list(blocks_by_seq_ids.keys()):
+            seq_of_blocks = blocks_by_seq_ids[seq_id]
+            seq_aps = get_assembly_points(seq_of_blocks=seq_of_blocks)
+            aps.extend(seq_aps)
     logger.info("Writing output to file \"{file_name}\"".format(file_name=args.output))
     camsa_io.write_assembly_points(assembly_points=aps, destination=args.output, output_setup=args.o_format, delimiter=args.o_delimiter)
     logger.info("Elapsed time: {el_time}".format(el_time=str(datetime.datetime.now() - start_time)))
-
