@@ -8,7 +8,7 @@ import logging
 import numbers
 import os
 import sys
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 import Bio
 import configargparse
@@ -18,8 +18,6 @@ from Bio import SeqIO
 from Bio.Alphabet import generic_dna
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-
-
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
@@ -89,7 +87,7 @@ def get_meta_flanking_by_meta_seq_name(meta_seq_name, orientation, meta_sequence
     result = []
     for meta_sequence in meta_sequences:
         flanking_meta_seq = get_meta_flanking_by_meta_seq(meta_sequence=meta_sequence, extension_type=extension_type, fasta_by_ids=fasta_by_ids, meta_sequences_by_parent_ids=meta_sequences_by_parent_ids, orientation=orientation)
-        if flanking_meta_seq is not None:
+        if flanking_meta_seq is not None and flanking_meta_seq.length > 0:
             result.append(flanking_meta_seq)
     return result
 
@@ -134,11 +132,11 @@ def get_meta_flanking_by_meta_seq(extension_type, fasta_by_ids, meta_sequence, m
 
 
 def collinearity(meta_seq1, meta_seq2, orientation1, orientation2):
-   if meta_seq1.strand == orientation1 and meta_seq2.strand == orientation2 and meta_seq1.end < meta_seq2.start:
-       return 1
-   elif meta_seq1.strand == reverse_or(orientaiton=orientation1) and meta_seq2.strand == reverse_or(orientaiton=orientation2) and meta_seq2.end < meta_seq1.start:
-       return -1
-   return 0
+    if meta_seq1.strand == orientation1 and meta_seq2.strand == orientation2 and meta_seq1.end < meta_seq2.start:
+        return 1
+    elif meta_seq1.strand == reverse_or(orientaiton=orientation1) and meta_seq2.strand == reverse_or(orientaiton=orientation2) and meta_seq2.end < meta_seq1.start:
+        return -1
+    return 0
 
 
 def get_dummy_gap_filling(gap_size, sep, default_gap_size):
@@ -167,16 +165,18 @@ if __name__ == "__main__":
                         help="A stream of fasta formatted sequences of scaffolds, that participate in the scaffold assembly represented in form of CAMSA points")
     parser.add_argument("--points", type=configargparse.FileType("rt"), required=True,
                         help="A stream of CAMSA formatted assembly points, representing a scaffold assembly, that is converted into FASTA formatted sequences")
-    parser.add_argument("--seqi", default="", type=str)
+    parser.add_argument("--seqi", default="", type=str, help="")
     parser.add_argument("--seqi-delimiter", default="\t", type=str)
-    parser.add_argument("--fill-gaps", action="store_true")
-    parser.add_argument("--extend-ends", action="store_true")
-    parser.add_argument("--fill-gaps-unknown", action="store_true")
-    parser.add_argument("--gap-by-ends-add", action="store_true")
-    parser.add_argument("--gap-diff-threshold-per", default=10.0, type=float)
-    parser.add_argument("--gap-diff-threshold-bp", default=1000, type=float)
+    parser.add_argument("--extend-ends", action="store_true", help="")
+    parser.add_argument("--fill-gaps", action="store_true", help="")
+    parser.add_argument("--fill-gaps-unknown", action="store_true", help="")
+    parser.add_argument("--gap-diff-threshold-per", default=10.0, type=float, help="")
+    parser.add_argument("--gap-diff-threshold-bp", default=1000, type=float, help="")
+    parser.add_argument("--gap-diff-threshold-max", action="store_true", dest="gap_diff_max_over_min", help="", default=False)
+    parser.add_argument("--gap-fill-no-intra-first", action="store_false", dest="gap_fill_intra_first", default=True)
+    parser.add_argument("--gap-fill-no-inter", action="store_false", dest="gap_fill_inter", default=True)
     parser.add_argument("--allow-singletons", action="store_true", dest="allow_singletons", default=False,
-                        help="Whether to include scaffolds, that were not mentioned in the CAMSA formatted assembly points\nDEFAULT: False")
+                        help="Whether to include scaffolds, that were not mentioned in the CAMSA formatted assembly points or in there \nDEFAULT: False")
     parser.add_argument("--c-sep", type=str,
                         help="A symbol, that is used to indicate gaps between scaffolds in the translated assemblies\nDEFAULT: N")
     parser.add_argument("--c-sep-length", type=int,
@@ -296,7 +296,7 @@ if __name__ == "__main__":
     for seq_id in list(participating_sequences_by_ids.keys()):
         attributed_sequences = [seq for seq in participating_sequences_by_ids[seq_id] if seq.seq_group_id != "None"]
         non_attributed_sequences = [seq for seq in participating_sequences_by_ids[seq_id] if seq.seq_group_id == "None"]
-        participating_sequences_by_ids[seq_id] = sorted(attributed_sequences, key=lambda seq: seq.seq_group_id) + non_attributed_sequences
+        participating_sequences_by_ids[seq_id] = sorted(attributed_sequences, key=lambda seq: seq.seq_group_id, reverse=True) + non_attributed_sequences
 
     meta_seqs_by_parent_ids = defaultdict(list)
     for seq_batch in participating_sequences_by_ids.values():
@@ -312,15 +312,17 @@ if __name__ == "__main__":
     for seq_batch in participating_sequences_by_ids.values():
         for seq in seq_batch:
             if seq.parent_seq_id not in frag_fasta_by_id:
-                logger.critical("Fragment {sequence} (parent for {block_name}) is not present in supplied fasta file. Exiting.".format(sequence=sequence.parent_seq_id, block_name=sequence.name))
+                logger.critical("Fragment {sequence} (parent for {block_name}) is not present in supplied fasta file. Exiting.".format(sequence=seq.parent_seq_id, block_name=seq.name))
                 exit(1)
 
     used_fragments = set()
-    logger.info("Outputting new scaffolds. Data is written to {file_name}".format(file_name=args.output))
-    filled_gaps_cnt = 0
-    extended_ends_cnt = 0
+    filled_gaps_by_origin_cnt = Counter()
+    extended_extremities_by_origin_cnt = Counter()
+    total_gaps_cnt = 0
+    total_extremities_cnt = 0
     for s_cnt, fragment_aps in enumerate(fragments):
         current = Seq("")
+        total_extremities_cnt += 2
         for f_cnt, (f1, f1_or, f2, f2_or, gap_size) in enumerate(fragment_aps):
             main_meta_seq1 = participating_sequences_by_ids[f1][0]
             main_meta_seq2 = participating_sequences_by_ids[f2][0]
@@ -336,13 +338,14 @@ if __name__ == "__main__":
                     extension_meta_seq = flanking_meta_seqs[0]
                     extension = get_fasta_for_meta_seq(meta_seq=extension_meta_seq, orientation="+", fasta_by_ids=frag_fasta_by_id)
                     current += extension
-                    extended_ends_cnt += 1
+                    extended_extremities_by_origin_cnt[extension_meta_seq.seq_group_id] += 1
                     logger.debug("Extended the end of the new scaffold based on the fragment {f1}, which appears to be the first in the \"chain\"".format(f1=f1))
                     logger.debug("\textension of length {ex_length} was obtained from the parent sequence {p_seq}".format(ex_length=extension_meta_seq.length, p_seq=extension_meta_seq.parent_seq_id))
                 else:
                     logger.debug("Were unable to extend new scaffold based on the fragment {f1}, which appears to be the first in the \"chain\"".format(f1=f1))
 
             current += seq1
+            total_gaps_cnt += 1
             filled_gap = False
             if args.fill_gaps:
                 ap_gap_size = gap_size if isinstance(gap_size, numbers.Number) else "?"
@@ -366,6 +369,7 @@ if __name__ == "__main__":
                 common_batches = [seq_group_id for seq_group_id in seq1_batches_names if seq_group_id in seq2_batches_names]
                 logger.debug("{batches_cnt} sequence groups were identified where both {f1} and {f2} have sequence information".format(batches_cnt=len(common_batches), f1=f1, f2=f2))
 
+                best_inter_gap_filling = None
                 for seq_group_id in common_batches:
                     logger.debug("Trying to fill the gap using sequence group {seq_group_id}".format(seq_group_id=seq_group_id))
                     meta_seq1s = seq1_by_batches[seq_group_id]
@@ -381,7 +385,8 @@ if __name__ == "__main__":
                             start_seq = get_fasta_for_meta_seq(meta_seq=meta_seq1_flanking, orientation="+", fasta_by_ids=frag_fasta_by_id)
                             end_seq = get_fasta_for_meta_seq(meta_seq=meta_seq2_flanking, orientation="+", fasta_by_ids=frag_fasta_by_id)
                             gap_filling = FlankingGapFilling(seq1=start_seq, seq2=end_seq, seq=None)
-                            possible_fillings.append(gap_filling)
+                            if args.gap_fill_inter:
+                                possible_fillings.append(gap_filling)
 
                         # case when two sequences reported in the assembly point are on the same parent assembly and are co-oriented w.r.t. relative orientation reported in the assembly point
                         if meta_seq1.parent_seq_id == meta_seq2.parent_seq_id:
@@ -399,27 +404,47 @@ if __name__ == "__main__":
                         logger.debug("Failed to fill the gap using sequence group {seq_group_id}".format(seq_group_id=seq_group_id))
                     else:
                         suitable_gap_fillings = []
+                        per_based_gap_error = ap_gap_size * 100 / args.gap_diff_threshold_per if ap_gap_size != "?" else 0
+                        bp_based_gap_error = args.gap_diff_threshold_bp if ap_gap_size != "?" else 0
+                        gap_error = max(per_based_gap_error, bp_based_gap_error) if args.gap_diff_max_over_min else min(per_based_gap_error, bp_based_gap_error)
+                        if ap_gap_size != "?":
+                            gap_error = min(ap_gap_size, gap_error)
+                            logger.debug("Inferred gap size error is {gse} for the gap of size {gs}".format(gse=gap_error, gs=ap_gap_size))
                         for gap_filling in possible_fillings:
-                            if isinstance(gap_filling, IntraGapFilling) and gap_filling.suitable_to_fill_the_gap(gap_size=ap_gap_size, error_per=args.gap_diff_threshold_per, error_bp=args.gap_diff_threshold_bp):
-                                gap_filling.compute_score(gap_size=ap_gap_size, error_per=args.gap_diff_threshold_per, error_bp=args.gap_diff_threshold_bp)
+                            if isinstance(gap_filling, IntraGapFilling) and gap_filling.suitable_to_fill_the_gap(gap_size=ap_gap_size, gap_size_error=gap_error):
+                                gap_filling.compute_score(gap_size=ap_gap_size, gap_size_error=gap_error)
                                 suitable_gap_fillings.append(gap_filling)
-                            elif isinstance(gap_filling, FlankingGapFilling) and gap_filling.suitable_to_fill_the_gap(gap_size=ap_gap_size, error_per=args.gap_diff_threshold_per, error_bp=args.gap_diff_threshold_bp, fill_remainder=args.gap_by_ends_add):
-                                gap_filling.prepare_seq(gap_size=ap_gap_size, error_per=args.gap_diff_threshold_per, error_bp=args.gap_diff_threshold_bp, fill_remainder=args.gap_by_ends_add, sep=args.c_sep)
-                                gap_filling.compute_score(gap_size=ap_gap_size, error_per=args.gap_diff_threshold_per, error_bp=args.gap_diff_threshold_bp)
+                            elif isinstance(gap_filling, FlankingGapFilling) and gap_filling.suitable_to_fill_the_gap(gap_size=ap_gap_size, gap_size_error=gap_error):
+                                gap_filling.prepare_seq(gap_size=ap_gap_size, gap_size_error=gap_error)
+                                gap_filling.compute_score(gap_size=ap_gap_size, gap_size_error=gap_error)
                                 suitable_gap_fillings.append(gap_filling)
                         if len(suitable_gap_fillings) == 0:
                             logger.debug("Failed to fill the gap using sequence group {seq_group_id}".format(seq_group_id=seq_group_id))
                         else:
                             logger.debug("Filled the gap between fragments {f1} and {f2} using sequence group {seq_group_id}".format(f1=f1, f2=f2, seq_group_id=seq_group_id))
-                            gap_filling = sorted(suitable_gap_fillings, key=lambda entry: entry.score)[-1]
-                            current += gap_filling.seq
-                            filled_gap = True
-                            filled_gaps_cnt += 1
+                            if args.gap_fill_intra_first:
+                                intra_gap_fillings = [filling for filling in suitable_gap_fillings if isinstance(filling, IntraGapFilling)]
+                                if len(intra_gap_fillings) > 0:
+                                    gap_filling = sorted(suitable_gap_fillings, key=lambda entry: entry.score)[-1]
+                                    current += gap_filling.seq
+                                    filled_gap = True
+                                    filled_gaps_by_origin_cnt[seq_group_id] += 1
+                                else:
+                                    if best_inter_gap_filling is None:
+                                        best_inter_gap_filling = sorted(suitable_gap_fillings, key=lambda entry: entry.score)[-1]
+                            else:
+                                gap_filling = sorted(suitable_gap_fillings, key=lambda entry: entry.score)[-1]
+                                current += gap_filling.seq
+                                filled_gap = True
+                                filled_gaps_by_origin_cnt[seq_group_id] += 1
                     if filled_gap:
                         break
                 # is only triggered if the gap was NOT successfully filled with a non "N" sequence
                 else:
-                    gap_filling = get_dummy_gap_filling(gap_size=ap_gap_size, sep=args.c_sep, default_gap_size=args.c_sep_length)
+                    if best_inter_gap_filling is not None:
+                        gap_filling = best_inter_gap_filling.seq
+                    else:
+                        gap_filling = get_dummy_gap_filling(gap_size=ap_gap_size, sep=args.c_sep, default_gap_size=args.c_sep_length)
                     current += gap_filling
 
             if f_cnt == len(fragment_aps) - 1:
@@ -436,7 +461,7 @@ if __name__ == "__main__":
                         extension_meta_seq = flanking_meta_seqs[0]
                         extension = get_fasta_for_meta_seq(meta_seq=extension_meta_seq, orientation="+", fasta_by_ids=frag_fasta_by_id)
                         current += extension
-                        extended_ends_cnt += 1
+                        extended_extremities_by_origin_cnt[extension_meta_seq.seq_group_id] += 1
                         logger.debug("Extended the end of the new scaffold based on the fragment {f2}, which appears to be the last in the \"chain\"".format(f2=f2))
                         logger.debug("\textension of length {ex_length} was obtained from the parent sequence {p_seq}".format(ex_length=extension_meta_seq.length, p_seq=extension_meta_seq.parent_seq_id))
                     else:
@@ -445,12 +470,17 @@ if __name__ == "__main__":
         name = args.scaffold_name_template.format(cnt=s_cnt)
         seq_record = SeqRecord(seq=current, id=name, description="")
         SeqIO.write(sequences=seq_record, handle=args.output, format="fasta")
-    logger.info("Filled {gap_fill_cnt} gaps.".format(gap_fill_cnt=filled_gaps_cnt))
-    logger.info("Extended {end_ext_cnt} extremities.".format(end_ext_cnt=extended_ends_cnt))
+    logger.info("Filled {gap_fill_cnt} / {total_gaps_cnt} gaps.".format(gap_fill_cnt=sum(filled_gaps_by_origin_cnt.values()), total_gaps_cnt=total_gaps_cnt))
+    for key, value in filled_gaps_by_origin_cnt.items():
+        logger.debug("\tFilled {gap_filled_cnt} gaps with source \"{seq_group_id}\"".format(gap_filled_cnt=value, seq_group_id=key))
+    logger.info("Extended {end_ext_cnt} / {total_extremities_cnt} extremities.".format(end_ext_cnt=sum(extended_extremities_by_origin_cnt.values()), total_extremities_cnt=total_extremities_cnt))
+    for key, value in extended_extremities_by_origin_cnt.items():
+        logger.debug("\tExtended {extended_extremities_cnt} extremities of new scaffolds with source \"{seq_group_id}\"".format(extended_extremities_cnt=value, seq_group_id=key))
     if args.allow_singletons:
         logger.info("Adding singleton fragments, that did not participate in any assembly points to the resulting assembly")
         for f_id, fragment in frag_fasta_by_id.items():
             if f_id not in used_fragments:
                 SeqIO.write(sequences=fragment, handle=args.output, format="fasta")
+    logger.info("New scaffolds were written to {file_name}".format(file_name=args.output))
     logger.info("All done!")
     logger.info("Elapsed time: {el_time}".format(el_time=str(datetime.datetime.now() - start_time)))

@@ -1,24 +1,4 @@
 # -*- coding: utf-8 -*-
-import sys
-
-ed_matrix = {
-    "A": {"A": 0, "C": 1, "G": 1, "T": 1, "N": 0},
-    "C": {"A": 1, "C": 0, "G": 1, "T": 1, "N": 0},
-    "G": {"A": 1, "C": 1, "G": 0, "T": 1, "N": 0},
-    "T": {"A": 1, "C": 1, "G": 1, "T": 0, "N": 0},
-    "N": {"A": 0, "C": 0, "G": 0, "T": 0, "N": 0},
-    "gap": 1,
-}
-
-al_matrix = {
-    "A": {"A": 0, "C": 1, "G": 1, "T": 1, "N": 0},
-    "C": {"A": 1, "C": 0, "G": 1, "T": 1, "N": 0},
-    "G": {"A": 1, "C": 1, "G": 0, "T": 1, "N": 0},
-    "T": {"A": 1, "C": 1, "G": 1, "T": 0, "N": 0},
-    "N": {"A": 0, "C": 0, "G": 0, "T": 0, "N": 0},
-    "gap": 1,
-}
-
 
 def get_alignments(iseq, jseq, backtracking, end_cell):
     iseq_r = []
@@ -28,20 +8,21 @@ def get_alignments(iseq, jseq, backtracking, end_cell):
     while current_cell_v != "s":
         if current_cell_v == "u":
             jseq_r.append("-")
-            iseq_r.append(iseq[current_cell_index[0]])
+            iseq_r.append(iseq[current_cell_index[0] - 1])
             current_cell_index = (current_cell_index[0] - 1, current_cell_index[1])
         elif current_cell_v == "l":
             jseq_r.append("-")
-            jseq_r.append(jseq_r[current_cell_index[1]])
+            jseq_r.append(jseq_r[current_cell_index[1] - 1])
             current_cell_index = (current_cell_index[0], current_cell_index[1] - 1)
         else:
-            iseq_r.append(iseq[current_cell_index[0]])
-            jseq_r.append(jseq[current_cell_index[1]])
+            iseq_r.append(iseq[current_cell_index[0] - 1])
+            jseq_r.append(jseq[current_cell_index[1] - 1])
             current_cell_index = (current_cell_index[0] - 1, current_cell_index[1] - 1)
+        current_cell_v = backtracking[current_cell_index[0]][current_cell_index[1]]
     return "".join(reversed(iseq_r)), "".join(reversed(jseq_r))
 
 
-def get_consensus_sequences(aligned_seqs, first):
+def get_consensus_sequences(aligned_seqs):
     result = []
     for fl, sl in zip(*aligned_seqs):
         if fl == "-":
@@ -52,83 +33,61 @@ def get_consensus_sequences(aligned_seqs, first):
             candidate = sl
         elif sl == "N":
             candidate = fl
+        elif sl == fl:
+            candidate = sl
         else:
-            candidate = fl if first else sl
+            candidate = "N"
         result.append(candidate)
     return "".join(result)
 
 
-def sp_alignment(suffix, prefix,
-                 ed_matrix=ed_matrix,
-                 min_suffix=0, min_prefix=0,
-                 max_edit=-1):
-    """
-    :param prefix:
-    :param suffix:
-    :param matrix:
-    :return: consensus seq, aligned seqs (tuple of two strings read w.r.t. produced alignment), edit distance
-    """
-    if max_edit == - 1:
-        max_edit = sys.maxsize
-    i_range = len(suffix) + 1
-    j_range = len(prefix) + 1
+def substitute_score(letter1, letter2):
+    if letter1 == "N" or letter2 == "N" or letter1 == letter2:
+        return 0
+    return 1
+
+
+def bounded_alignment(seq1, seq2, max_edit_distance=-1):
+    if max_edit_distance == -1:
+        max_edit_distance = max(len(seq1), len(seq2))
+    i_range = len(seq1) + 1
+    j_range = len(seq2) + 1
     M = [[0] * j_range for _ in range(i_range)]
-    for i in range(min_suffix):
-        M[i][0] = sys.maxsize
-    for j in range(min_prefix):
-        M[-1][j] = sys.maxsize
     Mbt = [["s" for _ in range(j_range)] for _ in range(i_range)]
-    for j in range(j_range):
-        M[0][j] = ed_matrix["gap"] * j
+    for j in range(1, j_range):
+        M[0][j] = j
         Mbt[0][j] = "l"
-    for i in range(1, i_range-1):
-        for j in range(j_range-1):
-            suffix_letter = suffix[i]
-            prefix_letter = prefix[j]
-            up = M[i - 1][j] + ed_matrix["gap"]
-            diag = M[i][j] + ed_matrix[suffix_letter][prefix_letter]
-            left = M[i][j - 1] + ed_matrix["gap"]
-            M[i][j] = max(diag, up, left)
-            if M[i][j] == diag:
-                Mbt[i][j] = "d"
-            elif M[i][j] == up:
-                Mbt[i][j] = "u"
+    for i in range(1, i_range):
+        M[i][0] = i
+        Mbt[i][0] = "u"
+    for i in range(1, i_range):
+        for j in range(1, j_range):
+            if abs(i - j) > max_edit_distance:
+                continue
+            options = [(M[i - 1][j - 1] + substitute_score(seq1[i - 1], seq2[j - 1]), "d")]
+            if abs(i - j) < max_edit_distance:
+                options.append((M[i - 1][j] + 1, "u"))
+                options.append((M[i][j - 1] + 1, "l"))
             else:
-                Mbt[i][j] = "l"
-
-    ed_scores = [(i, value) for i, value in enumerate(M[i_range - 1][::-1]) if value <= max_edit]
-    if len(ed_scores) == 0:
-        return None, None, None
-    best_entry = sorted(ed_scores, key=lambda entry: (entry[1]))[-1]
-    aligned_seqs = get_alignments(iseq=suffix, jseq=prefix,
-                                  backtracking=Mbt,
-                                  end_cell=(i_range - 1, best_entry[1]))
-    consensus_seq = get_consensus_sequences(aligned_seqs=aligned_seqs, first=True)
-    return consensus_seq, aligned_seqs, best_entry[1]
-
-
-def bounded_alignment(seq1, seq2, matrix):
-    pass
+                if i > j:
+                    options.append((M[i - 1][j] + 1, "u"))
+                else:
+                    options.append((M[i][j - 1] + 1, "l"))
+            result = min(options, key=lambda entry: entry[0])
+            M[i][j] = result[0]
+            Mbt[i][j] = result[1]
+    if M[-1][-1] > max_edit_distance:
+        return AlignmentResult(seq1=seq1, seq2=seq2, consensus=None, al_seq1=None, al_seq2=None, edit_distance=M[-1][-1])
+    aligned_seqs = get_alignments(iseq=seq1, jseq=seq2, backtracking=Mbt, end_cell=(i_range - 1, j_range - 1))
+    consensus_seq = get_consensus_sequences(aligned_seqs=aligned_seqs)
+    return AlignmentResult(seq1=seq1, seq2=seq2, consensus=consensus_seq, al_seq1=aligned_seqs[0], al_seq2=aligned_seqs[1], edit_distance=M[-1][-1])
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+class AlignmentResult(object):
+    def __init__(self, seq1, seq2, consensus, al_seq1, al_seq2, edit_distance):
+        self.seq1 = seq1
+        self.seq2 = seq2
+        self.al_seq1 = al_seq1
+        self.al_seq2 = al_seq2
+        self.consensus = consensus
+        self.edit_distance = edit_distance
