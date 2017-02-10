@@ -96,10 +96,10 @@ if __name__ == "__main__":
                 exit(1)
     sequences = []
     for block_id in sorted(blocks_by_ids.keys()):
-        blocks = blocks_by_ids[block_id]
+        blocks_by_id = blocks_by_ids[block_id]
         blocks = []
         for genome in genomes_order:
-            blocks.extend([block for block in blocks if block.parent_seq.genome_name == genome])
+            blocks.extend([block for block in blocks_by_id if block.parent_seq.genome_name == genome])
         annotations = []
         for ann_genome in args.ann_genomes:
             for block in blocks:
