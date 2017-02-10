@@ -132,9 +132,9 @@ def get_meta_flanking_by_meta_seq(extension_type, fasta_by_ids, meta_sequence, m
 
 
 def collinearity(meta_seq1, meta_seq2, orientation1, orientation2):
-    if meta_seq1.strand == orientation1 and meta_seq2.strand == orientation2 and meta_seq1.end < meta_seq2.start:
+    if meta_seq1.strand == orientation1 and meta_seq2.strand == orientation2 and meta_seq1.end <= meta_seq2.start:
         return 1
-    elif meta_seq1.strand == reverse_or(orientaiton=orientation1) and meta_seq2.strand == reverse_or(orientaiton=orientation2) and meta_seq2.end < meta_seq1.start:
+    elif meta_seq1.strand == reverse_or(orientaiton=orientation1) and meta_seq2.strand == reverse_or(orientaiton=orientation2) and meta_seq2.end <= meta_seq1.start:
         return -1
     return 0
 
@@ -167,6 +167,7 @@ if __name__ == "__main__":
                         help="A stream of CAMSA formatted assembly points, representing a scaffold assembly, that is converted into FASTA formatted sequences")
     parser.add_argument("--seqi", default="", type=str, help="")
     parser.add_argument("--seqi-delimiter", default="\t", type=str)
+    parser.add_argument("--genomes-order", default="", type=str)
     parser.add_argument("--extend-ends", action="store_true", help="")
     parser.add_argument("--fill-gaps", action="store_true", help="")
     parser.add_argument("--fill-gaps-unknown", action="store_true", help="")
@@ -291,12 +292,31 @@ if __name__ == "__main__":
             participating_sequences_by_ids[f1] = sequences_by_ids[f1]
             participating_sequences_by_ids[f2] = sequences_by_ids[f2]
 
+    all_seq_groups = set()
+    for seq_id in list(participating_sequences_by_ids.keys()):
+        for seq in participating_sequences_by_ids[seq_id]:
+            all_seq_groups.add(seq.seq_group_id)
+    if args.genomes_order == "":
+        args.genomes_order = sorted(all_seq_groups, reverse=True)
+    else:
+        args.genomes_order = args.genomes_order.split(",")
+    for genome in args.genomes_order:
+        if genome not in all_seq_groups:
+            logger.critical("Genome with name {genome} specified in the --genomes-order flag value was not present in the inferred set of sequences {seq_groups}"
+                            "".format(genome=genome, seq_groups=",".join(sorted(all_seq_groups))))
+            exit(1)
     # sorting participating sequences into "batches" denoted by seq_group_id field, with a default "None" value to it
     #   initial order of sequences within each batch is preserved w.r.t. the way it is listed in the *.seqi file
     for seq_id in list(participating_sequences_by_ids.keys()):
-        attributed_sequences = [seq for seq in participating_sequences_by_ids[seq_id] if seq.seq_group_id != "None"]
-        non_attributed_sequences = [seq for seq in participating_sequences_by_ids[seq_id] if seq.seq_group_id == "None"]
-        participating_sequences_by_ids[seq_id] = sorted(attributed_sequences, key=lambda seq: seq.seq_group_id, reverse=True) + non_attributed_sequences
+        in_genomes_order = [seq for seq in participating_sequences_by_ids[seq_id] if seq.seq_group_id in args.genomes_order]
+        attributed_sequences = [seq for seq in participating_sequences_by_ids[seq_id] if seq.seq_group_id != "Default" and seq.seq_group_id not in args.genomes_order]
+        non_attributed_sequences = [seq for seq in participating_sequences_by_ids[seq_id] if seq.seq_group_id == "Default"]
+        participating_sequences_by_ids[seq_id] = []
+        for genome in args.genomes_order:
+            participating_sequences_by_ids[seq_id].extend([seq for seq in in_genomes_order if seq.seq_group_id == genome])
+        attributed_sequences = sorted(attributed_sequences, reverse=True, key=lambda entry: entry.seq_group_id)
+        participating_sequences_by_ids[seq_id].extend(attributed_sequences)
+        participating_sequences_by_ids[seq_id].extend(non_attributed_sequences)
 
     meta_seqs_by_parent_ids = defaultdict(list)
     for seq_batch in participating_sequences_by_ids.values():
@@ -340,7 +360,7 @@ if __name__ == "__main__":
                     current += extension
                     extended_extremities_by_origin_cnt[extension_meta_seq.seq_group_id] += 1
                     logger.debug("Extended the end of the new scaffold based on the fragment {f1}, which appears to be the first in the \"chain\"".format(f1=f1))
-                    logger.debug("\textension of length {ex_length} was obtained from the parent sequence {p_seq}".format(ex_length=extension_meta_seq.length, p_seq=extension_meta_seq.parent_seq_id))
+                    logger.debug("\textension of length {ex_length} was obtained from the parent sequence {p_seq} in sequence group {seq_group_id}".format(ex_length=extension_meta_seq.length, p_seq=extension_meta_seq.parent_seq_id, seq_group_id=extension_meta_seq.seq_group_id))
                 else:
                     logger.debug("Were unable to extend new scaffold based on the fragment {f1}, which appears to be the first in the \"chain\"".format(f1=f1))
 
@@ -404,7 +424,7 @@ if __name__ == "__main__":
                         logger.debug("Failed to fill the gap using sequence group {seq_group_id}".format(seq_group_id=seq_group_id))
                     else:
                         suitable_gap_fillings = []
-                        per_based_gap_error = ap_gap_size * 100 / args.gap_diff_threshold_per if ap_gap_size != "?" else 0
+                        per_based_gap_error = (ap_gap_size / 100 * args.gap_diff_threshold_per) if ap_gap_size != "?" else 0
                         bp_based_gap_error = args.gap_diff_threshold_bp if ap_gap_size != "?" else 0
                         gap_error = max(per_based_gap_error, bp_based_gap_error) if args.gap_diff_max_over_min else min(per_based_gap_error, bp_based_gap_error)
                         if ap_gap_size != "?":
@@ -463,7 +483,7 @@ if __name__ == "__main__":
                         current += extension
                         extended_extremities_by_origin_cnt[extension_meta_seq.seq_group_id] += 1
                         logger.debug("Extended the end of the new scaffold based on the fragment {f2}, which appears to be the last in the \"chain\"".format(f2=f2))
-                        logger.debug("\textension of length {ex_length} was obtained from the parent sequence {p_seq}".format(ex_length=extension_meta_seq.length, p_seq=extension_meta_seq.parent_seq_id))
+                        logger.debug("\textension of length {ex_length} was obtained from the parent sequence {p_seq} in sequence group {seq_group_id}".format(ex_length=extension_meta_seq.length, p_seq=extension_meta_seq.parent_seq_id, seq_group_id=extension_meta_seq.seq_group_id))
                     else:
                         logger.debug("Were unable to extend new scaffold based on the fragment {f2}, which appears to be the first in the \"chain\"".format(f2=f2))
 
