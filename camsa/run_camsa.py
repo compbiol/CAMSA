@@ -41,12 +41,12 @@ if __name__ == "__main__":
                                                             os.path.join(camsa.root_dir, "logging.ini")])
     parser.add_argument("points", nargs="+",
                         help="A list of input files, representing a standard CAMSA format for assembly points.")
-    parser.add_argument("--lengths", default=None,
-                        help="A file with information about lengths for all sequences, involved in input assembly points")
-    parser.add_argument("--lengths-delimiter", type=str, default="\t",
-                        help="A delimiter character for the file containing information about lengths of the observed sequences.\nDEFAULT: \\t")
-    parser.add_argument("--lengths-ensure-all", action="store_true", dest="lengths_ensure", default=False,
-                        help="Ensures, that either all, or non of the sequences participating in assembly points have lengths assigned to them.\nDEFAULT: False")
+    parser.add_argument("--seqi", default=None,
+                        help="A file with sequences' information about fragments, involved in input assembly points")
+    parser.add_argument("--seqi-delimiter", type=str, default="\t",
+                        help="A delimiter character for the file containing sequences' information.\nDEFAULT: \\t")
+    parser.add_argument("--seqi-ensure-all", action="store_true", dest="lengths_ensure", default=False,
+                        help="Ensures, that either all, or non of the sequences participating in assembly points have information provided for them.\nDEFAULT: False")
     parser.add_argument("-c", "--config", is_config_file=True,
                         help="Config file path with settings for CAMSA to run with.\nOverwrites the default CAMSA configuration file.\nValues in config file can be overwritten by command line arguments.")
     parser.add_argument("--c-cw-exact", type=float,
@@ -70,7 +70,7 @@ if __name__ == "__main__":
                         help="Whether to allow cycles in the produced merged assembly.\nDEFAULT: False")
     parser.add_argument("--version", action="version", version=camsa.VERSION)
     parser.add_argument("--i-delimiter", default="\t", type=str,
-                        help="String used as a delimiter in the input files with CAMSA assemblyp points")
+                        help="String used as a delimiter in the input files with CAMSA assembly points")
     parser.add_argument("-o", "--o-dir",
                         help="A directory, where CAMSA will store all of the produced output (report, assets, etc).\nDEFAULT: camsa_{date}")
     # parser.add_argument("--o-interactive-disable", action="store_false", dest="o_interactive", default=True,
@@ -127,29 +127,34 @@ if __name__ == "__main__":
                                                                                   default_cw_eae=args.c_cw_exact,
                                                                                   default_cw_cae=args.c_cw_candidate,
                                                                                   delimiter=args.i_delimiter)
-    lengths = {}
-    if args.lengths is not None:
-        logger.info("Reading sequences' lengths")
-        with open(args.lengths, "rt") as source:
-            lengths = camsa_io.read_lengths(source=source, delimiter=args.lengths_delimiter, destination=lengths)
-    if len(lengths) > 0:
+    or_seqi = defaultdict(list)
+    if args.seqi is not None:
+        args.seqi = os.path.abspath(os.path.expanduser(args.seqi))
+        logger.info("Reading sequences' info")
+        with open(args.seqi, "rt") as source:
+            camsa_io.read_seqi_from_input_sources(source=source, delimiter=args.seqi_delimiter, destination=or_seqi)
+    seqi = {}
+    for seq_name in list(or_seqi.keys()):
+        entry_list = or_seqi[seq_name]
+        seqi[seq_name] = entry_list[0]
+    if len(seqi) > 0:
         sequences_ids_from_assembly_points = set()
         for source, aps in assembly_points_by_sources.items():
             for ap in aps:
                 sequences_ids_from_assembly_points.add(ap.seq1)
                 sequences_ids_from_assembly_points.add(ap.seq2)
-        sequences_ids_from_lengths = set(lengths.keys())
+        sequences_ids_from_lengths = set(seqi.keys())
         difference = sequences_ids_from_assembly_points - sequences_ids_from_lengths
         if len(difference) > 0:
             logger.warning("Some sequences, that participate in assembly points do not have lengths associated with them,"
                            "while others do.")
             logger.warning("Problematic sequences: {seqs}".format(seqs=",".join(sorted(difference))))
-            if args.lengths_ensure:
-                logger.error("A flag \"--lengths-ensure-all\" was set, so the program terminates")
+            if args.seqi_ensure:
+                logger.error("A flag \"--seqi-ensure-all\" was set, so the program terminates")
             else:
                 logger.warning("Assigning lengths of -1 to all problematic sequences")
                 for seq_id in difference:
-                    lengths[seq_id] = Sequence(name=seq_id, length=-1)
+                    seqi[seq_id] = Sequence(name=seq_id, length=-1)
 
     #######################################
     #       extracting reference          #
@@ -309,9 +314,9 @@ if __name__ == "__main__":
                 "assemblies_to_colors": assemblies_to_colors,
                 "grouped_assemblies": grouped_assemblies,
                 "fragments": {
-                    "lengths": lengths,
-                    'max_length': max([seq.length for seq in lengths.values()]) if len(lengths) > 0 else -1,
-                    'min_length': min([seq.length for seq in lengths.values()]) if len(lengths) > 0 else -1,
+                    "seqi": seqi,
+                    'max_length': max([seq.length for seq in seqi.values()]) if len(seqi) > 0 else -1,
+                    'min_length': min([seq.length for seq in seqi.values()]) if len(seqi) > 0 else -1,
                 }
             },
             settings={
