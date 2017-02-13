@@ -20,7 +20,7 @@ setup(
     install_requires=['six>=1.10.0', 'networkx>=1.11', 'Jinja2>=2.8', 'enum34>=1.1.6', 'blist>=1.3.6', 'ConfigArgParse>=0.10.0',
                       'biopython>=1.67'],
     scripts=["camsa/run_camsa.py",
-             "camsa/utils/ragout/ragout_coords2fasta.py", "camsa/utils/ragout/ragout_coords_coverage.py",
+             "camsa/utils/ragout/ragout_coords2fasta.py", "camsa/utils/ragout/ragout_coords_coverage.py", "camsa/utils/ragout/ragout_coords2camsa_seqi.py",
              "camsa/utils/grimm/grimm2camsa_points.py",
              "camsa/utils/fasta/fasta2camsa_points.py", "camsa/utils/fasta/fasta2camsa_seqi.py", "camsa/utils/fasta/camsa_points2fasta.py",
              "camsa/utils/agp/agp2camsa_points.py"],
