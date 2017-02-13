@@ -22,7 +22,7 @@ if __name__ == "__main__":
         names=camsa.CAMSA_AUTHORS,
         affiliations=camsa.AFFILIATIONS,
         dummy=" ",
-        tool="Converting FASTA formatted scaffolding results for further CAMSA processing.",
+        tool="Converting FASTA formatted fragments further CAMSA processing.",
         information="For more information refer to {docs}".format(docs=camsa.CAMSA_DOCS_URL),
         contact=camsa.CONTACT)
     full_description = "=" * 80 + "\n" + full_description + "=" * 80 + "\n"
