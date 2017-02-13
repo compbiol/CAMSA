@@ -1,3 +1,7 @@
 [submodule "camsa/external_libs/Ragout"]
 	path = camsa/external_libs/Ragout
 	url = https://github.com/fenderglass/Ragout.git
+
+[submodule "camsa/external_libs/progressiveCactus"]
+	path = camsa/external_libs/progressiveCactus
+	url = https://github.com/glennhickey/progressiveCactus.git
