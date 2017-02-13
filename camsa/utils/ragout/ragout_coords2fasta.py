@@ -33,16 +33,15 @@ if __name__ == "__main__":
 
     parser.add_argument("--version", action="version", version=camsa.VERSION)
     parser.add_argument("ragout_coords", type=str, help="A path to ragout coords file")
-    parser.add_argument("--ref-genomes", type=str, default="")
     parser.add_argument("--ann-genomes", type=str, default="")
     parser.add_argument("--ann-delimiter", type=str, default=";")
     parser.add_argument("--filter-indels", action="store_true", dest="filter_indels", default=False)
     parser.add_argument("--filter-duplications", action="store_true", dest="filter_duplications", default=False)
     parser.add_argument("--good-genomes", type=str, default="", help="A coma separated list of genome names, to be processed and conversed.\nDEFAULT: \"\" (i.e., all genomes are good)")
     parser.add_argument("--bad-genomes", type=str, default="", help="A coma separated list of genome names, to be excluded from processing and conversion.\nDEFAULT: \"\" (i.e., no genomes are bad)")
-    parser.add_argument("--sbs", action="store_true", default=False, dest="silent_block_skip")
     parser.add_argument("fasta", nargs="+")
     parser.add_argument("-o", "--output", type=configargparse.FileType("wt"), default=sys.stdout)
+    parser.add_argument("--o-genomes", dest="ref_genomes", type=str, default="a string of coma separated names of genomes, who will")
     parser.add_argument("--c-logging-level", dest="c_logging_level", default=logging.INFO, type=int,
                         choices=[logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
                         help="Logging level for the converter.\nDEFAULT: {info}".format(info=logging.INFO))
@@ -76,14 +75,14 @@ if __name__ == "__main__":
         filter_duplications(blocks_by_ids=blocks_by_ids)
     all_filtered_genomes = get_all_genomes_from_blocks(blocks_as_ids=blocks_by_ids)
     if args.ref_genomes == "":
-        logger.info("Reference genomes were not specified")
+        logger.info("Output genomes were not specified")
         args.ref_genomes = sorted(all_filtered_genomes)
-        logger.info("Setting reference genomes to {ref_genome}".format(ref_genome=args.ref_genome))
+        logger.info("Setting output genomes to {ref_genome}".format(ref_genome=args.ref_genomes))
     else:
         args.ref_genomes = args.ref_genomes.split(",")
         for genome in args.ref_genomes:
             if genome not in all_filtered_genomes:
-                logger.critical("Reference genome {ref_genome} was not present in all filtered genome {filtered_genomes}"
+                logger.critical("Output genome {ref_genome} was not present in all filtered genomes {filtered_genomes}"
                                 "".format(ref_genome=args.genome, filtered_genomes=",".join(all_filtered_genomes)))
                 exit(1)
     if args.ann_genomes == "":
@@ -91,25 +90,14 @@ if __name__ == "__main__":
     else:
         args.ann_genomes = args.ann_genomes.split(",")
         for genome in args.ann_genomes:
-            if genome not in args.ref_genomes:
-                logger.critical("Annotation genomes {ann_genome} was not present in reference genomes {ref_genomes}"
-                                "".format(ann_genome=args.genome, ref_genomes=",".join(all_filtered_genomes)))
+            if genome not in all_filtered_genomes:
+                logger.critical("Annotation genomes {ann_genome} was not present in all filtered genomes {filtered_genomes}"
+                                "".format(ann_genome=args.genome, filtered_genomes=",".join(all_filtered_genomes)))
                 exit(1)
     blocks_to_convert = []
     for block_id in sorted(blocks_by_ids.keys()):
         blocks = blocks_by_ids[block_id]
         blocks_by_ref_genomes = [block for block in blocks if block.parent_seq.genome_name in args.ref_genomes]
-        if len(blocks_by_ref_genomes) == 0:
-            if not args.silent_block_skip:
-                logger.critical("For blocks with id {block_id} not a single instance was present in the reference genome {ref_genome}. Flag \"--sbs\" was not set, and this event is thus critical."
-                                "".format(block_id=block_id, ref_genome=args.ref_genome))
-            else:
-                logger.warning("For blocks with id {block_id} not a single instance was present in the reference genome \"{ref_genome}\". Flag \"--sbs\" was set, thus silently ignoring this case."
-                               "".format(block_id=block_id, ref_genome=args.ref_genome))
-                continue
-        # if len(blocks_by_ref_genomes) > 1:
-        #     logger.warning("More than a single block with id {block_id} was found in the reference genome \"{ref_genome}\". Randomly choosing one such block (shall not be a problem, as they must be merely identical)"
-        #                    "".format(block_id=block_id, ref_genome=args.ref_genome))
         blocks = []
         for ref_genome in args.ref_genomes:
             for block in blocks_by_ref_genomes:
