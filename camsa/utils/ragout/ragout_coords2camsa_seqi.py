@@ -34,13 +34,19 @@ if __name__ == "__main__":
                         help="A file to which the CAMSA readable fragments lengths would be written. Standard extension is \".camsa.lengths\".\nDEFAULT: stdout")
     parser.add_argument("--o-format", type=str, help="")
     parser.add_argument("ragout_coords", type=str, help="A path to ragout coords file")
-    parser.add_argument("--genomes-order", type=str, default="")
-    parser.add_argument("--ann-genomes", type=str, default="")
+    parser.add_argument("--genomes-order", type=str, default="",
+                        help="A coma separated list of genome names, used to determine the output order for each homologous synteny block.\nDEFAULT: \"\" (i.e., sorted list of good (all - bad) genomes)")
+    parser.add_argument("--ann-genomes", type=str,
+                        default="A coma separated list of genome names, to be used when annotation all synteny blocks in the output.\nDEFAULT: \"\" (i.e., equals to the --genomes-order value)")
     parser.add_argument("--ann-delimiter", type=str, default=";")
-    parser.add_argument("--filter-indels", action="store_true", dest="filter_indels", default=False)
-    parser.add_argument("--no-filter-indels", action="store_false", dest="filter_indels", default=False)
-    parser.add_argument("--filter-duplications", action="store_true", dest="filter_duplications", default=True)
-    parser.add_argument("--no-filter-duplications", action="store_false", dest="filter_duplications", default=True)
+    parser.add_argument("--filter-indels", action="store_true", dest="filter_indels", default=False,
+                        help="A flag to indicate whether to filter out all synteny blocks, that are not present exactly once in each of the good (all-bad) genomes.")
+    parser.add_argument("--no-filter-indels", action="store_false", dest="filter_indels", default=False,
+                        help="A flag to indicate whether to filter out all synteny blocks, that are not present exactly once in each of the good (all-bad) genomes.")
+    parser.add_argument("--filter-duplications", action="store_true", dest="filter_duplications", default=True,
+                        help="A flag to indicate whether to filter out all synteny blocks, that are present more than once in at least on of the good (all-bad) genomes.")
+    parser.add_argument("--no-filter-duplications", action="store_false", dest="filter_duplications", default=True,
+                        help="A flag to indicate whether to filter out all synteny blocks, that are present more than once in at least on of the good (all-bad) genomes.")
     parser.add_argument("--good-genomes", type=str, default="", help="A coma separated list of genome names, to be processed and conversed.\nDEFAULT: \"\" (i.e., all genomes are good)")
     parser.add_argument("--bad-genomes", type=str, default="", help="A coma separated list of genome names, to be excluded from processing and conversion.\nDEFAULT: \"\" (i.e., no genomes are bad)")
     parser.add_argument("--c-logging-level", dest="logging_level", default=logging.INFO, type=int,
