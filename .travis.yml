@@ -39,7 +39,6 @@ before_install:
 install:
   - source camsa-env/bin/activate
   - pip install -e .
-  - pip install -e .[fasta]
 
 script:
   - cd camsa/examples/utils/fasta/data
