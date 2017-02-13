@@ -162,22 +162,37 @@ if __name__ == "__main__":
 
     parser.add_argument("--version", action="version", version=camsa.VERSION)
     parser.add_argument("--fasta", type=configargparse.FileType("rt"), required=True,
-                        help="A stream of fasta formatted sequences of scaffolds, that participate in the scaffold assembly represented in form of CAMSA points")
+                        help="A stream of fasta formatted sequences of fragments, that participate in the scaffold assembly represented in form of CAMSA points")
     parser.add_argument("--points", type=configargparse.FileType("rt"), required=True,
                         help="A stream of CAMSA formatted assembly points, representing a scaffold assembly, that is converted into FASTA formatted sequences")
-    parser.add_argument("--seqi", default="", type=str, help="")
-    parser.add_argument("--seqi-delimiter", default="\t", type=str)
-    parser.add_argument("--genomes-order", default="", type=str)
-    parser.add_argument("--extend-ends", action="store_true", help="")
-    parser.add_argument("--fill-gaps", action="store_true", help="")
-    parser.add_argument("--fill-gaps-unknown", action="store_true", help="")
-    parser.add_argument("--gap-diff-threshold-per", default=10.0, type=float, help="")
-    parser.add_argument("--gap-diff-threshold-bp", default=1000, type=float, help="")
-    parser.add_argument("--gap-diff-threshold-max", action="store_true", dest="gap_diff_max_over_min", help="", default=False)
-    parser.add_argument("--gap-fill-no-intra-first", action="store_false", dest="gap_fill_intra_first", default=True)
-    parser.add_argument("--gap-fill-no-inter", action="store_false", dest="gap_fill_inter", default=True)
-    parser.add_argument("--allow-singletons", action="store_true", dest="allow_singletons", default=False,
-                        help="Whether to include scaffolds, that were not mentioned in the CAMSA formatted assembly points or in there \nDEFAULT: False")
+    parser.add_argument("--seqi", default="", type=str,
+                        help="A stream of CAMSA formatted information about fragments, that participate in the reported assembly points.\nDEFAULT: dummy seqi records are created for each fasta record, if non provided.")
+    parser.add_argument("--seqi-delimiter", default="\t", type=str,
+                        help="A delimiter character for the file containing sequences' information.\nDEFAULT: \\t")
+    parser.add_argument("--genomes-order", default="", type=str,
+                        help="Order in which genomes sequences (i.e., seq_group_id column in *.seqi file) shall be for resulting sequence reconstruction.\nDEFAULT: sorted order of all seq_group_id column values. Seqi entries without such attribute are assigned the \"Default\" seq_group and used last.")
+    parser.add_argument("--extend-ends", action="store_true", dest="extend_ends",
+                        help="Flag specifying whether to extend the extremities in the reconstructed assembly, when possible, using flanking extremities in the sequences, from which fragments come.\nDEFAULT: True", default=True)
+    parser.add_argument("--no-extend-ends", action="store_false", dest="extend_ends",
+                        help="Flag specifying whether to extend the extremities in the reconstructed assembly, when possible, using flanking extremities in the sequences, from which fragments come.\nDEFAULT: True", default=True)
+    parser.add_argument("--fill-gaps", action="store_true", dest="fill_gaps",
+                        help="Flag specifying whether to fill gaps in the reconstructed assembly using information in the sequences, from which fragments participating in assembly points come.\nDEFAULT: True", default=True)
+    parser.add_argument("--no-fill-gaps", action="store_false", dest="fill_gaps",
+                        help="Flag specifying whether to fill gaps in the reconstructed assembly using information in the sequences, from which fragments participating in assembly points come.\nDEFAULT: True", default=True)
+    parser.add_argument("--fill-gaps-unknown", action="store_true",
+                        help="A flag specifying whether to fill gaps with unknown gap size or nor.\nDEFAULT: False (i.e., Ns will be inserted)")
+    parser.add_argument("--gap-diff-threshold-per", default=10.0, type=float,
+                        help="A percentage wise difference (i.e., in [0, 100]) specifying how much the length of the filling can differ from the given gap size.\nDEFAULT: 10")
+    parser.add_argument("--gap-diff-threshold-bp", default=1000, type=float,
+                        help="A bp wise difference (i.e., [0,..]) specifying how much the length of the filling can differ from the given gap size.\nDEFAULT: 10")
+    parser.add_argument("--gap-diff-threshold-max", action="store_true", dest="gap_diff_max_over_min", default=False,
+                        help="A flag specifying whether to take maximum possible difference (i.e., between percentage wise and bp wise) or a minimum one.\nDEFAULT: False (i.e., minimum, more conservative, difference is taken as a threshold)")
+    parser.add_argument("--gap-fill-no-intra-first", action="store_false", dest="gap_fill_intra_first", default=True,
+                        help="A flag specifying whether gaps shall be fist filled with intra-fragment sequence, rather than using two flanking, possible overlapping sequences.\nDEFAULT: True")
+    parser.add_argument("--gap-fill-no-inter", action="store_false", dest="gap_fill_inter", default=True,
+                        help="A flag specifying whether it is allowed to fill gaps with pairs flanking sequences or not.")
+    # parser.add_argument("--allow-singletons", action="store_true", dest="allow_singletons", default=False,
+    #                     help="Whether to include scaffolds, that were not mentioned in the CAMSA formatted assembly points or in there \nDEFAULT: False")
     parser.add_argument("--c-sep", type=str,
                         help="A symbol, that is used to indicate gaps between scaffolds in the translated assemblies\nDEFAULT: N")
     parser.add_argument("--c-sep-length", type=int,
@@ -496,11 +511,11 @@ if __name__ == "__main__":
     logger.info("Extended {end_ext_cnt} / {total_extremities_cnt} extremities.".format(end_ext_cnt=sum(extended_extremities_by_origin_cnt.values()), total_extremities_cnt=total_extremities_cnt))
     for key, value in extended_extremities_by_origin_cnt.items():
         logger.debug("\tExtended {extended_extremities_cnt} extremities of new scaffolds with source \"{seq_group_id}\"".format(extended_extremities_cnt=value, seq_group_id=key))
-    if args.allow_singletons:
-        logger.info("Adding singleton fragments, that did not participate in any assembly points to the resulting assembly")
-        for f_id, fragment in frag_fasta_by_id.items():
-            if f_id not in used_fragments:
-                SeqIO.write(sequences=fragment, handle=args.output, format="fasta")
+    # if args.allow_singletons:
+    #     logger.info("Adding singleton fragments, that did not participate in any assembly points to the resulting assembly")
+    #     for f_id, fragment in frag_fasta_by_id.items():
+    #         if f_id not in used_fragments:
+    #             SeqIO.write(sequences=fragment, handle=args.output, format="fasta")
     logger.info("New scaffolds were written to {file_name}".format(file_name=args.output))
     logger.info("All done!")
     logger.info("Elapsed time: {el_time}".format(el_time=str(datetime.datetime.now() - start_time)))
