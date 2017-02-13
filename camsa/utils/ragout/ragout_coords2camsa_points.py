@@ -55,7 +55,7 @@ if __name__ == "__main__":
     parser.add_argument("--bad-genomes", type=str, default="Anc0", help="A coma separated list of genome names, to be excluded from processing and conversion.\nDEFAULT: \"\" (i.e., no genomes are bad)")
     parser.add_argument("-o", "--output", type=configargparse.FileType("wt"), default=sys.stdout)
     parser.add_argument("--o-genomes", type=str, dest="output_genomes", default="",
-                        help="A coma separated list of genome names, which will determine that order for each synteny block entries to be listed in the output.\nDEFAULT: \"\" (i.e., sorted list of good (all - bad) genomes)")
+                        help="A coma separated list of genome names, which will determine the order inferred assembly points to be output.\nDEFAULT: \"\" (i.e., sorted list of good (all - bad) genomes)")
     parser.add_argument("--o-format", type=str, help="")
     parser.add_argument("--o-delimiter", default="\t", type=str, help="")
     parser.add_argument("--c-logging-level", dest="c_logging_level", default=logging.INFO, type=int,
