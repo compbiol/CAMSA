@@ -97,8 +97,8 @@ if __name__ == "__main__":
         args.ann_genomes = args.ann_genomes.split(",")
         for genome in args.ann_genomes:
             if genome not in genomes_order:
-                logger.critical("Annotation genomes {ann_genome} was not present in reference genomes {ref_genomes}"
-                                "".format(ann_genome=args.genome, ref_genomes=",".join(sorted(all_filtered_genomes))))
+                logger.critical("Annotation genome {ann_genome} was not present in reference genomes {ref_genomes}"
+                                "".format(ann_genome=genome, ref_genomes=",".join(sorted(all_filtered_genomes))))
                 exit(1)
     sequences = []
     for block_id in sorted(blocks_by_ids.keys()):
