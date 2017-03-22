@@ -32,7 +32,7 @@ before_install:
 
 install:
   - source camsa-env/bin/activate
-  - pip install -e .
+  - travis_wait 30 pip install -e .
 
 script:
   - cd camsa/examples/utils/fasta/data
