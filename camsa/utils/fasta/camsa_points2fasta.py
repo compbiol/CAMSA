@@ -383,7 +383,7 @@ if __name__ == "__main__":
             total_gaps_cnt += 1
             filled_gap = False
             if args.fill_gaps:
-                ap_gap_size = gap_size if isinstance(gap_size, numbers.Number) else "?"
+                ap_gap_size = int(gap_size) if isinstance(gap_size, numbers.Number) else "?"
                 if ap_gap_size == "?" and not args.fill_gaps_unknown:
                     gap_filling = get_dummy_gap_filling(gap_size=ap_gap_size, sep=args.c_sep, default_gap_size=args.c_sep_length)
                     current += gap_filling

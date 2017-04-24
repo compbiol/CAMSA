@@ -46,7 +46,7 @@ class FlankingGapFilling(GapFilling):
         if cumulative_length > max_gap_size:
             min_overlap = cumulative_length - gap_size - gap_size_error
             max_overlap = cumulative_length - gap_size + gap_size_error
-            max_overlap = min(max_overlap, len(self.start_seq), len(self.end_seq))
+            max_overlap = int(min(max_overlap, len(self.start_seq), len(self.end_seq)))
             l1s = self.start_seq[-max_overlap:]
             l2p = self.end_seq[:max_overlap]
             alignment_result = bounded_alignment(seq1=l1s, seq2=l2p, max_edit_distance=max_overlap - min_overlap)
