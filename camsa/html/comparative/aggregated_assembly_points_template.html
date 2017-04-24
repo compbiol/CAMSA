@@ -94,6 +94,11 @@
                         <div class="col-lg-offset-3 col-lg-5 text-right">
                             <input id="fragments_length_both" class="col-lg-5" type="checkbox" data-toggle="toggle" data-on="Both sequences" data-off="Either sequence" data-width="200">
                         </div>
+                        <div class="row search_query_div">
+                            <div class="col-lg-offset-2 col-lg-8">
+                                <label><input id="include_fragments_lengths" type="checkbox"> Include lengths search results</label>
+                            </div>
+                        </div>
                     {% else %}
                         <div class="row">
 
@@ -379,7 +384,10 @@
                         } else {
                             lengths_result = seq1_result || seq2_result;
                         }
-                        result.push(lengths_result);
+                        var include_length_results = $("#include_fragemnts_lengths").is(":checked");
+                        if (include_length_results) {
+                            result.push(lengths_result);
+                        }
                     {% endif %}
 
                     var logical_or = $("#logical_or_search").is(":checked");
