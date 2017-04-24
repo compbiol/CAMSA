@@ -12,7 +12,7 @@ def get_alignments(iseq, jseq, backtracking, end_cell):
             current_cell_index = (current_cell_index[0] - 1, current_cell_index[1])
         elif current_cell_v == "l":
             jseq_r.append("-")
-            jseq_r.append(jseq_r[current_cell_index[1] - 1])
+            jseq_r.append(jseq[current_cell_index[1] - 1])
             current_cell_index = (current_cell_index[0], current_cell_index[1] - 1)
         else:
             iseq_r.append(iseq[current_cell_index[0] - 1])
