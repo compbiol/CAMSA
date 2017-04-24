@@ -88,7 +88,7 @@ if __name__ == "__main__":
         genomes_order = sorted(all_filtered_genomes)
     for genome in genomes_order:
         if genome not in all_filtered_genomes:
-            logger.critical("Genome \"{genome}\" was specified with teh --genomes-order flag but was not found in the set of filtered genomes \{{filtered_genomes}\}"
+            logger.critical("Genome \"{genome}\" was specified with teh --genomes-order flag but was not found in the set of filtered genomes {{{filtered_genomes}}}"
                             "".format(genome=genome, filtered_genomes=",".join(sorted(all_filtered_genomes))))
             exit(1)
     if args.ann_genomes == "":
