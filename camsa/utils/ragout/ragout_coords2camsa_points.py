@@ -99,9 +99,10 @@ if __name__ == "__main__":
             logger.critical("Genome {genome_name} specified with the --o-genomes flag was not present in all filtered genome {filtered_genomes}"
                             "".format(genome_name=genome, filtered_genomes=",".join(all_filtered_genomes)))
             exit(1)
-    blocks_to_convert = []
+
     aps = []
     for genome in output_genomes:
+        blocks_to_convert = []
         for block_id in sorted(blocks_by_ids.keys()):
             blocks = blocks_by_ids[block_id]
             blocks_by_genome = [block for block in blocks if block.parent_seq.genome_name == genome]
