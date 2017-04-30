@@ -15,7 +15,7 @@ setup(
     license='MIT',
     keywords="comparative genomics, scaffolding, genome assembly",
     url='https://github.com/compbiol/camsa',
-    packages=['', 'camsa', 'camsa.core', 'camsa.utils', 'camsa.utils.camsa', 'camsa.utils.fasta', 'camsa.utils.agp', 'camsa.utils.ragout', 'camsa.utils.grimm'],
+    packages=['', 'camsa', 'camsa.core', 'camsa.utils', 'camsa.utils.camsa', 'camsa.utils.fasta', 'camsa.utils.agp', 'camsa.utils.ragout', 'camsa.utils.grimm', 'camsa.utils.agouti'],
     include_package_data=True,
     install_requires=['six>=1.10.0', 'networkx>=1.11', 'Jinja2>=2.8', 'enum34>=1.1.6', 'blist>=1.3.6', 'ConfigArgParse>=0.10.0',
                       'biopython>=1.67', 'bg>=1.8.1', 'more_itertools'],
