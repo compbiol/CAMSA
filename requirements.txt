@@ -7,3 +7,4 @@ blist
 ConfigArgParse
 bg
 hypothesis
+more_itertools
