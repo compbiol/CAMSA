@@ -97,7 +97,8 @@
                             {{ assembly.in_conflicted_cnt }}
                             {% if not loop.last %}, {% endif %}
                         {% endfor %}
-                    ]
+                    ],
+                    visible: false
                 }, {
                     name: 'In-semiconflicting',
                     data: [
@@ -105,7 +106,8 @@
                             {{ grouped_assembly.in_semi_conflicted_cnt }}
                             {% if not loop.last %}, {% endif %}
                         {% endfor %}
-                    ]
+                    ],
+                    visible: false
                 }
                 ]
             });
