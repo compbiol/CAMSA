@@ -20,9 +20,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import camsa
 from camsa.core import io as camsa_io
 from camsa.core import merging
-from camsa.core.reference_analysis import analyze_and_update_assembly_points_based_on_reference
 from camsa.core.comparative_analysis import compute_and_update_assembly_points_conflicts
-from camsa.core.data_structures import Assembly, assign_ids_to_assembly_points, merge_assembly_points, assign_parents_to_children, to_json, Sequence
+from camsa.core.data_structures import Assembly, assign_ids_to_assembly_points, merge_assembly_points, assign_parents_to_children, to_json, Sequence, OrderGraph, AssemblyPoint
 from camsa.core.merging import MergingStrategies, update_assembly_points_with_merged_assembly, update_gap_sizes_in_merged_assembly
 
 if __name__ == "__main__":
@@ -78,7 +77,9 @@ if __name__ == "__main__":
     parser.add_argument("--o-merged-format", type=str,
                         help="The CAMSA-out formatting for the merged scaffold assemblies in a form of CAMSA points.")
     parser.add_argument("--o-subgroups-format", type=str,
-                        help="The CAMSA-out formatting for the merged scaffold assemblies in a form of CAMSA points.")
+                        help="The CAMSA-out formatting for the subgrouped assembly points form of CAMSA points.")
+    parser.add_argument("--o-subgroups-uo-format", type=str,
+                        help="The CAMSA-out formatting for the subgrouped unoriented assembly points in a form of CAMSA points.")
     parser.add_argument("--o-collapsed-format", type=str,
                         help="The CAMSA-out formatting for the collapsed assembly points and their computed conflicts.")
     parser.add_argument("--o-original-format", type=str,
@@ -187,6 +188,7 @@ if __name__ == "__main__":
     #       assemblies subgroups          #
     #######################################
     logger.info("Processing assemblies' subgroups")
+    logger.info("Processing assembly points taking both order and orientation into account")
     tmp_individual_assemblies = defaultdict(list)
     for ap in merged_assembly_points:
         for source_name in ap.sources:
@@ -202,6 +204,24 @@ if __name__ == "__main__":
                     assembly.aps.append(ap)
             grouped_assemblies.append(assembly)
     grouped_assemblies = list(filter(lambda a: len(a.aps) > 0, sorted(grouped_assemblies, key=lambda entry: len(entry.aps), reverse=True)))
+
+    logger.info("Processing assembly points, taking just order into account")
+    order_graph = OrderGraph.from_aps(aps=merged_assembly_points)
+    unoriented_aps = []
+    for (u, v, data) in order_graph.graph.edges(data=True):
+        ap = AssemblyPoint(seq1=u, seq2=v, seq1_or="?", seq2_or="?",
+                           children_ids=set(data["ids"]), sources=sorted(set(data["sources"])))
+        unoriented_aps.append(ap)
+    unoriented_aps_by_ids = assign_ids_to_assembly_points(assembly_points=unoriented_aps, id_prefix="unor_")
+    grouped_unoriented_assemblies = []
+    for i in range(1, len(individual_assemblies) + 1):
+        for assembly_combination in itertools.combinations(sorted([a.name for a in individual_assemblies]), i):
+            assembly = Assembly(name=assembly_combination, aps=[])
+            for ap in unoriented_aps:
+                if len(ap.sources) == len(assembly_combination) and all(map(lambda entry: entry in ap.sources, assembly_combination)):
+                    assembly.aps.append(ap)
+            grouped_unoriented_assemblies.append(assembly)
+    grouped_unoriented_assemblies = list(filter(lambda a: len(a.aps) > 0, sorted(grouped_unoriented_assemblies, key=lambda entry: len(entry.aps), reverse=True)))
 
     #######################################
     #        reference   analysis         #
@@ -278,6 +298,15 @@ if __name__ == "__main__":
             camsa_io.write_assembly_points(assembly_points=group.aps,
                                            destination=destination,
                                            output_setup=args.o_subgroups_format)
+    subgroups_unoriented_report_dir = os.path.join(comparative_report_dir, "unoriented_subgroups")
+    os.makedirs(subgroups_unoriented_report_dir)
+    for group in grouped_unoriented_assemblies:
+        comparative_report_group_unoriented_points_path = os.path.join(subgroups_unoriented_report_dir,
+                                                                       "{group_name}.camsa.points".format(group_name=".".join(group.name)))
+        with open(comparative_report_group_unoriented_points_path, "wt") as destination:
+            camsa_io.write_assembly_points(assembly_points=group.aps,
+                                           destination=destination,
+                                           output_setup=args.o_subgroups_uo_format)
 
     original_points_path = os.path.join(comparative_report_dir, "original.camsa.points")
     with open(original_points_path, "wt") as destination:
@@ -313,6 +342,7 @@ if __name__ == "__main__":
                 "assemblies_to_ids": assemblies_to_ids,
                 "assemblies_to_colors": assemblies_to_colors,
                 "grouped_assemblies": grouped_assemblies,
+                "grouped_unoriented_assemblies": grouped_unoriented_assemblies,
                 "fragments": {
                     "seqi": seqi,
                     'max_length': max([seq.length for seq in seqi.values()]) if len(seqi) > 0 else -1,

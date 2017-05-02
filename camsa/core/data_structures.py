@@ -195,6 +195,26 @@ class RefMetrics(object):
         self.best_ref_reading_id = None
 
 
+class OrderGraph(object):
+    def __init__(self):
+        self.graph = networkx.Graph()
+
+    def add_ap(self, ap):
+        seq1, seq2 = ap.seq1, ap.seq2
+        if self.graph.has_edge(u=seq1, v=seq2):
+            self.graph[seq1][seq2]["ids"].append(ap.self_id)
+            self.graph[seq1][seq2]["sources"].extend(ap.sources)
+        else:
+            self.graph.add_edge(u=seq1, v=seq2, attr_dict={"ids": [ap.self_id], "sources": [source for source in ap.sources]})
+
+    @classmethod
+    def from_aps(cls, aps):
+        result = cls()
+        for ap in aps:
+            result.add_ap(ap=ap)
+        return result
+
+
 class MergedScaffoldAssemblyGraph(object):
     def __init__(self):
         self.graph = networkx.Graph()
