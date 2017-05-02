@@ -36,6 +36,8 @@ PAIRS_COLUMN_ALIASES = {
     "ctg1-ctg2_gap": "gap_size",
     ########################
     "score": "cw",
+    ########################
+    "self_id": "self_id",
 }
 
 
@@ -54,9 +56,10 @@ def extract_nullable_numerical_value(field, row, fn_relations, default="?"):
     return value
 
 
-def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, default_cw_cae=0.9):
+def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, default_cw_cae=0.9, read_ids=False):
     """
 
+    :param read_ids: a flag to whether or not try to extract the id values from the input (if no column is there, None is the result) 
     :param source: file like object tot APs data from
     :param delimiter: tab/comma/etc separator
     :param destination: data structure, where information about APs will be stored
@@ -64,7 +67,6 @@ def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, defau
     :param default_cw_cae: confidence wight for candidate AE, in case ? is provided in source
     :return: destination data structure, that can be viewed as a default dict of list of APs, where key is the source of the AP
     """
-
 
     if destination is None:
         destination = defaultdict(list)
@@ -82,13 +84,18 @@ def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, defau
         if seq1 == seq2:
             # no support for duplicated seqs present
             continue
+        if read_ids:
+            self_id = extract_nullable_value(field="self_id", row=row, fn_relations=fn_relations)
+        else:
+            self_id = None
         destination[origin].append(AssemblyPoint(seq1=seq1,
                                                  seq2=seq2,
                                                  seq1_or=row[fn_relations["seq1_or"]],
                                                  seq2_or=row[fn_relations["seq2_or"]],
                                                  sources=[row[fn_relations["origin"]]],
                                                  cw=cw,
-                                                 gap_size=gap_size))
+                                                 gap_size=gap_size,
+                                                 self_id=self_id))
     return destination
 
 

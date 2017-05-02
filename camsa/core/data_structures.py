@@ -341,12 +341,23 @@ class Assembly(object):
         return len([ap for ap in self.aps if ap.is_non_conflicted])
 
 
-def assign_ids_to_assembly_points(assembly_points, id_prefix="", id_generator=None):
+def assign_ids_to_assembly_points(assembly_points, id_prefix="", id_generator=None, skip_existing=True):
     assembly_points_by_ids = {}
     if id_generator is None:
         id_generator = itertools.count()
+    existing_ids = set()
+    if not skip_existing:
+        for ap in assembly_points:
+            if ap.self_id is not None:
+                existing_ids.add(ap.self_id)
     for assembly_point in assembly_points:
-        assembly_point.self_id = id_prefix + str(six.next(id_generator))
+        new_id = id_prefix + str(six.next(id_generator))
+        if skip_existing:
+            assembly_point.self_id = new_id
+        else:
+            while new_id in existing_ids:
+                new_id = id_prefix + str(six.next(id_generator))
+            assembly_point.self_id = new_id
         assembly_points_by_ids[assembly_point.self_id] = assembly_point
     return assembly_points_by_ids
 
