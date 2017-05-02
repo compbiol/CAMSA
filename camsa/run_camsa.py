@@ -54,6 +54,10 @@ if __name__ == "__main__":
                         help="A confidence weight value assigned to semi/un-oriented assembly points and respective candidate assembly edges,\nin case \"?\" is specified as the respective assembly point confidence weight.\nDEFAULT: 0.75")
     # parser.add_argument("--c-comparative-disable", action="store_false", dest="comparative", default=True,
     #                     help="")
+    parser.add_argument("--c-subgroups-cntlim", type=int,
+                        help="A maximum number of assemblies subgroups (sorted in descending order) to be output. -1 for no limit.")
+    parser.add_argument("--c-subgroups-uo-cntlim", type=int,
+                        help="A maximum number of unoriented versions of assemblies subgroups (sorted in descending order) to be output. -1 for no limit.")
     parser.add_argument("--ref-disable", action="store_false", dest="reference", default=True,
                         help="")
     parser.add_argument("--ref", type=str, default="", dest="reference_name",
@@ -204,6 +208,8 @@ if __name__ == "__main__":
                     assembly.aps.append(ap)
             grouped_assemblies.append(assembly)
     grouped_assemblies = list(filter(lambda a: len(a.aps) > 0, sorted(grouped_assemblies, key=lambda entry: len(entry.aps), reverse=True)))
+    if args.c_subgroups_cntlim >= 0:
+        grouped_assemblies = grouped_assemblies[:args.c_subgroups_cntlim]
 
     logger.info("Processing assembly points, taking just order into account")
     order_graph = OrderGraph.from_aps(aps=merged_assembly_points)
@@ -222,6 +228,8 @@ if __name__ == "__main__":
                     assembly.aps.append(ap)
             grouped_unoriented_assemblies.append(assembly)
     grouped_unoriented_assemblies = list(filter(lambda a: len(a.aps) > 0, sorted(grouped_unoriented_assemblies, key=lambda entry: len(entry.aps), reverse=True)))
+    if args.c_subgroups_uo_cntlim >= 0:
+        grouped_unoriented_assemblies = grouped_unoriented_assemblies[:args.c_subgroups_uo_cntlim]
 
     #######################################
     #        reference   analysis         #
