@@ -31,6 +31,7 @@ class AssemblyPoint(object):
         self.seq2_par_or = None
         #### ref metrics
         self.ref_metrics = RefMetrics()
+        self.extra_data = {}
 
     @property
     def orientation_as_word(self):

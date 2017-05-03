@@ -56,7 +56,7 @@ def extract_nullable_numerical_value(field, row, fn_relations, default="?"):
     return value
 
 
-def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, default_cw_cae=0.9, read_ids=False):
+def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, default_cw_cae=0.9, read_ids=False, read_extra_data=False):
     """
 
     :param read_ids: a flag to whether or not try to extract the id values from the input (if no column is there, None is the result) 
@@ -74,13 +74,24 @@ def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, defau
     fieldnames = reader.fieldnames
     fn_relations = get_fn_relations_for_column_names(fieldnames=fieldnames, aliases=PAIRS_COLUMN_ALIASES)
     for row in filter(lambda entry: not entry[fieldnames[0]].startswith("#"), reader):
-        origin = row[fn_relations["origin"]]
+        processed_fields = set()
+        origin_field = fn_relations["origin"]
+        origin = row[origin_field]
+        processed_fields.add(origin_field)
         cw = extract_nullable_numerical_value(field="cw", row=row, fn_relations=fn_relations)
+        if "cw" in fn_relations:
+            processed_fields.add(fn_relations["cw"])
         if cw == "?":
             cw = default_cw_eae if "?" not in [row[fn_relations["seq1_or"]], row[fn_relations["seq2_or"]]] else default_cw_cae
         gap_size = extract_nullable_numerical_value(field="gap_size", row=row, fn_relations=fn_relations)
-        seq1 = row[fn_relations["seq1"]]
-        seq2 = row[fn_relations["seq2"]]
+        if "gap_size" in fn_relations:
+            processed_fields.add(fn_relations["gap_size"])
+        seq_1_field = fn_relations["seq1"]
+        seq1 = row[seq_1_field]
+        processed_fields.add(seq_1_field)
+        seq_2_field = fn_relations["seq2"]
+        seq2 = row[seq_2_field]
+        processed_fields.add(seq_2_field)
         if seq1 == seq2:
             # no support for duplicated seqs present
             continue
@@ -88,18 +99,26 @@ def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, defau
             self_id = extract_nullable_value(field="self_id", row=row, fn_relations=fn_relations)
         else:
             self_id = None
-        destination[origin].append(AssemblyPoint(seq1=seq1,
-                                                 seq2=seq2,
-                                                 seq1_or=row[fn_relations["seq1_or"]],
-                                                 seq2_or=row[fn_relations["seq2_or"]],
-                                                 sources=[row[fn_relations["origin"]]],
-                                                 cw=cw,
-                                                 gap_size=gap_size,
-                                                 self_id=self_id))
+        if "self_id" in fn_relations:
+            processed_fields.add(fn_relations["self_id"])
+        seq_1_or_field = fn_relations["seq1_or"]
+        seq_2_or_field = fn_relations["seq2_or"]
+        origin_field = fn_relations["origin"]
+        ap = AssemblyPoint(seq1=seq1, seq2=seq2,
+                           seq1_or=row[seq_1_or_field], seq2_or=row[seq_2_or_field],
+                           sources=[row[origin_field]], cw=cw, gap_size=gap_size, self_id=self_id)
+        processed_fields.add(seq_1_or_field)
+        processed_fields.add(seq_2_or_field)
+        processed_fields.add(origin_field)
+        if read_extra_data:
+            remaining_fields = set(fieldnames) - set(processed_fields)
+            for field in remaining_fields:
+                ap.extra_data[field] = row[field]
+        destination[origin].append(ap)
     return destination
 
 
-def read_assembly_points_from_input_sources(sources, delimiter="\t", default_cw_eae=1, default_cw_cae=0.75):
+def read_assembly_points_from_input_sources(sources, delimiter="\t", default_cw_eae=1, default_cw_cae=0.75, read_ids=False, read_extra_data=False):
     """
 
     :param sources: list of file paths with input AP data
@@ -113,7 +132,8 @@ def read_assembly_points_from_input_sources(sources, delimiter="\t", default_cw_
         file_name = os.path.abspath(os.path.expanduser(file_name))
         with open(file_name, "rt") as source:
             read_pairs(source=source, delimiter=delimiter, destination=result,
-                       default_cw_eae=default_cw_eae, default_cw_cae=default_cw_cae)
+                       default_cw_eae=default_cw_eae, default_cw_cae=default_cw_cae,
+                       read_ids=read_ids, read_extra_data=read_extra_data)
     return result
 
 
