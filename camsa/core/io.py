@@ -98,7 +98,7 @@ def read_pairs(source, delimiter="\t", destination=None, default_cw_eae=1, defau
         if read_ids:
             self_id = extract_nullable_value(field="self_id", row=row, fn_relations=fn_relations)
         else:
-            self_id = None
+            self_id = "?"
         if "self_id" in fn_relations:
             processed_fields.add(fn_relations["self_id"])
         seq_1_or_field = fn_relations["seq1_or"]
