@@ -174,17 +174,17 @@ if __name__ == "__main__":
             exit(1)
 
     id_generator = itertools.count()
-    original_assembly_points_by_ids = {}
-    for assembly_points in assembly_points_by_sources.values():
-        original_assembly_points_by_ids.update(assign_ids_to_assembly_points(assembly_points=assembly_points, id_prefix="or_",
-                                                                             id_generator=id_generator))
+    original_assembly_points = [or_ap for aps in assembly_points_by_sources.values() for or_ap in aps]
+    # for assembly_points in assembly_points_by_sources.values():
+    original_assembly_points_by_ids = assign_ids_to_assembly_points(assembly_points=original_assembly_points, id_prefix="or_",
+                                                                    id_generator=id_generator, sort=True)
 
     #######################################
     #       assembly points merging       #
     #######################################
     logger.info("Merging assembly points from different sources into a set of unique ones.")
     merged_assembly_points = merge_assembly_points(assembly_points_by_source=assembly_points_by_sources)
-    merged_assembly_points_by_ids = assign_ids_to_assembly_points(assembly_points=merged_assembly_points, id_prefix="m_")
+    merged_assembly_points_by_ids = assign_ids_to_assembly_points(assembly_points=merged_assembly_points, id_prefix="m_", sort=True)
     assign_parents_to_children(children_assembly_points_by_ids=original_assembly_points_by_ids,
                                parent_assembly_points_by_ids=merged_assembly_points_by_ids)
 
