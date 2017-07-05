@@ -10,18 +10,35 @@ from collections import defaultdict
 import configargparse
 import logging
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+
 import camsa
 from camsa.core.data_structures import AssemblyPoint
 import camsa.core.io as camsa_io
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
-
-
-def get_assembly_points(agouti_path, source):
+def get_assembly_points(agouti_path, source, oriented=False):
     result = []
     for left, right in more_itertools.windowed(agouti_path, n=2):
-        ap = AssemblyPoint(seq1=left, seq2=right, seq1_or="?", seq2_or="?", sources=[str(source)])
+        if oriented:
+            if left.startswith("-"):
+                seq1 = left[1:]
+                seq1_or = "-"
+            else:
+                seq1 = left
+                seq1_or = "+"
+            if right.startswith("-"):
+                seq2 = right[1:]
+                seq2_or = "-"
+            else:
+                seq2 = right
+                seq2_or = "+"
+        else:
+            seq1 = left
+            seq2 = right
+            seq1_or = "?"
+            seq2_or = "?"
+        ap = AssemblyPoint(seq1=seq1, seq2=seq2, seq1_or=seq1_or, seq2_or=seq2_or, sources=[str(source)])
         result.append(ap)
     return result
 
@@ -40,6 +57,7 @@ if __name__ == "__main__":
                                                             os.path.join(camsa.root_dir, "logging.ini")])
     parser.add_argument("agouti", nargs="+", help="A list of paths to files, that in AGOUTI format contain information about scaffold assemblies.")
     parser.add_argument("--o-format", type=str, help="")
+    parser.add_argument("--oriented", action="store_true", default=False)
     parser.add_argument("-o", "--output", type=configargparse.FileType("wt"), default=sys.stdout, help="Path to the file, where converted assembly points will be stored.\nDEFAULT: stdout")
     parser.add_argument("--o-delimiter", default="\t", type=str, help="")
     parser.add_argument("--source", default=None, help="A value to be used in the \"source\" column in the output.\n"
@@ -87,7 +105,7 @@ if __name__ == "__main__":
             logger.warning("Encountered a path of length <= 1 {{{path}}}; skipping"
                            "".format(path=",".join(path)))
             continue
-        assembly_points.extend(get_assembly_points(agouti_path=path, source=source))
+        assembly_points.extend(get_assembly_points(agouti_path=path, source=source, oriented=args.oriented))
     logger.info("Writing output to file \"{file_name}\"".format(file_name=args.output))
     camsa_io.write_assembly_points(assembly_points=assembly_points, destination=args.output, output_setup=args.o_format, delimiter=args.o_delimiter)
     logger.info("Elapsed time: {el_time}".format(el_time=str(datetime.datetime.now() - start_time)))
