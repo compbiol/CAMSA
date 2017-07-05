@@ -19,23 +19,34 @@ PAIRS_COLUMN_ALIASES = {
     ########################
     "species": "origin",
     "organisms": "origin",
+    "origin": "origin",
     ########################
     "ctg1": "seq1",
+    "contig1": "seq1",
+    "seq1": "seq1",
     ########################
     "ctg2": "seq2",
+    "contig2": "seq2",
+    "seq2": "seq2",
     ########################
     "orientation_ctg1": "seq1_or",
+    "orientation_contig1": "seq1_or",
     "ctg1_orientation": "seq1_or",
     "ctg1_or": "seq1_or",
+    "seq1_or": "seq1_or",
     ########################
     "ctg2_orientation": "seq2_or",
     "orientation_ctg2": "seq2_or",
+    "orientation_contig2": "seq2_or",
     "ctg2_or": "seq2_or",
+    "seq2_or": "seq2_or",
     ########################
     "distance": "gap_size",
     "ctg1-ctg2_gap": "gap_size",
+    "gap_size": "gap_size",
     ########################
     "score": "cw",
+    "cw": "cw",
     ########################
     "self_id": "self_id",
 }
