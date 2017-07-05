@@ -349,17 +349,18 @@ def assign_ids_to_assembly_points(assembly_points, id_prefix="", id_generator=No
     existing_ids = set()
     if not skip_existing:
         for ap in assembly_points:
-            if ap.self_id is not None:
+            if ap.self_id is not None and ap.self_id != "?":
                 existing_ids.add(ap.self_id)
     if sort:
         s_assembly_points = sorted(assembly_points, key=lambda entry: (entry.seq1, entry.seq2, entry.seq1_or, entry.seq2_or, entry.sources))
     else:
         s_assembly_points = assembly_points
     for assembly_point in s_assembly_points:
-        new_id = id_prefix + str(six.next(id_generator))
         if skip_existing:
+            new_id = id_prefix + str(six.next(id_generator))
             assembly_point.self_id = new_id
-        else:
+        elif assembly_point.self_id is None or assembly_point.self_id == "?":
+            new_id = id_prefix + str(six.next(id_generator))
             while new_id in existing_ids:
                 new_id = id_prefix + str(six.next(id_generator))
             assembly_point.self_id = new_id
