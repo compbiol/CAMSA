@@ -13,9 +13,9 @@ if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
     brew update
 #    brew tap homebrew/science
     brew install pyenv
-    brew install mercurial
+#    brew install mercurial
 #    brew install mummer
-    brew install gcc
+#    brew install gcc
     case "$PYTHON" in
     "2.7")
      pyenv install 2.7.14

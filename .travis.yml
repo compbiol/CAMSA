@@ -31,11 +31,13 @@ before_install:
   - sudo chmod +x .travis/install.sh && sudo chown $USER .travis/install.sh && /bin/bash .travis/install.sh
 
 install:
+  - export PATH="$HOME/miniconda/bin:$PATH"
   - nucmer -h
   - source camsa-env/bin/activate
   - travis_wait 30 pip install -e .
 
 script:
+  - export PATH="$HOME/miniconda/bin:$PATH"
   - nucmer -h
   - cd camsa/examples/utils/fasta/data
   - gzip -d B_anthracis_contigs.fasta.gz B_anthracis_Mslice.fasta.gz
