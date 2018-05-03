@@ -280,7 +280,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     start_time = datetime.datetime.now()
 
-    logger = logging.getLogger("CAMSA.utils.fasta2camsa_pairs")
+    logger = logging.getLogger("CAMSA.utils.fasta2camsa_points")
     ch = logging.StreamHandler()
     ch.setLevel(args.c_logging_level)
     logger.setLevel(args.c_logging_level)
