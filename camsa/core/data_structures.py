@@ -206,7 +206,7 @@ class OrderGraph(object):
             self.graph[seq1][seq2]["ids"].append(ap.self_id)
             self.graph[seq1][seq2]["sources"].extend(ap.sources)
         else:
-            self.graph.add_edge(u=seq1, v=seq2, attr_dict={"ids": [ap.self_id], "sources": [source for source in ap.sources]})
+            self.graph.add_edge(u=seq1, v=seq2, ids=[ap.self_id], sources=[source for source in ap.sources])
 
     @classmethod
     def from_aps(cls, aps):
@@ -255,7 +255,7 @@ class ScaffoldAssemblyGraph(object):
         self.graph = networkx.MultiGraph()
 
     def add_edge(self, u, v, **kwargs):
-        self.graph.add_edge(u=u, v=v, attr_dict=kwargs)
+        self.graph.add_edge(u=u, v=v, **kwargs)
 
     @classmethod
     def from_assembly_points(cls, assembly_points, reference=False, add_scaffold_edges=True):
