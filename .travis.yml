@@ -31,6 +31,7 @@ before_install:
   - sudo chmod +x .travis/install.sh && sudo chown $USER .travis/install.sh && /bin/bash .travis/install.sh
 
 install:
+  - nucmer -h
   - source camsa-env/bin/activate
   - travis_wait 30 pip install -e .
 
