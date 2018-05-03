@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
 
 if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
+    if [ "$PYTHON" = "2.7" ]; then
+        wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O ~/miniconda.sh
+    else
+        wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O ~/miniconda.sh
+    fi
+    bash ~/miniconda.sh -b -p $HOME/miniconda
+    export PATH="$HOME/miniconda/bin:$PATH"
+    conda install -c bioconda mummer
     brew update
-    brew tap homebrew/science
+#    brew tap homebrew/science
     brew install pyenv
     brew install mercurial
-    brew install mummer
+#    brew install mummer
     brew install gcc
     case "$PYTHON" in
     "2.7")
