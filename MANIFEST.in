@@ -1,4 +1,4 @@
-include LICENSE.txt README.md requirements.txt setup.py
+include pypi_full.rst LICENSE.txt README.md requirements.txt setup.py
 recursive-include camsa/libs *
 recursive-include camsa/examples *
 recursive-include camsa *.ini
