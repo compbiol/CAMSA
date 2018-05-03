@@ -9,6 +9,7 @@ if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
     bash ~/miniconda.sh -b -p $HOME/miniconda
     export PATH="$HOME/miniconda/bin:$PATH"
     conda install -c bioconda mummer
+    nucmer -h
     brew update
 #    brew tap homebrew/science
     brew install pyenv
@@ -20,13 +21,13 @@ if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
      pyenv install 2.7.14
      pyenv global 2.7.14
      ;;
-     "3.4")
-     pyenv install 3.4.3
-     pyenv global 3.4.3
-     ;;
      "3.5")
-     pyenv install 3.5.1
-     pyenv global 3.5.1
+     pyenv install 3.5.4
+     pyenv global 3.5.4
+     ;;
+     "3.6")
+     pyenv install 3.6.3
+     pyenv global 3.6.3
      ;;
      "pypy.2")
      pyenv install pypy-5.3
