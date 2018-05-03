@@ -9,8 +9,8 @@ if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
     brew install gcc
     case "$PYTHON" in
     "2.7")
-     pyenv install 2.7.11
-     pyenv global 2.7.11
+     pyenv install 2.7.14
+     pyenv global 2.7.14
      ;;
      "3.4")
      pyenv install 3.4.3

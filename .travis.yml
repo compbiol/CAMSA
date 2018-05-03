@@ -1,8 +1,8 @@
 language: python
 python:
   - 2.7
-  - 3.4
   - 3.5
+  - 3.6
 #  - pypy
 #  - pypy3
 os:
@@ -15,12 +15,12 @@ matrix:
       osx_image: xcode7.3
       language: generic
       env:
-        - PYTHON=3.4
+        - PYTHON=3.5
     - os: osx
       osx_image: xcode7.3
       language: generic
       env:
-        - PYTHON=3.5
+        - PYTHON=3.6
     - os: osx
       osx_image: xcode7.3
       language: generic

@@ -15,7 +15,7 @@ Main CAMSA features:
 4. constructs a merged combined scaffold assembly
 5. provides an interactive framework for a visual comparative analysis of the given assemblies
 
-CAMSA is developed using Python programming language and is compatible with both Python2 (2.7+) and Python3 (3.3+). This means CAMSA can be run on any modern operating system properly.
+CAMSA is developed using Python programming language and is compatible with both Python2 (2.7+) and Python3 (3.5+). This means CAMSA can be run on any modern operating system properly.
 >Note: only Linux and MacOS were tested extensively with respect to CAMSA installation and usage. If you want to use CAMSA on windows, please try to do so on your own (we have continuous integration setup on Windows platform as well, but no as detailed as on MacOS/Linux), and if you run into any problems - contact us.
 
 
