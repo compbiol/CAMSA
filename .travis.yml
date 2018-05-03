@@ -35,6 +35,7 @@ install:
   - travis_wait 30 pip install -e .
 
 script:
+  - nucmer -h
   - cd camsa/examples/utils/fasta/data
   - gzip -d B_anthracis_contigs.fasta.gz B_anthracis_Mslice.fasta.gz
   - cd ../../../../../
