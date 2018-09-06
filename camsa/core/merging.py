@@ -111,7 +111,7 @@ def maximal_matching(assembly_points_by_sources, acyclic=True, min_cw=0.0):
     matching = networkx.max_weight_matching(G=assembly_edges_graph.graph)
     cover_graph = networkx.Graph()
     cover_graph.add_edges_from(scaffold_edges)
-    edges = get_edges_from_matching(matching)
+    edges = matching
     for u, v in edges:
         cover_graph.add_edge(u, v, weight=assembly_edges_graph.graph[u][v]['weight'])
     # sanity check
