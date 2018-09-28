@@ -121,7 +121,7 @@ if __name__ == "__main__":
     assembly_graph = networkx.Graph()
 
     scaffold_edges = get_scaffold_edges(assembly_points=assembly_points_by_sources)
-    assembly_graph.add_edges_from(ebunch=scaffold_edges)
+    assembly_graph.add_edges_from(scaffold_edges)
     assembly_points_by_edges = {}
 
     for ap in assembly_points_by_sources:
@@ -131,7 +131,7 @@ if __name__ == "__main__":
 
     logger.debug("Checking that there are no in(semi)conflicting assembly points")
     for vertex in assembly_graph.nodes():
-        degree = assembly_graph.degree(nbunch=vertex)
+        degree = assembly_graph.degree[vertex]
         if degree > 2:
             scaffold_name = get_scaffold_name_from_vertex(v=vertex)
             logger.error("Supplied assembly contained a conflict.")
@@ -144,7 +144,7 @@ if __name__ == "__main__":
     logger.debug("Extracting paths from assembly graph")
     paths = []
     for cc in networkx.connected_component_subgraphs(G=assembly_graph):
-        origins = [v for v in cc.nodes() if cc.degree(v) == 1]
+        origins = [v for v in cc.nodes() if cc.degree[v] == 1]
         if len(origins) == 2:
             path = networkx.shortest_path(G=cc, source=origins[0], target=origins[1])
             logger.debug("Extracted a linear scaffold of length {scaffold_length}, staring with {s_v} and ending with {e_v}"

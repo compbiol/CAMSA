@@ -44,7 +44,7 @@ def merge_greedily(assembly_points_by_sources, acyclic=True, min_cw=0.0):
     cover_graph = networkx.Graph()
     cover_graph.add_edges_from(scaffold_edges)
     end_points = {}
-    for (u, v) in cover_graph.edges_iter():
+    for (u, v) in cover_graph.edges():
         end_points[u] = v
         end_points[v] = u
 
@@ -84,7 +84,7 @@ def merge_greedily(assembly_points_by_sources, acyclic=True, min_cw=0.0):
             assembly_edges.discard(to_discard)
     # checking that we didn't screw up :)
     for vertex in cover_graph.nodes():
-        if cover_graph.degree(vertex) > 2:
+        if cover_graph.degree[vertex] > 2:
             print(vertex)
             print(cover_graph.edges(nbunch=vertex))
             exit(1)
@@ -116,7 +116,7 @@ def maximal_matching(assembly_points_by_sources, acyclic=True, min_cw=0.0):
         cover_graph.add_edge(u, v, weight=assembly_edges_graph.graph[u][v]['weight'])
     # sanity check
     for vertex in cover_graph.nodes():
-        assert cover_graph.degree(vertex) <= 2
+        assert cover_graph.degree[vertex] <= 2
     # checking for any issues with unoriented assembly points
     for assembly_point in unoriented_assembly_points:
         participating_edges = []
