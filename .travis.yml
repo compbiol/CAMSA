@@ -40,7 +40,7 @@ before_install:
 
 install:
   - hash -r
-  - export PATH="$HOME/miniconda/bin:$PATH"
+  - export PATH="$HOME/miniconda/envs/test-environment/bin:$PATH"
   - echo $PATH
   - ls -l $HOME/miniconda/bin
   - nucmer -h
