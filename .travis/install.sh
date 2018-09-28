@@ -16,6 +16,8 @@ if [ "$TRAVIS_OS_NAME" = 'osx' ]; then
     source activate test-environment
     conda install -c bioconda mummer
     hash -r
+    which nucmer
+    ls -l $HOME/miniconda/bin/
     nucmer -h
 fi
 
@@ -36,5 +38,7 @@ if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
     source activate test-environment
     conda install -c bioconda mummer
     hash -r
+    which nucmer
+    ls -l $HOME/miniconda/bin/
     nucmer -h
 fi
