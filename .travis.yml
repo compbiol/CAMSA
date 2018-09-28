@@ -39,7 +39,10 @@ before_install:
   - sudo chmod +x .travis/install.sh && sudo chown $USER .travis/install.sh && /bin/bash .travis/install.sh
 
 install:
+  - hash -r
   - export PATH="$HOME/miniconda/bin:$PATH"
+  - echo $PATH
+  - ls -l $HOME/miniconda/bin
   - nucmer -h
   - travis_wait 30 pip install -e .
 
