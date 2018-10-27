@@ -197,8 +197,8 @@ class RefMetrics(object):
 
 
 class OrderGraph(object):
-    def __init__(self):
-        self.graph = networkx.Graph()
+    def __init__(self, graph=None):
+        self.graph = graph if graph is not None else networkx.Graph()
 
     def add_ap(self, ap):
         seq1, seq2 = ap.seq1, ap.seq2
