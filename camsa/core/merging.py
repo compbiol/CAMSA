@@ -128,7 +128,7 @@ def maximal_matching(assembly_points_by_sources, acyclic=True, min_cw=0.0):
             cover_graph.remove_edge(participating_edges[0][0], participating_edges[0][1])
     if acyclic:
         edges_to_delete = []
-        for cc in networkx.connected_components(G=cover_graph, copy=True):
+        for cc in networkx.connected_components(G=cover_graph):
             if networkx.number_of_nodes(cc) == networkx.number_of_edges(cc):
                 assembly_edges = filter(lambda entry: "weight" in entry[2], cc.edges(data=True))
                 edges_to_delete.append(min(assembly_edges, key=lambda entry: entry[2]["weight"]))
