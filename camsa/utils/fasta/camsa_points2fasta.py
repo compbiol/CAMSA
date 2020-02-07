@@ -144,6 +144,7 @@ if __name__ == "__main__":
     logger.debug("Extracting paths from assembly graph")
     paths = []
     for cc in networkx.connected_components(G=assembly_graph):
+        cc = assembly_graph.subgraph(cc).copy()
         origins = [v for v in cc.nodes() if cc.degree[v] == 1]
         if len(origins) == 2:
             path = networkx.shortest_path(G=cc, source=origins[0], target=origins[1])
